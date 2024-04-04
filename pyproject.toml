@@ -1,0 +1,16 @@
+[project]
+name = "truealgebra"
+version = "0.1.0"
+authors = [
+  { name="Robert Sanders", email="bobcharlie307@gmail.com" },
+]
+description = "A vaery flexible computer algebra system based of python."
+readme = "README.md"
+requires-python = ">=3.5"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
