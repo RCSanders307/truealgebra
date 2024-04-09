@@ -1,105 +1,48 @@
 from collections import defaultdict
 from truealgebra.core.expression import CommAssoc, Assign, Number
-import truealgebra.core.settings as sett
+from truealgebra.core.settings import SettingsSingleton, bp
 import pytest
 
 
-def test_digits():
-    digits = set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
-
-    assert sett.DIGITS == digits
-
-
-def test_letters():
-    letters = set([
-        '_',
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
-    ])
-
-    assert sett.LETTERS == letters
-
-
-def test_white_space():
-    white_space = set([' ', '\t'])
-
-    assert sett.WHITE_SPACE == white_space
-
-
-def test_operators():
-    operators = set([
-        ':',  '\\', '*', '+', '-', '"', '^', '&', '%', '@', '!', '~',
-        '/', '?', '<', '>', '=', '`', '|'
-    ])
-
-    assert sett.OPERATORS == operators
-
-
-def test_meta_delimiters():
-    meta_delimiters = set(["\n", ";"])
-
-    assert sett.META_DELIMITERS == meta_delimiters
-
-
-def test_isbindingpower():
-    assert sett.isbindingpower(700)
-    assert sett.isbindingpower(0)
-    assert not sett.isbindingpower(-1)
-    assert not sett.isbindingpower(1.0)
-
-
-def test_issymbolname():
-    assert sett.issymbolname('abc')
-    assert sett.issymbolname('ABC1')
-    assert not sett.issymbolname('2ABC1')
-    assert not sett.issymbolname('**')
-    assert not sett.issymbolname('AB C1')
-    assert not sett.issymbolname(786)
-
-
-def test_isoperatorname():
-    assert sett.isoperatorname('*+')
-    assert not sett.isoperatorname('* +')
-    assert not sett.isoperatorname(456)
-    assert not sett.isoperatorname('asd')
+@pytest.fixture
+def settings():
+    settings = SettingsSingleton()
+    yield settings
+    settings.reset()
 
 
 def test_bp():
-    bp = sett.bp(175, 228)
+    pair = bp(175, 228)
 
-    assert bp.lbp == 175
-    assert bp.rbp == 228
+    assert pair.lbp == 175
+    assert pair.rbp == 228
 
 
-def test_settings_init():
-    vanilla = sett.Settings()
+def test_settings_init(settings):
     correct_nc = defaultdict(set)
     correct_nc['suchthat']
     correct_nc['forall']
 
-    assert vanilla.default_bp == sett.bp(250, 250)
-    assert vanilla.custom_bp == dict()
-    assert vanilla.infixprefix == dict()
-    assert vanilla.symbol_operators == dict()
-    assert vanilla.bodied_functions == dict()
-    assert vanilla.sqrtneg1 == ''
-    assert vanilla.container_subclass == dict()
-    assert vanilla.complement == dict()
-    assert vanilla.categories == correct_nc
+    assert settings.default_bp == bp(250, 250)
+    assert settings.custom_bp == dict()
+    assert settings.infixprefix == dict()
+    assert settings.symbol_operators == dict()
+    assert settings.bodied_functions == dict()
+    assert settings.sqrtneg1 == ''
+    assert settings.container_subclass == dict()
+    assert settings.complement == dict()
+    assert settings.categories == correct_nc
 
 
 @pytest.mark.parametrize(
     "lbp, rbp, assignment",
     [
-        (300, 400, sett.bp(300, 400)),
-        (100, 0, sett.bp(100, 0)),
-        (0, 1000, sett.bp(0, 1000)),
+        (300, 400, bp(300, 400)),
+        (100, 0, bp(100, 0)),
+        (0, 1000, bp(0, 1000)),
     ]
 )
-def test_set_default_bp(lbp, rbp, assignment):
-    settings = sett.Settings()
+def test_set_default_bp(lbp, rbp, assignment, settings):
     settings.set_default_bp(lbp, rbp)
 
     assert settings.default_bp == assignment
@@ -119,26 +62,23 @@ def test_set_default_bp(lbp, rbp, assignment):
     ]
 
 )
-def test_set_default_bp_error(lbp, rbp, msg, capsys):
-    settings = sett.Settings()
-
+def test_set_default_bp_error(lbp, rbp, msg, capsys, settings):
     settings.set_default_bp(lbp, rbp)
     output = capsys.readouterr()
 
     assert msg in output.out
-    assert settings.default_bp == sett.bp(250, 250)
+    assert settings.default_bp == bp(250, 250)
 
 
 @pytest.mark.parametrize(
     "name, lbp, rbp, assignment",
     [
-        ('*', 200, 300, {'*': sett.bp(200, 300)}),
-        ('+', 0, 300, {'+': sett.bp(0, 300)}),
-        ('!', 200, 0, {'!': sett.bp(200, 0)}),
+        ('*', 200, 300, {'*': bp(200, 300)}),
+        ('+', 0, 300, {'+': bp(0, 300)}),
+        ('!', 200, 0, {'!': bp(200, 0)}),
     ]
 )
-def test_set_custom_bp(name, lbp, rbp, assignment):
-    settings = sett.Settings()
+def test_set_custom_bp(name, lbp, rbp, assignment, settings):
     settings.set_custom_bp(name, lbp, rbp)
 
     assert settings.custom_bp == assignment
@@ -177,8 +117,7 @@ def test_set_custom_bp(name, lbp, rbp, assignment):
         ),
     ]
 )
-def test_set_custom_bp_error(name, lbp, rbp, msg, capsys):
-    settings = sett.Settings()
+def test_set_custom_bp_error(name, lbp, rbp, msg, capsys, settings):
     settings.set_custom_bp(name, lbp, rbp)
     output = capsys.readouterr()
 
@@ -192,15 +131,13 @@ def test_set_custom_bp_error(name, lbp, rbp, msg, capsys):
         ('-', 470, {'-': 470}, ''),
         (
             '--', 470, {'--': 470},
-            'settings.custom_bp["--"] = sett.bp(400, 401)'
+            'settings.custom_bp["--"] = bp(400, 401)'
         ),
     ]
 )
-def test_set_infixprefix(name, rbp, assignment, extra):
-    settings = sett.Settings()
+def test_set_infixprefix(name, rbp, assignment, extra, settings):
     if extra:
         exec(extra)
-#   settings.set_custom_bp('--', sett.bp(400, 401))
     settings.set_infixprefix(name, rbp)
 
     assert settings.infixprefix == assignment
@@ -215,17 +152,16 @@ def test_set_infixprefix(name, rbp, assignment, extra):
             'rbp 0 must be a binding power greater than 0',
         ),
         (
-            '*', 500, 'settings.custom_bp["*"] = sett.bp(20, 0)',
+            '*', 500, 'settings.custom_bp["*"] = bp(20, 0)',
             'right binding power of * infix form cannot be 0',
         ),
         (
-            '**', 500, 'settings.custom_bp["**"] = sett.bp(0, 20)',
+            '**', 500, 'settings.custom_bp["**"] = bp(0, 20)',
             'left binding power of ** infix form cannot be 0',
         ),
     ]
 )
-def test_set_infixprefix_error(name, rbp, extra, msg, capsys):
-    settings = sett.Settings()
+def test_set_infixprefix_error(name, rbp, extra, msg, capsys, settings):
     if extra:
         exec(extra)
     settings.set_infixprefix(name, rbp)
@@ -235,19 +171,17 @@ def test_set_infixprefix_error(name, rbp, extra, msg, capsys):
     assert settings.infixprefix == dict()
 
 
-def test_set_symbol_operators_0():
-    settings = sett.Settings()
-    settings.default_bp = sett.bp(101, 102)
+def test_set_symbol_operators_0(settings):
+    settings.default_bp = bp(101, 102)
     settings.set_symbol_operators('a')
 
-    assert settings.symbol_operators == {'a': sett.bp(101, 102)}
+    assert settings.symbol_operators == {'a': bp(101, 102)}
 
 
-def test_set_symbol_operators_1():
-    settings = sett.Settings()
+def test_set_symbol_operators_1(settings):
     settings.set_symbol_operators('b', 375, 485)
 
-    assert settings.symbol_operators == {'b': sett.bp(375, 485)}
+    assert settings.symbol_operators == {'b': bp(375, 485)}
 
 
 @pytest.mark.parametrize(
@@ -284,8 +218,9 @@ def test_set_symbol_operators_1():
         ),
     ]
 )
-def test_set_symbol_operators_errors(name, lbp, rbp, extra, msg, capsys):
-    settings = sett.Settings()
+def test_set_symbol_operators_errors(
+    name, lbp, rbp, extra, msg, capsys, settings
+ ):
     if extra:
         exec(extra)
     settings.set_symbol_operators(name, lbp, rbp)
@@ -295,16 +230,14 @@ def test_set_symbol_operators_errors(name, lbp, rbp, extra, msg, capsys):
     assert settings.symbol_operators == dict()
 
 
-def test_set_bodied_functions_0():
-    settings = sett.Settings()
-    settings.default_bp = sett.bp(101, 102)
+def test_set_bodied_functions_0(settings):
+    settings.default_bp = bp(101, 102)
     settings.set_bodied_functions('a')
 
     assert settings.bodied_functions == {'a': 102}
 
 
-def test_set_bodied_functions_1():
-    settings = sett.Settings()
+def test_set_bodied_functions_1(settings):
     settings.set_bodied_functions('b', 47)
 
     assert settings.bodied_functions == {'b': 47}
@@ -319,7 +252,7 @@ def test_set_bodied_functions_1():
             'name + must be a symbol name.'
         ),
         (
-            'c', 370, 'settings.symbol_operators["c"] = sett.bp(200, 209)',
+            'c', 370, 'settings.symbol_operators["c"] = bp(200, 209)',
             'name c cannot be key in symbol_operators',
         ),
         (
@@ -336,8 +269,9 @@ def test_set_bodied_functions_1():
         ),
     ]
 )
-def test_set_bodied_functionss_errors(name, rbp, extra, msg, capsys):
-    settings = sett.Settings()
+def test_set_bodied_functionss_errors(
+    name, rbp, extra, msg, capsys, settings
+):
     if extra:
         exec(extra)
     settings.set_bodied_functions(name, rbp)
@@ -348,16 +282,12 @@ def test_set_bodied_functionss_errors(name, rbp, extra, msg, capsys):
 
 
 @pytest.mark.parametrize("a_string", ['i', 'j', ''])
-def test_set_sqrtneg1(a_string):
-    settings = sett.Settings()
-
+def test_set_sqrtneg1(a_string, settings):
     settings.set_sqrtneg1(a_string)
     assert settings.sqrtneg1 == a_string
 
 
-def test_set_sqrtneg1_error(capsys):
-    settings = sett.Settings()
-
+def test_set_sqrtneg1_error(capsys, settings):
     settings.set_sqrtneg1('m')
     output = capsys.readouterr()
 
@@ -372,9 +302,7 @@ def test_set_sqrtneg1_error(capsys):
         ('**', CommAssoc),
     ]
 )
-def test_set_container_subclass(name, cls):
-    settings = sett.Settings()
-
+def test_set_container_subclass(name, cls, settings):
     settings.set_container_subclass(name, cls)
 
     assert settings.container_subclass == {name: cls}
@@ -394,9 +322,7 @@ def test_set_container_subclass(name, cls):
         ),
     ]
 )
-def test_set_container_subclass_error(name, cls, msg, capsys):
-    settings = sett.Settings()
-
+def test_set_container_subclass_error(name, cls, msg, capsys, settings):
     settings.set_container_subclass(name, cls)
     output = capsys.readouterr()
 
@@ -411,9 +337,7 @@ def test_set_container_subclass_error(name, cls, msg, capsys):
         ('**', '^^'),
     ]
 )
-def test_set_complement(complementname, targetname):
-    settings = sett.Settings()
-
+def test_set_complement(complementname, targetname, settings):
     settings.set_complement(complementname, targetname)
 
     assert settings.complement == {complementname: targetname}
@@ -430,9 +354,9 @@ def test_set_complement(complementname, targetname):
         ('*b', '^^', 'complementname *b must be a symbol or operator name',),
     ]
 )
-def test_set_complement_error(complementname, targetname, msg, capsys):
-    settings = sett.Settings()
-
+def test_set_complement_error(
+    complementname, targetname, msg, capsys, settings
+):
     settings.set_complement(complementname, targetname)
     output = capsys.readouterr()
 
@@ -451,9 +375,7 @@ def test_set_complement_error(complementname, targetname, msg, capsys):
         ('abc1%', '', {'forall': set(), 'suchthat': set(), 'abc1%': set()}),
     ]
 )
-def test_set_category(category, name, catdict):
-    settings = sett.Settings()
-
+def test_set_category(category, name, catdict, settings):
     if name:
         settings.set_categories(category, name)
     else:
@@ -473,8 +395,7 @@ def test_set_category(category, name, catdict):
         ('abc', '##', 'name ## must be an operator name or symbol name'),
     ]
 )
-def test_set_category_error(category, name, msg, capsys):
-    settings = sett.Settings()
+def test_set_category_error(category, name, msg, capsys, settings):
     cat_dict = defaultdict(set)
     cat_dict['forall']
     cat_dict['suchthat']

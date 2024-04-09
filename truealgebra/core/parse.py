@@ -1,6 +1,6 @@
 from truealgebra.core.err import ta_logger
 from truealgebra.core.expression import Container, Number, Symbol, null, end
-from truealgebra.core.settings import plain_vanilla_settings as vanilla
+from truealgebra.core.settings import SettingsSingleton
 from truealgebra.core.constants import (
     OPERATORS, DIGITS, WHITE_SPACE, LETTERS, META_DELIMITERS
 )
@@ -42,16 +42,11 @@ class Parse:
     factory methods use self.buf to create tokens which are TrueAlgebra
     expressions. Factory methods return TrueAlgebra expressions.
     """
-# original:
-#   def __init__(self, settings=vanilla):
-#       self.settings = settings
-#       self.buf = ''
-#       self.char = None
-#       self.string = ''
-#       self.string_iterator = None
 
-    def __init__(self, settings=vanilla, postrule=None):
-        self.settings = settings
+    def __init__(self,  postrule=None):
+        # Not Good. settings should be a module variable,
+        # not a class attribute
+        self.settings = SettingsSingleton()
         self.buf = ''
         self.char = None
         self.string = ''
@@ -443,8 +438,6 @@ class Parse:
     def symbol_factory(self):
         return Symbol(self.buf)
 
-
-vanilla_parse = Parse(vanilla)
 
 # used to parse strings with newline "\n" characters and ";"
 def meta_parser(strn, parse):
