@@ -92,8 +92,9 @@ def conftest_settings():
     settings.set_complement('star', '*')
     settings.set_complement('!!', '+')
 
+    yield settings
+    settings.reset()
 
-    return settings
 
 
 

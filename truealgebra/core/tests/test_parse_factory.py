@@ -7,9 +7,8 @@ from truealgebra.core.expression import (
 import pytest
 
 
-# test integer_factory - Done
-def test_integer_factory(settings):
-    parse = Parse(settings)
+def test_integer_factory(conftest_settings):
+    parse = Parse()
     parse.buf = '37'
 
     out = parse.integer_factory()
@@ -18,8 +17,8 @@ def test_integer_factory(settings):
     assert type(out.value) == int
 
 
-def test_complex_real_factory(settings):
-    parse = Parse(settings)
+def test_complex_real_factory(conftest_settings):
+    parse = Parse()
     parse.buf = '84.34'
 
     out = parse.complex_real_factory()
@@ -27,8 +26,8 @@ def test_complex_real_factory(settings):
     assert out == Number(complex(0, float('84.34')))
 
 
-def test_complex_int_factory(settings):
-    parse = Parse(settings)
+def test_complex_int_factory(conftest_settings):
+    parse = Parse()
     parse.buf = '8'
 
     out = parse.complex_int_factory()
@@ -36,8 +35,8 @@ def test_complex_int_factory(settings):
     assert out == Number(complex(0, int('8')))
 
 
-def test_complex_factory(settings):
-    parse = Parse(settings)
+def test_complex_factory(conftest_settings):
+    parse = Parse()
 
     out = parse.complex_factory()
 
@@ -45,8 +44,8 @@ def test_complex_factory(settings):
 
 
 # test real_factory - Done
-def test_real_factory(settings):
-    parse = Parse(settings)
+def test_real_factory(conftest_settings):
+    parse = Parse()
     parse.buf = '674.23'
 
     out = parse.real_factory()
@@ -63,8 +62,8 @@ def test_real_factory(settings):
         ('and', Container('and')),
     ]
 )
-def test_make_conatiner_instance(buf, inst, settings):
-    parse = Parse(settings)
+def test_make_conatiner_instance(buf, inst, conftest_settings):
+    parse = Parse()
     parse.buf = buf
 
     out = parse.make_container_instance()
@@ -81,8 +80,8 @@ def test_make_conatiner_instance(buf, inst, settings):
         ('!!', CommAssoc('+'), 251, 252),
     ]
 )
-def test_operator_factory(buf, token, lbp, rbp, settings):
-    parse = Parse(settings)
+def test_operator_factory(buf, token, lbp, rbp, conftest_settings):
+    parse = Parse()
     parse.buf = buf
 
     out = parse.operator_factory()
@@ -101,8 +100,8 @@ def test_operator_factory(buf, token, lbp, rbp, settings):
         ('Rule', Restricted('Rule'), 0),
     ]
 )
-def test_function_form_factory(buf, token, rbp, settings):
-    parse = Parse(settings)
+def test_function_form_factory(buf, token, rbp, conftest_settings):
+    parse = Parse()
     parse.buf = buf
 
     out = parse.function_form_factory()
@@ -112,8 +111,8 @@ def test_function_form_factory(buf, token, rbp, settings):
     assert out.rbp == rbp
 
 
-def test_symbol_operator_factory(settings):
-    parse = Parse(settings)
+def test_symbol_operator_factory(conftest_settings):
+    parse = Parse()
     parse.buf = 'and'
 
     out = parse.symbol_operator_factory()
@@ -123,26 +122,8 @@ def test_symbol_operator_factory(settings):
     assert out.rbp == 76
 
 
-@pytest.mark.parametrize(
-    'buf, token, lbp, rbp',
-    [
-        ('**', Container('**'), 1251, 1250),
-        ('***', Container('***'), 251, 252),
-    ]
-)
-def test_operator_factory(buf, token, lbp, rbp, settings):
-    parse = Parse(settings)
-    parse.buf = buf
-
-    out = parse.operator_factory()
-
-    assert out == token
-    assert out.lbp == lbp
-    assert out.rbp == rbp
-
-
-def test_symbol_factory(settings):
-    parse = Parse(settings)
+def test_symbol_factory(conftest_settings):
+    parse = Parse()
     parse.buf = 'symbol'
 
     out = parse.symbol_factory()

@@ -11,7 +11,7 @@ import pytest
 
 # TEST init_parse method - Done
 @pytest.fixture
-def create_parse_init(settings):
+def create_parse_init(conftest_settings):
     """ Fixture Used in testing init_parse methods
     """
 
@@ -23,7 +23,7 @@ def create_parse_init(settings):
             return left
 
     def create_parse(init_tokenizer_out):
-        parse = PyTestParse(settings)
+        parse = PyTestParse()
         parse.init_tokenizer_out = init_tokenizer_out
         return parse
 
@@ -66,9 +66,8 @@ def test_init_parse_error(tok_out, msg, create_parse_init, capsys):
     assert msg in output.out
 
 
-# TEST two_parse method - Done
 @pytest.fixture
-def create_parse_two(settings):
+def create_parse_two(conftest_settings):
     """ Fixture Used in testing two_parse method
     """
 
@@ -90,7 +89,7 @@ def create_parse_two(settings):
         gen = iter(())
 
     def create_parse(token_tup):
-        parse = PyTestParse(settings)
+        parse = PyTestParse()
         parse.make_generator(token_tup)
         return parse
 
@@ -179,16 +178,16 @@ def test_two_parse_error(left, token_tup, msg, create_parse_two, capsys):
 
 
 # TEST two_parse_end method - Done
-def test_two_parse_end(settings):
-    parse = Parse(settings)
+def test_two_parse_end(conftest_settings):
+    parse = Parse()
 
     out = parse.two_parse_end(Symbol('x'))
 
     assert out == Symbol('x')
 
 
-def test_two_parse_end_error(settings, capsys):
-    parse = Parse(settings)
+def test_two_parse_end_error(conftest_settings, capsys):
+    parse = Parse()
 
     out = parse.two_parse_end(Container('@', (), 0, 3000))
     output = capsys.readouterr()
@@ -199,7 +198,7 @@ def test_two_parse_end_error(settings, capsys):
 
 # TEST three_parse method -Done
 @pytest.fixture
-def create_parse_three(settings):
+def create_parse_three(conftest_settings):
     """ Fixture Used in testing three_parse method
     """
 
@@ -218,7 +217,7 @@ def create_parse_three(settings):
         gen = iter(())
 
     def create_parse(token_tup):
-        parse = PytestParse(settings)
+        parse = PytestParse()
         parse.make_generator(token_tup)
         return parse
 
@@ -375,7 +374,7 @@ def test_three_parse(
 
 
 @pytest.fixture
-def create_parse_three_error(settings):
+def create_parse_three_error(conftest_settings):
     """ Fixture Used in testing three_parse method with error
     """
 
@@ -389,7 +388,7 @@ def create_parse_three_error(settings):
         gen = iter(())
 
     def create_parse(token_tup):
-        parse = PytestParse(settings)
+        parse = PytestParse()
         parse.make_generator(token_tup)
         return parse
 
@@ -432,14 +431,14 @@ def test_three_parse_error(
             [],
             Co('**', (Sy('a'),), 0, 1250),
             Co('!', (Nu(3),), 0, 0),
-            Co('**', (Sy('a'),Co('!', (Nu(3),)))),
+            Co('**', (Sy('a'), Co('!', (Nu(3),)))),
         ),
         (  # case 3e-2
             [Co('%', (), 0, 10), Co('%', (), 0, 10)],
             Co('**', (Sy('a'),), 0, 1250),
             Co('!', (Nu(3),), 0, 0),
             Co('%', (Co('%', (
-                Co('**', (Sy('a'),Co('!', (Nu(3),)))),
+                Co('**', (Sy('a'), Co('!', (Nu(3),)))),
             )),))
         ),
         (  # case 3e-3
@@ -453,23 +452,23 @@ def test_three_parse_error(
             Co('%', (
                 Co('!', (
                     Co('@', (Co('@', (
-                        Co('!', (Co('@', (Sy('y'),)),))
-                    ,)),))
-                ,))
-            ,))
+                        Co('!', (Co('@', (Sy('y'),)),)),
+                    )),)),
+                )),
+            ))
         ),
     ]
 )
-def test_three_parse_end(farleft, left, mid, correct, settings):
-    parse = Parse(settings)
+def test_three_parse_end(farleft, left, mid, correct, conftest_settings):
+    parse = Parse()
 
     out = parse.three_parse_end(farleft, left, mid)
 
     assert out == correct
 
 
-def test_three_parse_end_error(settings, capsys):
-    parse = Parse(settings)
+def test_three_parse_end_error(conftest_settings, capsys):
+    parse = Parse()
 
     out = parse.three_parse_end([], Sy('a'), CA('*', (), 1000, 999))
     output = capsys.readouterr()

@@ -6,13 +6,48 @@ Also the tests are broad enough that every method call in Parse is made.
 What is new in this pytest file is that ipython or other interactive python
 can import it and run the tests for easier developement and debugging.
 """
-from truealgebra.core.tests.ipython_three_parse import (
-    settings, Co, CA, Sy, Nu
+from truealgebra.core.abbrv import (
+    Co, CA, Sy, Nu, Re, Asn
 )
 from truealgebra.core.parse import Parse
+from truealgebra.core.settings import SettingsSingleton
 import pytest
 
-parse = Parse(settings)
+
+@pytest.fixture
+def settings(scope='module'):
+    settings = SettingsSingleton()
+    settings.set_default_bp(251, 252)
+    settings.set_custom_bp('!', 2000, 0)
+    settings.set_custom_bp('!!!', 3000, 0)
+    settings.set_custom_bp('/', 1100, 1100)
+    settings.set_custom_bp('**', 1251, 1250)
+    settings.set_custom_bp('*', 1000, 999)
+    settings.set_custom_bp('+', 500, 500)
+    settings.set_custom_bp("@", 0, 3000)
+    settings.set_custom_bp("%", 0, 10)
+    settings.set_custom_bp("!**", 1000, 1000)
+    settings.set_custom_bp("!*", 999, 999)
+
+    settings.set_bodied_functions('D', 481)
+    settings.set_symbol_operators("and", 75, 75)
+    settings.set_symbol_operators("E")
+    settings.set_symbol_operators("jj")
+    settings.set_infixprefix("-", 999)
+    settings.set_container_subclass('+', CA)
+    settings.set_container_subclass('*', CA)
+    settings.set_container_subclass(':=', Asn)
+    settings.set_container_subclass('Rule', Re)
+
+    settings.set_sqrtneg1('j')
+    settings.set_complement('star', '*')
+    settings.set_complement('!!', '+')
+
+    yield settings
+    settings.reset()
+
+
+parse = Parse()
 
 # Functional Tests
 str00 = ' f(2.3j, 4j, j, 37.66, 6., .33, 53, 6, x, a4) '
@@ -52,12 +87,12 @@ expr06 = Co('%', (Co('%', (Co('%', (Co('!', (Co('!', (Co('!', (
 )),)),)),)),)),))
 
 str07 = (' - - - b ')
-expr07 = Co('-', (Co('-', ( Co('-',(Sy('b'),)),)),))
+expr07 = Co('-', (Co('-', (Co('-', (Sy('b'),)),)),))
 
 str08 = (' a - - - b ')
 expr08 = Co('-', (
     Sy('a'),
-    Co('-', (Co('-',(Sy('b'),)),)),
+    Co('-', (Co('-', (Sy('b'),)),)),
 ))
 
 str09 = ' star(a, b, c, star(1, 2, 3)) '
@@ -70,7 +105,7 @@ expr09 = CA('*', (
 
 str10 = ' D(x) y * z '
 expr10 = Co('D', (
-    Sy('x'), 
+    Sy('x'),
     CA('*', (Sy('y'), Sy('z')))
 ))
 
@@ -98,7 +133,7 @@ expr11 = Sy('end')
         (str11, expr11),
     ]
 )
-def test_parse_functional(string, correct):
+def test_parse_functional(string, correct, settings):
     expr = parse(string)
 
     assert expr == correct
