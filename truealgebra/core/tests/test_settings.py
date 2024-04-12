@@ -7,6 +7,7 @@ import pytest
 @pytest.fixture
 def settings():
     settings = SettingsSingleton()
+    settings.reset()
     yield settings
     settings.reset()
 

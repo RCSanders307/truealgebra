@@ -12,6 +12,7 @@ import pytest
 @pytest.fixture
 def settings(scope='module'):
     settings = SettingsSingleton()
+    settings.reset()
 
     settings.set_default_bp(251, 252)
     settings.set_custom_bp('!', 2000, 0)
