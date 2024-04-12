@@ -153,17 +153,7 @@ class SettingsSingleton():
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(SettingsSingleton, cls).__new__(cls)
-            cls._instance.custom_bp = dict()
-            cls._instance.default_bp = bp(250, 250)
-            cls._instance.infixprefix = dict()
-            cls._instance.symbol_operators = dict()
-            cls._instance.bodied_functions = dict()
-            cls._instance.sqrtneg1 = ""
-            cls._instance.container_subclass = dict()
-            cls._instance.complement = dict()
-            cls._instance.categories = defaultdict(set)
-            cls._instance.categories['suchthat']
-            cls._instance.categories['forall']
+            cls._instance.reset()
         return cls._instance
 
     def reset(self):
