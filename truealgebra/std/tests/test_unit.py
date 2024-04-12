@@ -5,36 +5,41 @@ from truealgebra.std.unit import (
     UnitForm, SimplifyUnits, ConvertToBasis, MultiplyUnitsByBasis, 
     AffineConvert
 )
-from truealgebra.core.settings import Settings
+from truealgebra.core.settings import SettingsSingleton
 from truealgebra.core.parse import Parse
 import pytest
 from IPython import embed
 
-settings = Settings()
+@pytest.fixture
+def settings(scope='module'):
+    settings = SettingsSingleton()
 
-settings.set_custom_bp('=', 50, 50)
-settings.set_custom_bp(':=', 10, 10)
-settings.set_custom_bp('*', 1000, 1000)
-settings.set_custom_bp('**', 1200, 1200)
-settings.set_custom_bp('@', 0, 3000)
-settings.set_custom_bp('|', 10, 10)
-settings.set_custom_bp('`', 1500, 10)
-settings.set_infixprefix('-', 200)
+    settings.reset()
+    settings.set_custom_bp('=', 50, 50)
+    settings.set_custom_bp(':=', 10, 10)
+    settings.set_custom_bp('*', 1000, 1000)
+    settings.set_custom_bp('**', 1200, 1200)
+    settings.set_custom_bp('@', 0, 3000)
+    settings.set_custom_bp('|', 10, 10)
+    settings.set_custom_bp('`', 1500, 10)
+    settings.set_infixprefix('-', 200)
 
+    settings.set_container_subclass('*', CA)
+    settings.set_complement('star', '*')
 
-settings.set_container_subclass('*', CA)
-settings.set_complement('star', '*')
+    settings.set_container_subclass(':=', Asn)
+    settings.set_container_subclass('`', Re)
 
-settings.set_container_subclass(':=', Asn)
-settings.set_container_subclass('`', Re)
+    settings.set_categories('suchthat', '|')
+    settings.set_categories('suchthat', 'suchthat')
+    settings.set_categories('forall', '@')
 
-settings.set_categories('suchthat', '|')
-settings.set_categories('suchthat', 'suchthat')
-settings.set_categories('forall', '@')
+    settings.set_categories('forall', 'forall')
 
-settings.set_categories('forall', 'forall')
+    yield settings
+    settings.reset()
 
-parse = Parse(settings)
+parse = Parse()
 
 
 # =============
@@ -478,12 +483,14 @@ def test_ConvertTo_body(capsys, expr, correct, msg):
 # ====================
 # Test MultiplyUnitsBy
 # ====================
-class MultiplyUnitsBy(MultiplyUnitsByBasis):
-    parse = parse
+@pytest.fixture
+def Nm_to_J(settings, scope='module'):
+    class MultiplyUnitsBy(MultiplyUnitsByBasis):
+        parse = parse
 
-Nm_to_J = MultiplyUnitsBy(' J / N  * m')
+    return MultiplyUnitsBy(' J / N  * m')
 
-def test_MultiplyUnitsBy_postinit():
+def test_MultiplyUnitsBy_postinit(Nm_to_J):
     """Test postinit method"""
     assert Nm_to_J.factor == Co('/', (Sy('J'), CA('*', (Sy('N'), Sy('m')))))
 
@@ -501,7 +508,7 @@ def test_MultiplyUnitsBy_postinit():
         'wrong class'
     ]
 )
-def test_MultiplyUnitsBy_predicate(expr, correct):
+def test_MultiplyUnitsBy_predicate(expr, correct, Nm_to_J):
     """Test ConvertTo predicate"""
     out = Nm_to_J.predicate(expr)
 
@@ -526,7 +533,7 @@ def test_MultiplyUnitsBy_predicate(expr, correct):
         'two few items in expression',
     ]
 )
-def test_MultiplyUnitsBy_body(capsys, expr, correct, msg):
+def test_MultiplyUnitsBy_body(capsys, expr, correct, msg, Nm_to_J):
     """Test ConvertTo body method"""
     out = Nm_to_J.body(expr)
 
@@ -565,23 +572,33 @@ F_to_C = AffineConvert(
         (' 5 ` F ', ' 5 ` F', C_to_F),
         (' 41  ` F ', ' 5 ` C', F_to_C),
         (' 41  ` C ', ' 41 ` C', F_to_C),
-        (
-            ' y = 5 ` m**2 * N * min ',
-            ' y = 30000 ` star(cm, J, s) ',
-            RulesBU(Nm_to_J, tocm, tosec, simplifyunits),
-        ),
+#       (
+#           ' y = 5 ` m**2 * N * min ',
+#           ' y = 30000 ` star(cm, J, s) ',
+#           RulesBU(Nm_to_J, tocm, tosec, simplifyunits),
+#       ),
     ],
     ids=[
         'convert with C_to_F',
         'C_to_F does nor apply',
         'convert with F_to_C',
         'F_to_C does nor apply',
-        'ConvertTo, MultiplyBy, SimplifyUnits',
+#       'ConvertTo, MultiplyBy, SimplifyUnits',
     ]
 )
-def test_functional(in_string, correct_string, rule):
+def test_functional(in_string, correct_string, rule, settings):
     in_ = parse(in_string)
     correct = parse(correct_string)
+
+    out = rule(in_)
+
+    assert out == correct
+
+
+def test_functional_multiple_rules(settings, Nm_to_J):
+    in_ = parse(' y = 5 ` m**2 * N * min ')
+    correct = parse(' y = 30000 ` star(cm, J, s) ')
+    rule = RulesBU(Nm_to_J, tocm, tosec, simplifyunits)
 
     out = rule(in_)
 
