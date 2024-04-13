@@ -1,38 +1,42 @@
-from truealgebra.core.tests.ipython_three_parse import (
+from truealgebra.core.abbrv import (
     Co, CA, Sy, Nu
 )
 from truealgebra.core.parse import Parse
 from truealgebra.core.expression import (
     ExprBase, Null, End, UnParse
 )
-from truealgebra.core.settings import Settings, DIGITS, OPERATORS
+from truealgebra.core.settings import SettingsSingleton, DIGITS, OPERATORS
 import pytest
 
-settings = Settings()
 
+@pytest.fixture
+def settings(scope='module'):
+    settings = SettingsSingleton()
+    settings.reset()
 
-settings.set_default_bp(251, 252)
-settings.set_custom_bp('!', 2000, 0)
-settings.set_custom_bp('!!!', 3000, 0)
-settings.set_custom_bp('/', 1100, 1100)
-settings.set_custom_bp('**', 1251, 1250)
-settings.set_custom_bp('*', 1000, 999)
-settings.set_custom_bp("@", 0, 3000)
-settings.set_custom_bp("%", 0, 10)
-settings.set_custom_bp("!**", 1000, 1000)
+    settings.set_default_bp(251, 252)
+    settings.set_custom_bp('!', 2000, 0)
+    settings.set_custom_bp('!!!', 3000, 0)
+    settings.set_custom_bp('/', 1100, 1100)
+    settings.set_custom_bp('**', 1251, 1250)
+    settings.set_custom_bp('*', 1000, 999)
+    settings.set_custom_bp("@", 0, 3000)
+    settings.set_custom_bp("%", 0, 10)
+    settings.set_custom_bp("!**", 1000, 1000)
+    settings.set_custom_bp("!!*", 999, 2000)
+    settings.set_custom_bp("!!**", 900, 2000)
+    settings.set_custom_bp("!!+", 2000, 1000)
+    settings.set_custom_bp("!!++", 2000, 900)
 
-settings.set_custom_bp("!!*", 999, 2000)
-settings.set_custom_bp("!!**", 900, 2000)
+    settings.set_bodied_functions('D', 481)
+    settings.set_symbol_operators("and", 75, 76)
+    settings.set_infixprefix("-", 999)
+    settings.set_container_subclass('*', CA)
 
-settings.set_custom_bp("!!+", 2000, 1000)
-settings.set_custom_bp("!!++", 2000, 900)
+    settings.set_sqrtneg1('j')
 
-settings.set_bodied_functions('D', 481)
-settings.set_symbol_operators("and", 75, 76)
-settings.set_infixprefix("-", 999)
-settings.set_container_subclass('*', CA)
-
-settings.set_sqrtneg1('j')
+    yield settings
+    settings.reset()
 
 parse = Parse(settings)
 
@@ -56,14 +60,13 @@ def test_repr(expr, repr_):
 
 
 @pytest.fixture
-def assign_exprbase_settings():
+def assign_exprbase_settings(settings):
     ExprBase.settings = settings
     parse = Parse(settings)
     yield parse
     ExprBase.settings = None
 
 
-#done
 @pytest.mark.parametrize(
     'expr, albp, arbp',
     [

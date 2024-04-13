@@ -66,7 +66,6 @@ from truealgebra.core.constants import (
 bp = namedtuple("bp", ["lbp", "rbp"])
 
 
-
 def _msg_function(bool_tuple, msg_tuple, msg=''):
     for ndx, bool_value in enumerate(bool_tuple):
         if bool_value:
@@ -74,7 +73,7 @@ def _msg_function(bool_tuple, msg_tuple, msg=''):
     return msg
 
 
-class Settings:
+class SettingsSingleton():
     """
     TrueAlgebra Settings
     --------------------
@@ -149,7 +148,15 @@ class Settings:
         The set contents represent name attributes of Container instances.
 
     """
-    def __init__(self):
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(SettingsSingleton, cls).__new__(cls)
+            cls._instance.reset()
+        return cls._instance
+
+    def reset(self):
         self.custom_bp = dict()
         self.default_bp = bp(250, 250)
         self.infixprefix = dict()
@@ -159,37 +166,8 @@ class Settings:
         self.container_subclass = dict()
         self.complement = dict()
         self.categories = defaultdict(set)
-
         self.categories['suchthat']
         self.categories['forall']
-
-    def copy(self):
-        new = self.__class__()
-
-        for key in self.custom_bp:
-            new.custom_bp[key] = self.custom_bp[key]
-
-        new.default_bp = self.default_bp
-
-        for key in self.infixprefix:
-            new.infixprefix[key] = self.infixprefix[key]
-
-        for key in self.symbol_oerators:
-            new.symbol_oerators[key] = self.symbol_oerators[key]
-
-        for key in self.bodied_functions:
-            new.bodied_functions[key] = self.bodied_functions[key]
-
-        new.sqrtneg1 = self.sqrtneg1
-
-        for key in self.container_subclass:
-            new.container_subclass[key] = self.container_subclass[key]
-
-        for key in self.complement:
-            new.complement[key] = self.complement[key]
-
-        for cate in self.categories:
-            new.categories[cate] = self.categories[cate].copy()
 
     def set_default_bp(self, lbp, rbp):
         """Set default binding powers for operators.
@@ -464,4 +442,3 @@ class Settings:
             set_.add(name)
 
 
-plain_vanilla_settings = Settings()

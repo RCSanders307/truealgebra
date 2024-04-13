@@ -1,50 +1,60 @@
-from truealgebra.core.abbrv import *   # import abbreviations
-from truealgebra.core.expression import CommAssoc, Assign
+from truealgebra.core.abbrv import Sy, Nu, Co, Asn
+from truealgebra.core.expression import CommAssoc, Assign, true, false
 from truealgebra.core.frontend import FrontEnd, AssignRule, HistoryRule
 from truealgebra.core.rulebase import RuleBase, placebo_rule
 from truealgebra.core.rule import RulesBU, NaturalRule
 from truealgebra.core.parse import Parse
-from truealgebra.core.settings import Settings
-from IPython import embed
+from truealgebra.core.settings import SettingsSingleton
 import pytest
 
-settings = Settings()
 
-settings.set_custom_bp("=", 50, 50)
-settings.set_custom_bp("*", 1000, 1000)
-settings.set_infixprefix('-', 200)
+@pytest.fixture
+def settings(scope='module'):
+    settings = SettingsSingleton()
+    settings.reset()
 
-settings.set_container_subclass("*", CommAssoc)
-settings.set_container_subclass(":=", Assign)
-settings.set_complement('star', '*')
+    settings.set_custom_bp("=", 50, 50)
+    settings.set_custom_bp("*", 1000, 1000)
+    settings.set_infixprefix('-', 200)
 
-settings.set_categories('suchthat', '|')
-settings.set_categories('suchthat', 'suchthat')
-settings.set_categories('forall', '@')
+    settings.set_container_subclass("*", CommAssoc)
+    settings.set_container_subclass(":=", Assign)
+    settings.set_complement('star', '*')
 
-settings.set_categories('forall', 'forall')
+    settings.set_categories('suchthat', '|')
+    settings.set_categories('suchthat', 'suchthat')
+    settings.set_categories('forall', '@')
+    settings.set_categories('forall', 'forall')
 
-parse = Parse(settings)
+    yield settings
+    settings.reset()
+
+
+parse = Parse()
+
 
 class IsInt(RuleBase):
     def predicate(self, expr):
         return (
-            expr.name == 'isint' 
-            and isinstance(expr, Co) 
+            expr.name == 'isint'
+            and isinstance(expr, Co)
             and len(expr) == 1
         )
+
     def body(self, expr):
-        if isinstance(expr[0], Number) and isinstance(expr[0].value, int):
+        if isinstance(expr[0], Nu) and isinstance(expr[0].value, int):
             return true
         else:
             return false
 
+
 isint = IsInt()
 
+
 class Rule0(NaturalRule):
-    parse=parse
-    predicate_rule=isint
-    var_defn=NaturalRule.create_var_dict(
+    parse = parse
+    predicate_rule = isint
+    var_defn = NaturalRule.create_var_dict(
         ' @x | isint(x); @y | isint(y); @z | isint(z) ', parse
     )
 
@@ -54,6 +64,7 @@ rule0 = Rule0(
     outcome=' star(y, x, z) ',
 )
 
+
 # Test HistoryRule
 # ================
 def test_HistoeyRule_postinit():
@@ -62,7 +73,7 @@ def test_HistoeyRule_postinit():
     hr = HistoryRule(frontend=fe)
 
     assert hr.frontend == fe
-    assert hr.bottomup == True  # Not really part of postinit method
+    assert hr.bottomup is True  # Not really part of postinit method
 
 
 @pytest.mark.parametrize(
@@ -118,9 +129,9 @@ def test_AssignRule_postinit():
     ar = AssignRule(frontend=fe)
 
     assert ar.frontend == fe
-    assert ar.bottomup == True  # Not really part of postinit method
+    assert ar.bottomup is True  # Not really part of postinit method
     assert ar.assign_dict == dict()
-    assert ar.active == False
+    assert ar.active is False
 
 
 @pytest.mark.parametrize(
@@ -185,9 +196,9 @@ def test_AssignRule_activate():
 
     ar.activate()
 
-    assert ar.active == True
+    assert ar.active is True
     assert fe.active_assign_rule == ar
-    assert fe.assign_rules[0].active == False
+    assert fe.assign_rules[0].active is False
 
 
 # Test FrontEnd init
@@ -204,30 +215,31 @@ def test_frontend_init_default():
     assert isinstance(fe.assign_rules, list)
     assert isinstance(fe.assign_rules[0], AssignRule)
     assert fe.assign_rules[0].frontend == fe
-    assert fe.assign_rules[0].active == True
+    assert fe.assign_rules[0].active is True
     assert fe.active_assign_rule == fe.assign_rules[0]
     assert fe.default_rule == placebo_rule
-    assert fe.mute == False
+    assert fe.mute is False
     assert fe.session_rules.rule_list == list()
     assert isinstance(fe.session_rules, RulesBU)
     assert issubclass(fe.SessionRule, NaturalRule)
     assert fe.SessionRule.parse is fe.parse
-    assert fe.hold_assign == False
-    assert fe.hold_default == False
-    assert fe.hold_session == False
-    assert fe.hold_all == False
+    assert fe.hold_assign is False
+    assert fe.hold_default is False
+    assert fe.hold_session is False
+    assert fe.hold_all is False
+
 
 @pytest.mark.parametrize(
     'attribute, argument,',
     [
-        ('history_name','"Expr"'),
+        ('history_name', '"Expr"'),
         ('parse', 'parse'),
         ('default_rule', 'rule0'),
         ('hold_default', 'True'),
-        ('hold_assign','True'),
-        ('hold_session','True'),
-        ('hold_all','True'),
-        ('mute','True'),
+        ('hold_assign', 'True'),
+        ('hold_session', 'True'),
+        ('hold_all', 'True'),
+        ('mute', 'True'),
     ]
 )
 def test_frontend_init(argument, attribute):
@@ -267,7 +279,7 @@ def test_frontend_print_expr(capsys):
 #    default_rule changes Symbol 'd'  to 'dd'
 #    Each test shows what rule(s) a hold parameter controls
 class Default(RuleBase):
-    ### RuleBase subclass used for tests.
+    """ RuleBase subclass used for tests."""
     bottomup = True
 
     def postinit(self, targetname, replacename):
@@ -280,11 +292,12 @@ class Default(RuleBase):
     def body(self, expr):
         return Sy(self.replacename)
 
+
 # rule changes Symbol('d') to Symbol('dd')
 default0 = Default('d', 'dd')
 
 
-def test_frontend_init_no_hold():
+def test_frontend_init_no_hold(settings):
     """ All hold attributes set False;
     the assign_rule, session_rule, and default_rule are all used.
     """
@@ -312,7 +325,7 @@ def test_frontend_init_hold_assign():
     assert fe.history[1] == parse('f(a, ss, dd)')
 
 
-def test_frontend_init_hold_session():
+def test_frontend_init_hold_session(settings):
     """instance attribute hold_session set to True;
     the session_rule is not used.
     """
@@ -326,7 +339,7 @@ def test_frontend_init_hold_session():
     assert fe.history[1] == parse('f(aa, s, dd)')
 
 
-def test_frontend_init_hold_default():
+def test_frontend_init_hold_default(settings):
     """instance attribute hold_default set to True;
     the default_rule is not used.
     """
@@ -340,7 +353,7 @@ def test_frontend_init_hold_default():
     assert fe.history[1] == parse('f(aa, ss, d)')
 
 
-def test_frontend_init_hold_all():
+def test_frontend_init_hold_all(settings):
     """instance attribute hold_all set to True
     none of the rules are used.
     """
@@ -372,8 +385,7 @@ def test_frontend_call_hold_assign():
     assert fe.history[1] == parse('f(a, ss, dd)')
 
 
-
-def test_frontend_call_hold_session():
+def test_frontend_call_hold_session(settings):
     """instance attribute hold_session set to True;
     the session_rule is not used.
     """
@@ -387,7 +399,7 @@ def test_frontend_call_hold_session():
     assert fe.history[1] == parse('f(aa, s, dd)')
 
 
-def test_frontend_call_hold_default():
+def test_frontend_call_hold_default(settings):
     """instance attribute hold_default set to True;
     the default_rule is not used.
     """
@@ -401,7 +413,7 @@ def test_frontend_call_hold_default():
     assert fe.history[1] == parse('f(aa, ss, d)')
 
 
-def test_frontend_call_hold_all():
+def test_frontend_call_hold_all(settings):
     """instance attribute hold_all set to True
     none of the rules are used.
     """
@@ -415,12 +427,12 @@ def test_frontend_call_hold_all():
     assert fe.history[1] == parse('f(a, s, d)')
 
 
-
-
-# Test FrontEnd post_parser method Sequence of Statements. 
+# Test FrontEnd post_parser method Sequence of Statements.
 apply0 = Default('d', 'e')
 default1 = Default('b', 'c')
-def test_frontend_post_parser_sequence(capsys):
+
+
+def test_frontend_post_parser_sequence(capsys, settings):
     """Test the sequence of statements in the post_parser method.
 
     The staements must be executed in a specific order.

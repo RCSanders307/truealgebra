@@ -8,13 +8,14 @@ from truealgebra.core.expression import Container, null
 from truealgebra.core.expression import Symbol
 from truealgebra.core.parse import Parse, meta_parser
 from truealgebra.core.err import ta_logger
-from truealgebra.core.settings import Settings
+from truealgebra.core.settings import SettingsSingleton
 import types
 
 logger = logging.getLogger('rules logger')
 logger.setLevel(logging.ERROR)
 # logger.setLevel(logging.DEBUG)
 
+settings = SettingsSingleton()
 
 class Rules(RuleBase):
     def postinit(self, *rules, **kwargs):
@@ -126,7 +127,7 @@ class NaturalRule(RuleBase):
         if 'parse' in kwargs:
             self.parse = kwargs['parse']
         elif self.parse is None:
-            self.parse = Parse(Settings())
+            self.parse = Parse()
 
         if "predicate_rule" in kwargs:
             self.predicate_rule = kwargs["predicate_rule"]
@@ -170,13 +171,13 @@ class NaturalRule(RuleBase):
         var_dict = dict()
         for ex in parsed_string:
             try:
-                if ex.name in parse.settings.categories['forall']:
+                if ex.name in settings.categories['forall']:
                     for item in ex.items:
                         if isinstance(item, Symbol):
                             var_dict[item] = null
-                elif ex.name in parse.settings.categories['suchthat']:
+                elif ex.name in settings.categories['suchthat']:
                     if (
-                        ex[0].name in parse.settings.categories['forall']
+                        ex[0].name in settings.categories['forall']
                         and isinstance(ex[0][0], Symbol)
                     ):
                         var_dict[ex[0][0]] = ex[1]
