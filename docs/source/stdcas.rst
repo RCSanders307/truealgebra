@@ -8,7 +8,7 @@ with no third party packages or modules required.
 For example, all ``stdcas`` Number objects contain only standard python objects.
 Integers and reals are represented by python ``int``  and ``float`` objects.
 Fraction are iare represented by ``Fraction`` objects from the ``fractions`` module.
-The stdcas complex numbers are represented by the python ``complex` class.
+The stdcas complex numbers are represented by the python ``complex`` class.
 
 
 Import

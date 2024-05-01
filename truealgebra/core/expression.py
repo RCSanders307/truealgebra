@@ -110,7 +110,8 @@ class ExprBase(object):
         items   tuple, containing other expressions
 
     """
-    settings = None
+#   settings = None
+    _uunparse = None
     name = ""
     value = None
     items = None
@@ -158,11 +159,16 @@ class ExprBase(object):
     def __repr__(self):
         return " <EXPR> "
 
+    @classmethod
+    def set_unparse(cls, funct):
+        cls._uunparse = funct
+
     def __str__(self):
-        if self.settings is None:
+        if self._uunparse is None:
             return self.__repr__()
         else:
-            return self._unparse().string
+#           return self._unparse().string
+            return self._uunparse(self)
 
     def _unparse(self):
         return UnParse(" <EXPRBASE> ")

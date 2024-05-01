@@ -1,9 +1,13 @@
 #import truealgebra.std.settings
-from truealgebra.std.std_settings import parse
+from truealgebra.std.std_settings import parse, set_stdsettings
+
+set_stdsettings()
+
 from truealgebra.core.frontend import FrontEnd
 from truealgebra.core.expression import (
     ExprBase, Container, Symbol, Number,
 )
+from truealgebra.core.unparse import unparse
 
 from truealgebra.core.rule import (
     Rules, RulesBU, JustOne, JustOneBU, NaturalRule, HalfNaturalRule,
@@ -23,7 +27,8 @@ from truealgebra.std.eval import (
 from truealgebra.std.eqnmath import eqnmath, eqnflip
 from truealgebra.std.makeforms import toform0
 
-ExprBase.settings = parse.settings
+#ExprBase.settings = parse.settings
+ExprBase.set_unparse(unparse)
 
 frontend = FrontEnd(
 #   assign_name = ":=",
