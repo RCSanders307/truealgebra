@@ -85,32 +85,6 @@ class ReadableString:
         outstr += ')'
         return outstr
 
-    def deal_with_left(self, lbp, leftarg):
-        argstr = self(leftarg)
-        if self.need_parenthesis_on_left(lbp, leftarg):
-            return '(' + argstr + ') '
-        else:
-            return argstr + ' '
-
-    def need_parenthesis_on_left(self, lbp, leftarg):
-        inner_lrbp = self.lrbp(leftarg)
-        return inner_lrbp and lbp > inner_lrbp
-
-    def deal_with_right(self, rbp, rightarg):
-        argstr = self(rightarg)
-        if self.need_parenthesis_on_right(rbp, rightarg):
-            return ' (' + argstr + ')'
-        else:
-            return ' ' + argstr
-
-    def need_parenthesis_on_right(self, rbp, rightarg):
-        arg_llbp = self.llbp(rightarg)
-        # In parsing, with (left op) (token) (right op),
-        # the rbp of the left operator wins all ties with
-        # the lbp of the right operator.
-        # That is why the >= comparison is used below
-        return arg_llbp and rbp >= arg_llbp
-
     def llbp(self, expr):
         """ Least Left Binding Power
 
@@ -135,7 +109,7 @@ class ReadableString:
         """
         least = self.trbp(expr)
         if least > 0 and len(expr) > 0:
-            lower_layer_least = self.lrbp(expr[0])
+            lower_layer_least = self.lrbp(expr[-1])
             if lower_layer_least > 0 and lower_layer_least < least:
                 return lower_layer_least
             else:
@@ -143,6 +117,31 @@ class ReadableString:
         else:
             return 0
 
+    def need_parenthesis_on_left(self, lbp, leftarg):
+        arg_lrbp = self.lrbp(leftarg)
+        return arg_lrbp > 0 and lbp > arg_lrbp
+
+    def need_parenthesis_on_right(self, rbp, rightarg):
+        arg_llbp = self.llbp(rightarg)
+        # In parsing, with (left op) (token) (right op),
+        # the rbp of the left operator wins all ties with
+        # the lbp of the right operator.
+        # That is why the >= comparison is used below
+        return arg_llbp > 0 and rbp >= arg_llbp
+
+    def deal_with_left(self, lbp, leftarg):
+        argstr = self(leftarg)
+        if self.need_parenthesis_on_left(lbp, leftarg):
+            return '(' + argstr + ') '
+        else:
+            return argstr + ' '
+
+    def deal_with_right(self, rbp, rightarg):
+        argstr = self(rightarg)
+        if self.need_parenthesis_on_right(rbp, rightarg):
+            return ' (' + argstr + ')'
+        else:
+            return ' ' + argstr
 
 
 class ReadableHandlerBase(ABC):
@@ -258,7 +257,7 @@ class UnparseNull(ReadableHandlerBase):
 class UnparseEnd(ReadableHandlerBase):
     def handle_expr(self, expr):
         if isinstance(expr, End):
-            return '<End>'
+            return '<END>'
 
 
 unparse = ReadableString(
