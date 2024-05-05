@@ -472,3 +472,5 @@ def meta_parser(strn, parse):
             result = parse(strn[:indx])
             strn = strn[indx+1:]
         yield result
+        
+parse = Parse()

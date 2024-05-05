@@ -441,4 +441,4 @@ class SettingsSingleton():
         if name is not None:
             set_.add(name)
 
-
+settings = SettingsSingleton()
