@@ -8,8 +8,8 @@ from truealgebra.core.rulebase import RuleBase
 from truealgebra.core.parse import Parse
 import pytest
 
-from IPython import embed
 parse = Parse()
+
 
 @pytest.fixture
 def settings(scope='module'):
@@ -19,7 +19,7 @@ def settings(scope='module'):
     settings.set_custom_bp('-', 6, 100)
     settings.set_custom_bp('*', 10, 0)
     settings.set_custom_bp('@', 9, 9)
-    settings.set_custom_bp('/' ,8 ,0)
+    settings.set_custom_bp('/', 8, 0)
 
     settings.set_symbol_operators('prefix0', 0, 6)
     settings.set_symbol_operators('postfix0', 10, 0)
@@ -34,6 +34,7 @@ def settings(scope='module'):
 
     yield settings
     settings.reset()
+
 
 @pytest.fixture
 def flatten(scope='module'):
@@ -51,6 +52,7 @@ def flatten(scope='module'):
             return CommAssoc(expr.name, newitems)
 
     return Flatten()
+
 
 @pytest.fixture
 def SpecialObject(scope='module'):
@@ -71,6 +73,7 @@ def readspecial(SpecialObject, settings):
 
     rs.addhandler(UnparseSpecial)
     return rs
+
 
 # Functional Tests of unparse
 # ===========================
@@ -110,7 +113,6 @@ def test_operators(string, settings):
     ]
 )
 def test_commassoc(flatten, string, settings):
-#   xxx = 464; embed()
     expr = flatten(parse(string))
     outstr = unparse(expr)
 
@@ -125,10 +127,10 @@ def test_commassoc(flatten, string, settings):
     ]
 )
 def test_commassoc_special(expr, string, settings):
-#   xxx = 464; embed()
     outstr = unparse(expr)
 
     assert outstr == string
+
 
 @pytest.mark.parametrize(
     'string',
@@ -175,7 +177,7 @@ def test_end(settings):
 @pytest.mark.parametrize(
     'expr, correct',
     [
-        (Co('-', (Sy('x'), Sy('y'))), 6),  # custom 
+        (Co('-', (Sy('x'), Sy('y'))), 6),  # custom
         (Co('+++', (Sy('x'), Sy('y'))), 300),  # default
         (Co('D', (Sy('x'), Sy('y'))), 0),  # bodied
         (Co('and', (Sy('x'), Sy('y'))), 12),  # symbol op
@@ -244,7 +246,7 @@ def test_least_left_binding_power(string, correct, settings):
 @pytest.mark.parametrize(
     'string, correct',
     [
-        (' 7 ', 0), 
+        (' 7 ', 0),
         (' x ', 0),
         (' f(x, y) ', 0),
         (' + prefix0 + x', 6),
@@ -260,7 +262,7 @@ def test_least_right_binding_power(string, correct, settings):
 
 
 # need_parenthesis_on_right
-@pytest.mark.parametrize('string', ['x * and y / ', 'x @ y / * '] )
+@pytest.mark.parametrize('string', ['x * and y / ', 'x @ y / * '])
 @pytest.mark.parametrize('rbp, correct', [(6, False), (8, True), (10, True)])
 def test_need_parenthesis_on_right(string, correct, rbp, settings):
     expr = parse(string)
@@ -270,7 +272,7 @@ def test_need_parenthesis_on_right(string, correct, rbp, settings):
 
 
 # need_parenthesis_on_left
-@pytest.mark.parametrize('string', ['prefix0 + + x', '+ prefix0 + x'] )
+@pytest.mark.parametrize('string', ['prefix0 + + x', '+ prefix0 + x'])
 @pytest.mark.parametrize('lbp, correct', [(4, False), (6, False), (8, True)])
 def test_need_parenthesis_on_left(string, correct, lbp, settings):
     expr = parse(string)
@@ -283,8 +285,8 @@ def test_need_parenthesis_on_left(string, correct, lbp, settings):
 @pytest.mark.parametrize(
     'rbp, correct',
     [
-        (6, ' x * and y /'), 
-        (8, ' (x * and y /)'), 
+        (6, ' x * and y /'),
+        (8, ' (x * and y /)'),
         (10, ' (x * and y /)')
     ]
 )
@@ -300,8 +302,8 @@ def test_deal_with_right(correct, rbp, settings):
 @pytest.mark.parametrize(
     'lbp, correct',
     [
-        (4, 'prefix0 + + x '), 
-        (6, 'prefix0 + + x '), 
+        (4, 'prefix0 + + x '),
+        (6, 'prefix0 + + x '),
         (8, '(prefix0 + + x) ')
     ]
 )

@@ -35,7 +35,6 @@ will modify the subdict dictionary.
 
 """
 from truealgebra.core.rulebase import Substitute, TrueThing
-from truealgebra.core.constants import isoperatorname, issymbolname
 from truealgebra.core.err import ta_logger
 
 
@@ -45,55 +44,6 @@ class TrueThingCAM(TrueThing):
     def __init__(self, subdict, target_list):
         self.subdict = subdict
         self.target_list = target_list
-
-
-class UnParse():
-    """
-    string
-        string reprecentaion of a truealgebra expression
-    albp and arbp
-        apparent binding powers used to determine if string
-        should be inside parenthesis if it is contained inside
-        another expression.
-
-        albp and arbp are always 0 except in the two cases below
-
-    albp
-    ----
-        * The string attribute presents a sequence of two or more tokens
-        containing operators.
-        * The first token of the sequence is complete, (rlb, lbp =  0, 0)
-        * The second token of the sequence is an operator with a nonzero lbp
-        * The second token's lbp becomes the UnParse instance albp
-
-    A parenthesis pair is required if
-        [containing expression rbp] > [child expression albp]
-
-    albp
-    ----
-        * The string attribute presents a sequence of two or more tokens
-        containing operators.
-        * The last token of the sequence is complete, (rlb, lbp =  0, 0).
-        * The second to last token of the sequence
-        is an operator with a nonzero lbp.
-        * The second to last  token's rbp becomes the UnParse instance arbp.
-
-    A parenthesis pair is required if
-        [child expression arbp] <= [containing expression lbp]
-
-    CommAssoc Instances
-    -------------------
-    If the string attribute represents a child expression inside a
-    CommAssoc instance of two or more arguments the situation is similar.
-    The albp and arbp are defined in the same manner.
-    The albp and arbp are compared to the CommAssoc instance binding powers
-    to determine if a pair of parenthesis are required
-    around the child expression.
-    """
-    def __init__(self, string, albp=0, arbp=0):
-        self.string = string
-        self.albp = albp
-        self.arbp = arbp
 
 
 class ExprBase(object):
@@ -110,7 +60,6 @@ class ExprBase(object):
         items   tuple, containing other expressions
 
     """
-#   settings = None
     _uunparse = None
     name = ""
     value = None
@@ -146,7 +95,7 @@ class ExprBase(object):
     def __eq__(self, other):
         return (
             self.name == other.name
-            and type(self) == type(other)
+            and type(self) is type(other)
             and self.value == other.value
         )
 
@@ -167,14 +116,7 @@ class ExprBase(object):
         if self._uunparse is None:
             return self.__repr__()
         else:
-#           return self._unparse().string
             return self._uunparse(self)
-
-    def _unparse(self):
-        return UnParse(" <EXPRBASE> ")
-
-    def strr(self):
-        return self._unparse().string
 
 
 class Null(ExprBase):
@@ -184,9 +126,6 @@ class Null(ExprBase):
 
     def __bool__(self):
         return False
-
-    def _unparse(self):
-        return UnParse(" <NULL> ")
 
 
 null = Null()
@@ -198,9 +137,6 @@ class End(ExprBase):
     def __repr__(self):
         return " <END> "
 
-    def _unparse(self):
-        return UnParse(" <END> ")
-
 
 end = End()
 
@@ -211,9 +147,6 @@ class Number(ExprBase):
 
     def __repr__(self):
         return repr(self.value)
-
-    def _unparse(self):
-        return UnParse(str(self.value))
 
 
 class Symbol(ExprBase):
@@ -230,9 +163,6 @@ class Symbol(ExprBase):
 
     def __repr__(self):
         return self.name
-
-    def _unparse(self):
-        return UnParse(self.name)
 
     def match(self, vardict, subdict, pred_rule, expr):
         if self in vardict:
@@ -324,7 +254,7 @@ class Container(ExprBase):
     def __eq__(self, other):
         if (
             self.name != other.name
-            or type(self) != type(other)
+            or type(self) is not type(other)
             or len(self) != len(other)
         ):
             return False
@@ -344,7 +274,7 @@ class Container(ExprBase):
 
     def match(self, vardict, subdict, pred_rule, expr):
         if (
-            type(expr) != type(self)
+            type(expr) is not type(self)
             or expr.name != self.name
             or len(expr) != len(self)
         ):
@@ -370,106 +300,10 @@ class Container(ExprBase):
         self.rbp = 0
         object.__setattr__(self, "items", self.items + (token,))
 
-    def _unparse(self):
-        """
-        The 'a' in variables albp and arbp,
-        stands for apparent binding power.
-        An operator (called parent) can have a left and a right argument.
-        the apparent binding powers of parent, left, and right
-        determine if an argument must be put inside parenthesis
-
-        The left and right are complete Unparse instances.
-        The parent unparse instance will be modified as needed
-        left and right are or will be children of parent.
-        """
-        if isoperatorname(self.name):
-            left, parent, right = self._unparse_operatorname()
-        elif self.name in self.settings.symbol_operators:
-            left, parent, right = self._unparse_operatorname()
-        else:
-            # This is a catch all.
-            # Names that are not symbol names are sent here.
-            left, parent, right = self._unparse_symbolname()
-        return self._unparse_parenthesis_or_not(left, parent, right)
-
-    def _unparse_parenthesis_or_not(self, left, parent, right):
-        # In paarsing, the left operator wins ties.
-        # In unparsing, that must be remebered
-        if parent.albp:
-            if left.arbp and left.arbp < parent.albp:
-                left.string = '(' + left.string + ')'
-            elif left.albp:
-                parent.albp = left.albp
-            parent.string = left.string + parent.string
-        if parent.arbp:
-            if right.albp and parent.arbp >= right.albp:
-                right.string = '(' + right.string + ')'
-            elif right.arbp:
-                parent.arbp = right.arbp
-            parent.string = parent.string + right.string
-        return parent
-
-    def _unparse_find_albp_arbp(self):
-        if self.name in self.settings.infixprefix and len(self.items) == 1:
-            albp, arbp = 0, self.settings.infixprefix[self.name]
-        elif self.name in self.settings.custom_bp:
-            albp, arbp = self.settings.custom_bp[self.name]
-        elif self.name in self.settings.symbol_operators:
-            albp, arbp = self.settings.symbol_operators[self.name]
-        else:
-            albp, arbp = self.settings.default_bp
-        return (albp, arbp)
-
-    def _unparse_operatorname(self):
-        albp, arbp = self._unparse_find_albp_arbp()
-        left, right = None, None
-
-        if albp and arbp and len(self.items) == 2:
-            left = self.items[0]._unparse()
-            right = self.items[1]._unparse()
-            parent = UnParse(' ' + self.name + ' ', albp, arbp)
-        elif albp and not arbp and len(self.items) == 1:
-            left = self.items[0]._unparse()
-            parent = UnParse(' ' + self.name, albp, arbp)
-        elif not albp and arbp and len(self.items) == 1:
-            right = self.items[0]._unparse()
-            parent = UnParse(self.name + ' ', albp, arbp)
-        else:
-            # This option is for when there is an error
-            # The albp and arbp do not match the number of items
-            parent = self._unparse_function_notation(self)
-
-        return (left, parent, right)
-
-    def _unparse_function_notation(self, items=None):
-        if items is None:
-            items = [item._unparse() for item in self.items]
-        else:
-            items = [item._unparse() for item in items]
-        out = self.name + "("
-        for item in items[:1]:
-            out += item.string
-        for item in items[1:]:
-            out += ", " + item.string
-        return UnParse(out + ")")
-
-    def _unparse_symbolname(self):
-        left, right = None, None
-        if self.name in self.settings.bodied_functions and len(self.items):
-            parent = self._unparse_function_notation(self.items[:-1])
-            if len(self.items) >= 2:
-                parent.string = parent.string + ' '
-            parent.arbp = self.settings.bodied_functions[self.name]
-            right = self.items[-1]._unparse()
-        else:
-            parent = self._unparse_function_notation()
-
-        return (left, parent, right)
-
 
 # this has not been completely unit tested
 class Assign(Container):
-    """Assign class instance and used to modify the Assign_Rule instances 
+    """Assign class instance and used to modify the Assign_Rule instances
     inside instanes fo FrontEnd.
     """
 
@@ -514,7 +348,7 @@ class Assign(Container):
         This prevents NaturalRules from being applied inside
         """
         if (
-            type(expr) != type(self)
+            type(expr) is not type(self)
             or expr.name != self.name
             or len(expr) != len(self)
         ):
@@ -542,7 +376,7 @@ class CommAssoc(Container):
 
     def __eq__(self, other):
         if (self.name != other.name
-                or type(self) != type(other)
+                or type(self) is not type(other)
                 or len(self) != len(other)):
             return False
         else:
@@ -564,70 +398,9 @@ class CommAssoc(Container):
             del otherlist[ndx]
         return True
 
-    def _unparse(self):
-        operbp = None
-        if isoperatorname(self.name):
-            if self.name in self.settings.custom_bp:
-                operbp = self.settings.custom_bp[self.name]
-            else:
-                operbp = self.settings.default_bp
-            return self._unparse_commassoc(operbp)
-        elif (
-            issymbolname(self.name)
-            and self.name in self.settings.symbol_operators
-        ):
-            operbp = self.settings.symbol_operators[self.name]
-            return self._unparse_commassoc(operbp)
-        else:
-            return self._unparse_function_notation()
-
-    def _unparse_commassoc(self, operbp):
-        gap = " "
-        items = [item._unparse() for item in self.items]
-
-        # look at the beginning of items
-        # settings needs to include the identity for when length = 0
-        if not items:
-            return self._unparse_function_notation()
-        elif len(items) == 1:
-            return items[0]
-        # during parsing, a left operator wins ties with a right operator.
-        # during unparsing, if arbp were to lose, a parenthesis is required
-        elif items[0].arbp and items[0].arbp < operbp.lbp:
-            outstr = "(" + items[0].string + ")" + gap
-            albp = operbp.lbp
-        else:
-            outstr = items[0].string + gap
-            if items[0].albp:
-                albp = items[0].albp
-            else:
-                albp = operbp.lbp
-        # look at the middle of items
-        for item in items[1:-1]:
-            if (
-                 (item.albp and operbp.rbp >= item.albp)
-                 or (item.arbp and item.arbp < operbp.lbp)
-            ):
-                outstr += self.name + gap + "(" + item.string + ")" + gap
-            else:
-                outstr += self.name + gap + item.string + gap
-
-        # look at the end of items
-        if items[-1].albp and operbp.rbp >= items[-1].albp:
-            outstr += self.name + gap + "(" + items[-1].string + ")"
-            arbp = operbp.rbp
-        else:
-            outstr += self.name + gap + items[-1].string
-            if items[-1].arbp:
-                arbp = items[-1].arbp
-            else:
-                arbp = operbp.rbp
-
-        return UnParse(outstr, albp, arbp)
-
     def match(self, vardict, subdict, pred_rule, expr):
         if (
-            type(expr) != type(self)
+            type(expr) is not type(self)
             or expr.name != self.name
         ):
             return False

@@ -75,7 +75,7 @@ class ReadableString:
                 return 0
         else:
             return 0
-    
+
     def funct_form(self, name, items):
         outstr = name + '('
         for item in items[:1]:
