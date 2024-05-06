@@ -2,7 +2,7 @@ from truealgebra.core.expression import (
     CommAssoc, Number, Container, Symbol, Assign, Restricted,
     null, true, false, any__
 )
-from truealgebra.core.settings import Settings
+from truealgebra.core.settings import SettingsSingleton
 import pytest
 
 
@@ -66,8 +66,10 @@ def ex():
 
 
 @pytest.fixture
-def settings():
-    settings = Settings()
+def conftest_settings():
+    settings = SettingsSingleton()
+    settings.reset()
+
     settings.set_default_bp(251, 252)
     settings.set_custom_bp('!', 2000, 0)
     settings.set_custom_bp('!!!', 3000, 0)
@@ -92,8 +94,9 @@ def settings():
     settings.set_complement('star', '*')
     settings.set_complement('!!', '+')
 
+    yield settings
+    settings.reset()
 
-    return settings
 
 
 

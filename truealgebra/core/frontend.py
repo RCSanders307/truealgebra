@@ -1,7 +1,7 @@
 from truealgebra.core.rulebase import RuleBase, placebo_rule
 from truealgebra.core.rule import RulesBU, NaturalRule
 from truealgebra.core.parse import Parse, meta_parser
-from truealgebra.core.settings import Settings
+#from truealgebra.core.settings import SettingsSingleton
 from truealgebra.core.expression import Assign, Container
 from truealgebra.core.err import ta_logger
 from truealgebra.core.abbrv import isNu
@@ -74,7 +74,7 @@ class FrontEnd():
         self.history_rule = HistoryRule(frontend=self)
 
         if parse is None:
-            self.parse = Parse(Settings())
+            self.parse = Parse()
         else:
             self.parse = parse
 

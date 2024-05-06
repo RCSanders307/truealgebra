@@ -2,7 +2,7 @@ from truealgebra.core.rulebase import RuleBase
 from truealgebra.core.expression import (
     Container, CommAssoc, Restricted, Number, Symbol, null
 )
-from truealgebra.core.settings import Settings
+#from truealgebra.core.settings import Settings
 from truealgebra.core.parse import Parse
 from truealgebra.core.err import ta_logger
 
@@ -194,7 +194,7 @@ class ConvertToBasis(RuleBase):
 
 
 class MultiplyUnitsByBasis(RuleBase):
-    parse = Parse(Settings())
+    parse = Parse()
 
     def postinit(self, *args, **kwargs):
         if 'parse' in kwargs:

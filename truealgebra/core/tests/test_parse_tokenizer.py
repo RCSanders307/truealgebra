@@ -15,13 +15,13 @@ Methods Tested
 
 from truealgebra.core.parse import Parse
 from truealgebra.core.expression import (
-    CommAssoc, Number, Container, Symbol, Restricted, null, end
+    Number, Container, Symbol, null, end
 )
 import pytest
 
 
 @pytest.fixture
-def create_parse_tok(settings):
+def create_parse_tok(conftest_settings):
     """ Fixture Used in testing tokenizer methods
 
     This fixture creates a Parse instance with init_parse emulation.
@@ -52,7 +52,7 @@ def create_parse_tok(settings):
         token_tup=(Number(5), Number(6), Number(8)),
         delim_tup=(',', ',', ')'),
     ):
-        parse = PyTestParse(settings)
+        parse = PyTestParse()
         parse.buf = buf
         parse.char = char
         parse.string = string
