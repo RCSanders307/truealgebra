@@ -82,7 +82,7 @@ def readspecial(SpecialObject, settings):
 @pytest.mark.parametrize(
     "string",
     [
-        '+ b',
+        '+ bj
         'a *',
         'a - b',
         '+ (a - b)',
@@ -90,7 +90,7 @@ def readspecial(SpecialObject, settings):
         'x - (a and b)',
         'D(x) (y and z)',
     ]
-)
+),
 def test_operators(string, settings):
     expr = parse(string)
     str_out = unparse(expr)
