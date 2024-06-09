@@ -1,5 +1,6 @@
 from truealgebra.core.rules import (
-    RuleBase, TrueThing, Rule, placebo_rule, Substitute
+    RuleBase, TrueThing, Rule, placebo_rule, Substitute, Rules, RulesBU,
+    JustOne, JustOneBU, TrueThingJO
 )
 from truealgebra.core.expression import ExprBase
 import pytest
@@ -92,6 +93,7 @@ xtoy0 = XToY(path = [0])
 xtoy1 = XToY(bottomup=True)
 xtoy2 = XToY(path = [1], bottomup=True)
 
+dw = Datum('w')
 dx = Datum('x')
 dy = Datum('y')
 dz = Datum('z')
@@ -202,6 +204,9 @@ def test_rule_tbody():
 # ===============
 subdict = {dx: dz, dy: dz}
 toz = Substitute(subdict=subdict)
+ztow = Substitute(subdict={dz: dw})
+wtox = Substitute(subdict={dw: dx})
+ytoz = Substitute(subdict={dy: dz})
 tozpathbu = Substitute(subdict=subdict, bottomup=True, path=(1,))
 
 
@@ -232,3 +237,88 @@ def test_substitute_functional():
 # ==========
 # Test Rules
 # ==========
+subrules = Rules(toz, ztow)
+emptyrules = Rules()
+def test_rules_tpredicate():
+    out = subrules.tpredicate('garbage')
+
+    assert type(out) is TrueThing
+    assert out.expr == 'garbage'
+
+
+@pytest.mark.parametrize(
+    'rules, expr, correct',
+    [
+        (subrules, dx, dw),
+        (emptyrules, dx, dx),
+    ]
+)
+def test_rules_tbody(rules, expr, correct):
+    out = rules.tbody(TrueThing(expr))
+
+    assert out == correct
+
+
+def test_rulesbu():
+    rulesbu = RulesBU(toz, ztow)
+
+    assert isinstance(rulesbu, Rules)
+    assert rulesbu.bottomup is True
+    
+
+# ============
+# Test JustOne
+# ============
+jo0 = JustOne()
+jo1 = JustOne(ytoz, ztow, wtox)
+jo2 = JustOne(ytoz, ytoz, jo1, ztow)
+
+
+@pytest.mark.parametrize(
+    'rule',
+    [jo0, jo1]
+)
+def test_justone_tpredicate0(rule):
+    out = rule.tpredicate(dx)
+
+    assert out is False
+
+
+def test_justone_tpredicate1():
+    out = jo1.tpredicate(dz)
+
+    assert isinstance(out, TrueThingJO)
+    assert out.expr == dz
+    assert out.ndx == 1
+
+    assert isinstance(out.selected_truething, TrueThing)
+    assert out.selected_truething.expr == dz
+
+
+def test_justone_tpredicate2():
+    out = jo2.tpredicate(dz)
+
+    assert isinstance(out, TrueThingJO)
+    assert out.expr == dz
+    assert out.ndx == 2
+
+    assert isinstance(out.selected_truething, TrueThingJO)
+    assert out.selected_truething.expr == dz
+    assert out.selected_truething.ndx == 1
+
+    assert isinstance(out.selected_truething.selected_truething, TrueThing)
+    assert out.selected_truething.selected_truething.expr == dz
+
+
+# functional test, and test tbody and eval_selected methods
+def test_justone():
+    out = jo2(dz)
+
+    assert out == dw
+
+
+def test_justonebu():
+    justonebu = JustOneBU(toz, ztow)
+
+    assert isinstance(justonebu, JustOne)
+    assert justonebu.bottomup is True
