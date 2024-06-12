@@ -146,6 +146,9 @@ class SettingsSingleton():
         The values are sets. The contents of the sets must be either
         a symbol names or operator names.
         The set contents represent name attributes of Container instances.
+    active_parse : None
+        Points to Parse instance that will be used throughout a 
+        truealgebra session.
 
     """
     _instance = None
@@ -168,6 +171,7 @@ class SettingsSingleton():
         self.categories = defaultdict(set)
         self.categories['suchthat']
         self.categories['forall']
+        self.active_parse = None
 
     def set_default_bp(self, lbp, rbp):
         """Set default binding powers for operators.

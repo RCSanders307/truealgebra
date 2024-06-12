@@ -87,7 +87,7 @@ class Rule(RuleBase):
         return expr
 
 
-placebo_rule = Rule()
+donothing_rule = Rule()
 
 
 class Substitute(Rule):
