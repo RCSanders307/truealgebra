@@ -169,8 +169,10 @@ class SettingsSingleton():
         self.container_subclass = dict()
         self.complement = dict()
         self.categories = defaultdict(set)
-        self.categories['suchthat']
-        self.categories['forall']
+# THIS HAS YET TO BE TESTED
+        self.categories['suchthat'].add('suchthat')
+# THIS HAS YET TO BE TESTED
+        self.categories['forall'].add('forall')
         self.active_parse = None
 
     def set_default_bp(self, lbp, rbp):

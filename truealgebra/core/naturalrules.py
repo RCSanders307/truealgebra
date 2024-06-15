@@ -1,9 +1,19 @@
-from truealgebra.core.rules import RuleBase, donothing_rule
+from truealgebra.core.rules import (
+    RuleBase, donothing_rule, TrueThing, Substitute
+)
 from truealgebra.core.settings import settings
 from truealgebra.core.parse import meta_parser
-from truealgebra.core.expression import null
+from truealgebra.core.expression import null, Symbol
 from truealgebra.core.err import ta_logger
 import types
+
+class TrueThingNR(TrueThing):
+    """Used with NaturalRule instances.
+    """
+# revisit subdict
+    def __init__(self, expr, subdict=None):
+        self.expr = expr
+        self.subdict = subdict
 
 class NaturalRuleBase(RuleBase):
     predicate_rule = donothing_rule
@@ -11,9 +21,10 @@ class NaturalRuleBase(RuleBase):
     outcome = null
     # as per:
     # https://adamj.eu/tech/2022/01/05/how-to-make-immutable-dict-in-python/
-    # the default var_defn below is a immutable dictioary
-    var_defn = types.MappingProxyType(dict()) 
-    # var_defn is not changed after it is created
+    # the default var_dict below is a immutable dictioary
+    var_dict = types.MappingProxyType(dict()) 
+    var_string = ''
+    # var_dict is not changed after it is created
     def __init__(self, *args, **kwargs):
         if "predicate_rule" in kwargs:
             self.predicate_rule = kwargs["predicate_rule"]
@@ -28,23 +39,22 @@ class NaturalRuleBase(RuleBase):
                 'settings.active_parse must point to a Parse instance'
             )
 
-        if "var_defn" in kwargs:
-            self.var_defn = kwargs['var_defn']
-        try:
-            if isinstance(self.var_defn, str):
-                self.var_defn = self.create_var_dict(
-                    self.var_defn, settings.active_parse
-                )
-        except TypeError:
-            ta_logger.log(
-                'settings.active_parse must point to a Parse instance'
-            )
+        self.convert_class_var()
+
+        if "var_string" in kwargs:
+            self.var_dict = self.create_var_dict(kwargs['var_string'])
 
         super().__init__(*args, **kwargs)
 
     @classmethod
+    def convert_class_var(cls):
+        if cls.var_string:
+            cls.var_dict = cls.create_var_dict(cls.var_string)
+            cls.var_string = ''
+
+    @classmethod
     def create_var_dict(cls, string):
-        """Create a variable dictionary (var_defn), used for pattern matching
+        """Create a variable dictionary used for pattern matching
 
         string : str instance is parsed into truealgebra expressions
             containing forall and suchthat expressions.
@@ -57,7 +67,12 @@ class NaturalRuleBase(RuleBase):
             The values are the second arguments of suchthat expressions.
             a variable not in a suchthat expression has null for a value.
         """
-        parsed_string = meta_parser(string, settings.active_parse)
+        try:
+            parsed_string = meta_parser(string, settings.active_parse)
+        except TypeError:
+            ta_logger.log(
+                'settings.active_parse must point to a Parse instance'
+            )
         var_dict = dict()
         for ex in parsed_string:
             try:
@@ -79,16 +94,13 @@ class NaturalRuleBase(RuleBase):
 
 
 class NaturalRule(NaturalRuleBase):
-#   parse = None
     outcome_rule = donothing_rule
 
     def __init__(self, *args, **kwargs):
 
-        # not used in HalfNaturalRUle
         if "outcome_rule" in kwargs:
             self.outcome_rule = kwargs["outcome_rule"]
 
-        # Not used with HalfNaturalRule
         if 'outcome' in kwargs:
             self.outcome = kwargs['outcome']
         if isinstance(self.outcome, str):
@@ -99,7 +111,7 @@ class NaturalRule(NaturalRuleBase):
     def tpredicate(self, expr):
         subdict = dict()
         predresult = self.pattern.match(
-            self.var_defn,
+            self.var_dict,
             subdict,
             self.predicate_rule,
             expr
@@ -127,7 +139,7 @@ class HalfNaturalRule(NaturalRuleBase):
     def tpredicate(self, expr):
         subdict = dict()
         predresult = self.pattern.match(
-            self.var_defn,
+            self.var_dict,
             subdict,
             self.predicate_rule,
             expr
