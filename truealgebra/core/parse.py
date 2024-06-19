@@ -1,6 +1,6 @@
 from truealgebra.core.err import ta_logger
 from truealgebra.core.expression import Container, Number, Symbol, null, end
-from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core.settings import settings
 from truealgebra.core.constants import (
     OPERATORS, DIGITS, WHITE_SPACE, LETTERS, META_DELIMITERS
 )
@@ -44,9 +44,6 @@ class Parse:
     """
 
     def __init__(self,  postrule=None):
-        # Not Good. settings should be a module variable,
-        # not a class attribute
-        self.settings = SettingsSingleton()
         self.buf = ''
         self.char = None
         self.string = ''
@@ -76,9 +73,9 @@ class Parse:
                 'not allowed before delimiter in: {}'.format(delims)
             )
             return null
-        elif left.lbp and left.name in self.settings.infixprefix:  # 0-1a
+        elif left.lbp and left.name in settings.infixprefix:  # 0-1a
             left.lbp = 0
-            left.rbp = self.settings.infixprefix[left.name]
+            left.rbp = settings.infixprefix[left.name]
         elif left.lbp:  # 0-1b
             parse_logger(
                 'token {} has unbound left binding power'.format(left)
@@ -102,10 +99,10 @@ class Parse:
 
             elif (  # case 2-4
                 left.rbp and mid.lbp
-                and mid.name in self.settings.infixprefix
+                and mid.name in settings.infixprefix
             ):
                 mid.lbp = 0
-                mid.rbp = self.settings.infixprefix[mid.name]
+                mid.rbp = settings.infixprefix[mid.name]
 
             elif left.rbp and mid.lbp:  # case 2-5
                 parse_logger(
@@ -174,12 +171,12 @@ class Parse:
                 return self.three_parse_end(farleft, left, mid)
 
             elif (  # case 3-2
-                right.name in self.settings.infixprefix
+                right.name in settings.infixprefix
                 and mid.rbp
                 and right.lbp
             ):
                 right.lbp = 0
-                right.rbp = self.settings.infixprefix[right.name]
+                right.rbp = settings.infixprefix[right.name]
                 # case = '3-2'
 
             elif mid.rbp and right.lbp:  # case 3-3
@@ -288,9 +285,9 @@ class Parse:
         while self.char in LETTERS or self.char in DIGITS:
             self.buf += self.char
             self.next_char()
-        if self.buf == self.settings.sqrtneg1:
+        if self.buf == settings.sqrtneg1:
             return self.complex_factory()
-        elif self.buf in self.settings.symbol_operators:
+        elif self.buf in settings.symbol_operators:
             return self.symbol_operator_factory()
         elif self.char == '(':
             return self.function_form_tokenizer()
@@ -312,7 +309,7 @@ class Parse:
         while self.char in DIGITS:
             self.buf += self.char
             self.next_char()
-        if self.char == self.settings.sqrtneg1:
+        if self.char == settings.sqrtneg1:
             self.next_char()
             return self.complex_real_factory()
         else:
@@ -353,7 +350,7 @@ class Parse:
             return null
         elif self.char in ('e', 'E'):
             return self.sform_tokenizer()
-        elif self.char == self.settings.sqrtneg1:
+        elif self.char == settings.sqrtneg1:
             self.next_char()
             return self.complex_real_factory()
         else:
@@ -371,7 +368,7 @@ class Parse:
             self.next_char()
         if self.char == '.':
             return self.real_tokenizer()
-        elif self.char == self.settings.sqrtneg1:
+        elif self.char == settings.sqrtneg1:
             self.next_char()
             return self.complex_int_factory()
         elif self.char in ('e', 'E'):
@@ -411,27 +408,27 @@ class Parse:
         return Number(float(self.buf))
 
     def make_container_instance(self):
-        name = self.settings.complement.get(self.buf, self.buf)
-        cls_ = self.settings.container_subclass.get(name, Container)
+        name = settings.complement.get(self.buf, self.buf)
+        cls_ = settings.container_subclass.get(name, Container)
         return cls_(name)
 
     def function_form_factory(self):
         token = self.make_container_instance()
-        if self.buf in self.settings.bodied_functions:
-            token.rbp = self.settings.bodied_functions[self.buf]
+        if self.buf in settings.bodied_functions:
+            token.rbp = settings.bodied_functions[self.buf]
         return token
 
     def symbol_operator_factory(self):
         token = self.make_container_instance()
-        token.lbp, token.rbp = self.settings.symbol_operators[self.buf]
+        token.lbp, token.rbp = settings.symbol_operators[self.buf]
         return token
 
     def operator_factory(self):
         token = self.make_container_instance()
 
-        token.lbp, token.rbp = self.settings.custom_bp.get(
+        token.lbp, token.rbp = settings.custom_bp.get(
             self.buf,
-            self.settings.default_bp
+            settings.default_bp
         )
         return token
 
@@ -440,7 +437,7 @@ class Parse:
 
 
 # used to parse strings with newline "\n" characters and ";"
-def meta_parser(strn, parse):
+def meta_parser(strn):
     """ This function has not been unit tested.
     It most likely will be changed significantly.
     Some of the changes could (or not) be:
@@ -466,10 +463,12 @@ def meta_parser(strn, parse):
             elif tmp > -1 and tmp < indx:
                 indx = tmp
         if indx == -1:
-            result = parse(strn)
+            # the statement below be in a try block
+            result = settings.active_parse(strn)
             strn = ""
         else:
-            result = parse(strn[:indx])
+            # the statement below be in a try block
+            result = settings.active_parse(strn[:indx])
             strn = strn[indx+1:]
         yield result
         

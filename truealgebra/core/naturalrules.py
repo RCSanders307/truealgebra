@@ -10,21 +10,19 @@ import types
 class TrueThingNR(TrueThing):
     """Used with NaturalRule instances.
     """
-# revisit subdict
-    def __init__(self, expr, subdict=None):
+    def __init__(self, expr, subdict=types.MappingProxyType(dict()) ):
         self.expr = expr
         self.subdict = subdict
 
 class NaturalRuleBase(RuleBase):
     predicate_rule = donothing_rule
     pattern = null
-    outcome = null
     # as per:
     # https://adamj.eu/tech/2022/01/05/how-to-make-immutable-dict-in-python/
-    # the default var_dict below is a immutable dictioary
-    var_dict = types.MappingProxyType(dict()) 
-    var_string = ''
-    # var_dict is not changed after it is created
+    # the default vardict below is a immutable dictioary
+    vardict = types.MappingProxyType(dict()) 
+    varstring = ''
+    # vardict is not changed after it is created
     def __init__(self, *args, **kwargs):
         if "predicate_rule" in kwargs:
             self.predicate_rule = kwargs["predicate_rule"]
@@ -39,21 +37,21 @@ class NaturalRuleBase(RuleBase):
                 'settings.active_parse must point to a Parse instance'
             )
 
-        self.convert_class_var()
+        if "varstring" in kwargs:
+            self.vardict = self.create_vardict(kwargs['varstring'])
 
-        if "var_string" in kwargs:
-            self.var_dict = self.create_var_dict(kwargs['var_string'])
+        self.convert_classvar()
 
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def convert_class_var(cls):
-        if cls.var_string:
-            cls.var_dict = cls.create_var_dict(cls.var_string)
-            cls.var_string = ''
+    def convert_classvar(cls):
+        if cls.varstring:
+            cls.vardict = cls.create_vardict(cls.varstring)
+            cls.varstring = ''
 
     @classmethod
-    def create_var_dict(cls, string):
+    def create_vardict(cls, string):
         """Create a variable dictionary used for pattern matching
 
         string : str instance is parsed into truealgebra expressions
@@ -61,40 +59,36 @@ class NaturalRuleBase(RuleBase):
 
         Output
         ------
-        var_dict : dict
+        vardict : dict
             The keys are Symbol instances called variables. 
             A variable was the argument of a forall expression.
             The values are the second arguments of suchthat expressions.
             a variable not in a suchthat expression has null for a value.
         """
-        try:
-            parsed_string = meta_parser(string, settings.active_parse)
-        except TypeError:
-            ta_logger.log(
-                'settings.active_parse must point to a Parse instance'
-            )
-        var_dict = dict()
+        parsed_string = meta_parser(string)
+        vardict = dict()
         for ex in parsed_string:
             try:
                 if ex.name in settings.categories['forall']:
                     for item in ex.items:
                         if isinstance(item, Symbol):
-                            var_dict[item] = null
+                            vardict[item] = null
                 elif ex.name in settings.categories['suchthat']:
                     if (
                         ex[0].name in settings.categories['forall']
                         and isinstance(ex[0][0], Symbol)
                     ):
-                        var_dict[ex[0][0]] = ex[1]
+                        vardict[ex[0][0]] = ex[1]
             except IndexError:
                 ta_logger.log(
                     'Index Error in forall or suchthat container expression'
                 )
-        return var_dict
+        return vardict
 
 
 class NaturalRule(NaturalRuleBase):
     outcome_rule = donothing_rule
+    outcome = null
 
     def __init__(self, *args, **kwargs):
 
@@ -111,7 +105,7 @@ class NaturalRule(NaturalRuleBase):
     def tpredicate(self, expr):
         subdict = dict()
         predresult = self.pattern.match(
-            self.var_dict,
+            self.vardict,
             subdict,
             self.predicate_rule,
             expr
@@ -139,7 +133,7 @@ class HalfNaturalRule(NaturalRuleBase):
     def tpredicate(self, expr):
         subdict = dict()
         predresult = self.pattern.match(
-            self.var_dict,
+            self.vardict,
             subdict,
             self.predicate_rule,
             expr
