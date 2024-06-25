@@ -14,6 +14,14 @@ class TrueThingNR(TrueThing):
         self.expr = expr
         self.subdict = subdict
 
+
+class TrueThingHNR(TrueThing):
+    """Thruething used with HalfNaturalRule instances. """
+    def __init__(self, expr, var=None):
+        self.expr = expr
+        self.var = var
+
+
 class NaturalRuleBase(RuleBase):
     predicate_rule = donothing_rule
     pattern = null
@@ -120,15 +128,13 @@ class NaturalRule(NaturalRuleBase):
         out = Substitute(subdict=subdict, bottomup=True)(self.outcome)
         return self.outcome_rule(out)
 
+
 class HalfNaturalRule(NaturalRuleBase):
     class VarNames:
         def __init__(self, subdict):
             for key in subdict:
                 name = key.name
                 exec('self.' + name + ' = subdict[key]')
-
-    def __str__(self):
-        return "HalfNaturalRule " + self.name + " instance"
 
     def tpredicate(self, expr):
         subdict = dict()
@@ -147,14 +153,18 @@ class HalfNaturalRule(NaturalRuleBase):
     def tbody(self, truething):
         try:
             return self.body(
-                truething.input_expression,
+                truething.expr,
                 truething.var,
             )
         except TypeError:
             ta_logger.log(
-                "HalfNaturalRule body method requires three arguments"
+                'HalfNaturalRule body method requires three arguments'
             )
-            return e.null
+            return null
 
     def body(self, expr, var):
         return expr
+
+#Is this something worth pursuing? Providing names for rules?
+#   def __str__(self):
+#       return "HalfNaturalRule " + self.name + " instance"

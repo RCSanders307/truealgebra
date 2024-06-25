@@ -1,10 +1,10 @@
-from truealgebra.core.rule import RuleBase as RB
-from truealgebra.core.rule import Rules as Rs
-from truealgebra.core.rule import RulesBU as RsBU
-from truealgebra.core.rule import JustOne as JO
-from truealgebra.core.rule import JustOneBU as JOBU
-from truealgebra.core.rule import NaturalRule as NR
-from truealgebra.core.rule import HalfNaturalRule as HNR
+from truealgebra.core.rules import Rule as Ru
+from truealgebra.core.rules import Rules as Rs
+from truealgebra.core.rules import RulesBU as RsBU
+from truealgebra.core.rules import JustOne as JO
+from truealgebra.core.rules import JustOneBU as JOBU
+from truealgebra.core.naturalrules import NaturalRule as NR
+from truealgebra.core.naturalrules import HalfNaturalRule as HNR
 
 from truealgebra.core.expression import ExprBase as EB
 from truealgebra.core.expression import Symbol as Sy
