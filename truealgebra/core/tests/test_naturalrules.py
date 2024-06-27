@@ -472,7 +472,7 @@ def test_hnr_tbody_error(settings, halfnaturalrule1, capsys):
     expr0 = settings.active_parse(' y ++ (3.0 ** 2) ')
     var = HalfNaturalRule.VarNames(
         {Sy('_'): Sy('y'), Sy('x'): Nu(2), Sy('y'): Nu(3.0)}
-    
+    )
     pred_out1 = TrueThingHNR(expr0, var=var)
 
     out = halfnaturalrule1.tbody(pred_out1)

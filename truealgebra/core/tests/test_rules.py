@@ -1,5 +1,5 @@
 from truealgebra.core.rules import (
-    RuleBase, TrueThing, Rule, placebo_rule, Substitute, Rules, RulesBU,
+    RuleBase, TrueThing, Rule, donothing_rule, Substitute, Rules, RulesBU,
     JustOne, JustOneBU, TrueThingJO
 )
 from truealgebra.core.expression import ExprBase
@@ -157,25 +157,25 @@ def test_rulebase_bu_path(rule, correct, bu, path):
 # Test Rule
 # =========
 def test_rule_body():
-    out = placebo_rule.body(dx)
+    out = donothing_rule.body(dx)
 
     assert type(out) == Datum
     assert out.datum == 'x'
 
 
 def test_rule_predicate():
-    out = placebo_rule.predicate(dx)
+    out = donothing_rule.predicate(dx)
 
     assert out is False
 
 def test_rule_tpredicate():
-    out = placebo_rule.tpredicate(dx)
+    out = donothing_rule.tpredicate(dx)
 
     assert out is False
 
 
 @pytest.fixture
-def placebo_rule2():
+def donothing_rule2():
     class Rule2(Rule):
         def predicate(self, expr):
             return True
@@ -183,8 +183,8 @@ def placebo_rule2():
     return Rule2()
 
 
-def test_rule_tpredicate2(placebo_rule2):
-    out = placebo_rule2.tpredicate(dx)
+def test_rule_tpredicate2(donothing_rule2):
+    out = donothing_rule2.tpredicate(dx)
 
     assert type(out) is TrueThing
     assert type(out.expr) is Datum
@@ -193,7 +193,7 @@ def test_rule_tpredicate2(placebo_rule2):
 
 def test_rule_tbody():
     thing = TrueThing(dx)
-    out = placebo_rule.tbody(thing)
+    out = donothing_rule.tbody(thing)
 
     assert type(out) is Datum
     assert out.datum == 'x'

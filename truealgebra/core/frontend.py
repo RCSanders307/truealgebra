@@ -1,16 +1,18 @@
-from truealgebra.core.rulebase import RuleBase, placebo_rule
-from truealgebra.core.rule import RulesBU, NaturalRule
+from truealgebra.core.rules import Rule, RulesBU, donothing_rule
+from truealgebra.core.naturalrules import NaturalRule
 from truealgebra.core.parse import Parse, meta_parser
-#from truealgebra.core.settings import SettingsSingleton
 from truealgebra.core.expression import Assign, Container
 from truealgebra.core.err import ta_logger
 from truealgebra.core.abbrv import isNu
 
-class HistoryRule(RuleBase):
+class HistoryRule(Rule):
     bottomup = True
 
-    def postinit(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.frontend = kwargs['frontend']
+
+        super().__init__(*args, **kwargs)
+
 
     def predicate(self, expr):
         return (
@@ -34,13 +36,15 @@ class HistoryRule(RuleBase):
             return expr
 
 
-class AssignRule(RuleBase):
+class AssignRule(Rule):
     bottomup = True
 
-    def postinit(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.frontend = kwargs['frontend']
         self.assign_dict = dict()
         self.active = False
+
+        super().__init__(*args, **kwargs)
 
     def predicate(self, expr):
         return expr in self.assign_dict
@@ -64,7 +68,7 @@ class AssignRule(RuleBase):
 
 class FrontEnd():
     def __init__(
-        self, history_name='Ex', parse=None, default_rule=placebo_rule,
+        self, history_name='Ex', parse=None, default_rule=donothing_rule,
         hold_default=False, hold_assign=False, hold_session=False,
         hold_all=False, mute=False
     ):
@@ -106,7 +110,7 @@ class FrontEnd():
         self, txt, hold_assign=False, hold_default=False, hold_session=False,
         hold_all=False, mute=False, apply=None
         ):
-        mp = meta_parser(txt, self.parse)
+        mp = meta_parser(txt)
         for ex in mp:
             self.post_parser(
                 ex, hold_assign, hold_default, hold_session, hold_all,

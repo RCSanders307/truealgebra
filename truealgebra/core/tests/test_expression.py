@@ -5,9 +5,9 @@ from truealgebra.core.expression import (
     CommAssoc, Number, Container, Symbol, ExprBase, Restricted, Assign,
     Null, End, null, true, false, any__
 )
-from truealgebra.core.rule import RuleBase
+from truealgebra.core.rules import Rule
 
-class ApplyF(RuleBase):
+class ApplyF(Rule):
     """ encapsulate all expressions and subexpressions inside of a 
     Container instance with name 'F'.
     """
@@ -22,7 +22,7 @@ class ApplyF(RuleBase):
 
 #applyF = ApplyF(bottomup=True)
 applyF = ApplyF()
-rule = RuleBase()
+rule = Rule()
 base_msg = 'TRUEALGEBRA ERROR!\n'
 
 
@@ -154,7 +154,7 @@ class Test_Apply2path_Method:
         assert output.out == err_msg 
 #############
 
-class IsInt(RuleBase):
+class IsInt(Rule):
     def predicate(self, expr):
         return (isinstance(expr, Container)
                 and expr.name == 'isint'

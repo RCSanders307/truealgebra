@@ -21,8 +21,8 @@ def test_bp():
 
 def test_settings_init(settings):
     correct_nc = defaultdict(set)
-    correct_nc['suchthat']
-    correct_nc['forall']
+    correct_nc['suchthat'].add('suchthat')
+    correct_nc['forall'].add('forall')
 
     assert settings.default_bp == bp(250, 250)
     assert settings.custom_bp == dict()
@@ -368,12 +368,12 @@ def test_set_complement_error(
 @pytest.mark.parametrize(
     'category, name, catdict',
     [
-        ('forall', '^^', {'forall': {'^^'}, 'suchthat': set()}),
+        ('forall', '^^', {'forall': {'^^', 'forall'}, 'suchthat': {'suchthat'}}),
         (
             'abc1%', 'abc',
-            {'forall': set(), 'suchthat': set(), 'abc1%': {'abc'}}
+            {'forall': {'forall'}, 'suchthat': {'suchthat'}, 'abc1%': {'abc'}}
         ),
-        ('abc1%', '', {'forall': set(), 'suchthat': set(), 'abc1%': set()}),
+        ('abc1%', '', {'forall': {'forall'}, 'suchthat': {'suchthat'}, 'abc1%': set()}),
     ]
 )
 def test_set_category(category, name, catdict, settings):
@@ -389,7 +389,7 @@ def test_set_category(category, name, catdict, settings):
     'category, name, msg',
     [
         (
-            5, 'abc',
+            5 , 'abc',
             'set_categories error\n    '
             'category 5 must be a string instance'
         ),
@@ -398,8 +398,8 @@ def test_set_category(category, name, catdict, settings):
 )
 def test_set_category_error(category, name, msg, capsys, settings):
     cat_dict = defaultdict(set)
-    cat_dict['forall']
-    cat_dict['suchthat']
+    cat_dict['forall'].add('forall')
+    cat_dict['suchthat'].add('suchthat')
 
     settings.set_categories(category, name)
     output = capsys.readouterr()
