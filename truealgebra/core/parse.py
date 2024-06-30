@@ -5,6 +5,7 @@ from truealgebra.core.constants import (
     OPERATORS, DIGITS, WHITE_SPACE, LETTERS, META_DELIMITERS
 )
 
+
 def parse_logger(msg):
     ta_logger.log('Parse Error\n' + msg)
 
@@ -191,7 +192,8 @@ class Parse:
                 )
                 return null
 
-            elif mid.lbp and farleft and farleft[-1].rbp >= mid.lbp:  # case 3-5
+            # case 3-5
+            elif mid.lbp and farleft and farleft[-1].rbp >= mid.lbp:
                 lefty = farleft.pop()
                 lefty._bind_right(left)
                 left = lefty
@@ -441,14 +443,14 @@ def meta_parser(strn):
     """ This function has not been unit tested.
     It most likely will be changed significantly.
     Some of the changes could (or not) be:
-    
+
         # The name 'Multi', will be used instead of 'meta'. For example,
         the name meta_parser would be multi_parser. multi means many.
 
         # The output would not be a generator, but a list or an object with
         a list attribute. e.g. MultExpression with a list exprs attribute.
 
-        #The objects will be created in the parser by using '\t' and ';' as 
+        #The objects will be created in the parser by using '\t' and ';' as
         delimiters in the delims parameters.
 
         # a MultiExpression instance can not be inside of any other Expression
@@ -471,5 +473,6 @@ def meta_parser(strn):
             result = settings.active_parse(strn[:indx])
             strn = strn[indx+1:]
         yield result
-        
+
+
 parse = Parse()

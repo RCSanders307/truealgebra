@@ -1,7 +1,5 @@
-from truealgebra.std.std_settings import parse
-from truealgebra.core.rule import (
-    HalfNaturalRule, NaturalRule, JustOne, JustOneBU
-)
+from truealgebra.core.rules import JustOne, JustOneBU
+from truealgebra.core.naturalrules import HalfNaturalRule, NaturalRule
 from truealgebra.core.expression import Number, true, false
 from fractions import Fraction
 
@@ -9,9 +7,8 @@ from fractions import Fraction
 # Number Type Rules
 # =================
 class HalfNaturalRulePred(HalfNaturalRule):
-    """Base class, defines parse attribute and one variable."""
-    parse = parse
-    var_defn = ' @ex '
+    """Base class, defines one variable."""
+    varstring = ' @ex '
 
 
 class IsNumber(HalfNaturalRulePred):
@@ -93,7 +90,7 @@ number_type_rules = JustOne(
 # Logic Rules
 # ===========
 class NaturalRulePredicate(NaturalRule):
-    parse = parse
+    varstring = ' @ex '
 
 
 not_true = NaturalRulePredicate(
@@ -231,8 +228,7 @@ predicate_rule_bu = JustOneBU(
 # ========
 
 class IfRule(NaturalRule):
-    parse = parse
-    var_defn = NaturalRule.create_var_dict(' forall(ex0, ex1) ', parse)
+    varstring = ' forall(ex0, ex1) '
 
 if_ = IfRule(
     pattern = ' if(true, ex0) ',

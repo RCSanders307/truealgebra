@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from IPython import embed
 
 
 class TrueThing:
     """Boolean evaluation to True and carries information.
 
-    TrueThing instance is the output of a rule's tpredicate method 
+    TrueThing instance is the output of a rule's tpredicate method
     and the sole input into the tbody method of the same rule.
 
     Attributes
@@ -17,23 +16,28 @@ class TrueThing:
     def __init__(self, expr):
         self.expr = expr
     selected_truething = False
+
     def __bool__(self):
         return True
+
 
 class TrueThingJO(TrueThing):
     """Used with JustOne instances.
 
     selected_truething : bool
-        The class attribute is always False. Used as a reference by JustOne instances.
+        The class attribute is always False.
+        Used as a reference by JustOne instances.
     """
     def __init__(self, expr, selected_truething=False, ndx=None):
         self.expr = expr
         self.selected_truething = selected_truething
         self.ndx = ndx
 
+
 class RuleBase(ABC):
     bottomup = False
     path = ()
+
     def __init__(self, *args, **kwargs):
         if "bottomup" in kwargs:
             self.bottomup = kwargs["bottomup"]
@@ -58,7 +62,7 @@ class RuleBase(ABC):
         both the _pathinhibit and _buinhibit parameters must be set True.
         """
         if self.path and not _pathinhibit:
-            return expr.apply2path(self.path, self )
+            return expr.apply2path(self.path, self)
 
         if self.bottomup and not _buinhibit:
             return expr.bottomup(self)
@@ -76,7 +80,7 @@ class Rule(RuleBase):
             return TrueThing(expr)
         else:
             return False
-    
+
     def tbody(self, truething):
         return self.body(truething.expr)
 
@@ -99,7 +103,7 @@ class Substitute(Rule):
         Attributes
         ----------
         subdict : dict
-            Both keys and values are Truealgebra expressions. 
+            Both keys and values are Truealgebra expressions.
         """
         if "subdict" in kwargs:
             self.subdict = kwargs["subdict"]
@@ -208,5 +212,3 @@ class JustOne(RuleBase):
 
 class JustOneBU(JustOne):
     bottomup = True
-
-

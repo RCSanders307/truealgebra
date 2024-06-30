@@ -4,7 +4,6 @@ from truealgebra.core.expression import (
     null, true, false, any__
 )
 import pytest
-#import truealgebra.std.settings
 
 
 class Num:

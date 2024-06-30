@@ -7,10 +7,11 @@ from truealgebra.core.expression import null, Symbol
 from truealgebra.core.err import ta_logger
 import types
 
+
 class TrueThingNR(TrueThing):
     """Used with NaturalRule instances.
     """
-    def __init__(self, expr, subdict=types.MappingProxyType(dict()) ):
+    def __init__(self, expr, subdict=types.MappingProxyType(dict())):
         self.expr = expr
         self.subdict = subdict
 
@@ -28,8 +29,9 @@ class NaturalRuleBase(RuleBase):
     # as per:
     # https://adamj.eu/tech/2022/01/05/how-to-make-immutable-dict-in-python/
     # the default vardict below is a immutable dictioary
-    vardict = types.MappingProxyType(dict()) 
+    vardict = types.MappingProxyType(dict())
     varstring = ''
+
     # vardict is not changed after it is created
     def __init__(self, *args, **kwargs):
         if "predicate_rule" in kwargs:
@@ -68,7 +70,7 @@ class NaturalRuleBase(RuleBase):
         Output
         ------
         vardict : dict
-            The keys are Symbol instances called variables. 
+            The keys are Symbol instances called variables.
             A variable was the argument of a forall expression.
             The values are the second arguments of suchthat expressions.
             a variable not in a suchthat expression has null for a value.
@@ -165,6 +167,6 @@ class HalfNaturalRule(NaturalRuleBase):
     def body(self, expr, var):
         return expr
 
-#Is this something worth pursuing? Providing names for rules?
+# Is this something worth pursuing? Providing names for rules?
 #   def __str__(self):
 #       return "HalfNaturalRule " + self.name + " instance"

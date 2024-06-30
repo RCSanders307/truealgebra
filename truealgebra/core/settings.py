@@ -57,7 +57,6 @@ from collections import namedtuple, defaultdict
 from truealgebra.core.err import ta_logger
 from truealgebra.core.expression import Container
 from truealgebra.core.constants import (
-    DIGITS, LETTERS, WHITE_SPACE, OPERATORS, META_DELIMITERS,
     isbindingpower, issymbolname, isoperatorname,
 )
 
@@ -147,7 +146,7 @@ class SettingsSingleton():
         a symbol names or operator names.
         The set contents represent name attributes of Container instances.
     active_parse : None
-        Points to Parse instance that will be used throughout a 
+        Points to Parse instance that will be used throughout a
         truealgebra session.
 
     """
@@ -446,5 +445,6 @@ class SettingsSingleton():
         set_ = self.categories[category]
         if name is not None:
             set_.add(name)
+
 
 settings = SettingsSingleton()

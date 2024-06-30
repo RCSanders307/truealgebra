@@ -37,7 +37,6 @@ will modify the subdict dictionary.
 from truealgebra.core.rules import Substitute, TrueThing
 from truealgebra.core.err import ta_logger
 
-from IPython import embed
 
 class TrueThingCAM(TrueThing):
     """Used with CommAssocMatch instances.
@@ -166,7 +165,6 @@ class Symbol(ExprBase):
         return self.name
 
     def match(self, vardict, subdict, pred_rule, expr):
-#       xxx = 434; embed()
         if self in vardict:
             return self.match_variable(vardict, subdict, pred_rule, expr)
         else:

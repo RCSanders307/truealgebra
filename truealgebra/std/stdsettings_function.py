@@ -10,8 +10,7 @@ from truealgebra.core.expression import (
 from truealgebra.core.parse import Parse
 
 
-from truealgebra.core.rulebase import RuleBase
-from truealgebra.core.rule import JustOneBU
+from truealgebra.core.rules import Rule, JustOneBU
 from fractions import Fraction
 from truealgebra.core.err import ta_logger
 
@@ -19,6 +18,51 @@ settings = SettingsSingleton()
 
 def eval_logger(msg):
     ta_logger.log('Numerical Evaluation Error\n' + msg)
+
+class NegativeNumber(Rule):
+    def predicate(self, expr):
+        return (
+            expr.name == '-'
+            and isinstance(expr, Container) 
+            and len(expr) == 1
+            and isinstance(expr[0], Number)
+            and (
+                isinstance(expr[0].value, int)
+                or isinstance(expr[0].value, float)
+            )
+        )
+
+    def body(self, expr):
+        return Number(-expr[0].value)
+
+negativenumber = NegativeNumber()
+
+class MakeFraction(Rule):
+    def predicate(self, expr):
+        return (
+            expr.name == '/'
+            and isinstance(expr, Container) 
+            and len(expr) == 2
+            and isinstance(expr[0], Number)
+            and isinstance(expr[0].value, int)
+            and isinstance(expr[1], Number)
+            and isinstance(expr[1].value, int)
+        )
+
+    def body(self, expr):
+        try:
+            out = Number(Fraction(expr[0].value, expr[1].value))
+        except ZeroDivisionError:
+            eval_logger('Division by zero.')
+            out = null
+        return out
+
+makefraction = MakeFraction()
+        
+parse = Parse(
+    postrule=JustOneBU(negativenumber, makefraction)
+)
+
 
 def set_stdsettings():
     settings.reset()
@@ -77,46 +121,4 @@ def set_stdsettings():
     settings.set_categories('forall', '@') 
     settings.set_categories('forall', 'forall') 
 
-class NegativeNumber(RuleBase):
-    def predicate(self, expr):
-        return (
-            expr.name == '-'
-            and isinstance(expr, Container) 
-            and len(expr) == 1
-            and isinstance(expr[0], Number)
-            and (
-                isinstance(expr[0].value, int)
-                or isinstance(expr[0].value, float)
-            )
-        )
-
-    def body(self, expr):
-        return Number(-expr[0].value)
-
-negativenumber = NegativeNumber()
-
-class MakeFraction(RuleBase):
-    def predicate(self, expr):
-        return (
-            expr.name == '/'
-            and isinstance(expr, Container) 
-            and len(expr) == 2
-            and isinstance(expr[0], Number)
-            and isinstance(expr[0].value, int)
-            and isinstance(expr[1], Number)
-            and isinstance(expr[1].value, int)
-        )
-
-    def body(self, expr):
-        try:
-            out = Number(Fraction(expr[0].value, expr[1].value))
-        except ZeroDivisionError:
-            eval_logger('Division by zero.')
-            out = null
-        return out
-
-makefraction = MakeFraction()
-        
-parse = Parse(
-    postrule=JustOneBU(negativenumber, makefraction)
-)
+    settings.active_parse = parse

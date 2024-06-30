@@ -1,8 +1,8 @@
-from truealgebra.core.rulebase import RuleBase
+from truealgebra.core.rules import Rule
 from truealgebra.core.expression import Number, CommAssoc
 
 
-class EvalCommAssocBase(RuleBase):
+class EvalCommAssocBase(Rule):
     def __init__(self, *args, **kwargs):
         self.name = kwargs['name']
         self.ident = kwargs['ident']

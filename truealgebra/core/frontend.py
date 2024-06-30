@@ -5,6 +5,7 @@ from truealgebra.core.expression import Assign, Container
 from truealgebra.core.err import ta_logger
 from truealgebra.core.abbrv import isNu
 
+
 class HistoryRule(Rule):
     bottomup = True
 
@@ -12,7 +13,6 @@ class HistoryRule(Rule):
         self.frontend = kwargs['frontend']
 
         super().__init__(*args, **kwargs)
-
 
     def predicate(self, expr):
         return (
@@ -86,18 +86,18 @@ class FrontEnd():
         self.assign_rules[0].active = True
         self.active_assign_rule = self.assign_rules[0]
         self.default_rule = default_rule
-        self.mute=mute
+        self.mute = mute
 
         self.session_rules = RulesBU()
+
         class SessionRule(NaturalRule):
             parse = self.parse
-        self.SessionRule = SessionRule
 
+        self.SessionRule = SessionRule
         self.hold_assign = hold_assign  # If True, hold assign_rules.
         self.hold_default = hold_default  # If True, hold default_rules.
         self.hold_session = hold_session  # If True, hold session_rules.
         self.hold_all = hold_all  # If True, hold all rules.
-
 
     def create_session_rule(self, *args, **kwargs):
         """ parse should NOT be a parameter
@@ -105,11 +105,10 @@ class FrontEnd():
         natural_rule = self.SessionRule(*args, **kwargs)
         self.session_rules.rule_list.append(natural_rule)
 
-
     def __call__(
         self, txt, hold_assign=False, hold_default=False, hold_session=False,
         hold_all=False, mute=False, apply=None
-        ):
+    ):
         mp = meta_parser(txt)
         for ex in mp:
             self.post_parser(
@@ -120,11 +119,11 @@ class FrontEnd():
     def post_parser(
             self, expr, hold_assign, hold_default, hold_session, hold_all,
             mute, apply,
-        ):
+    ):
         expr = self.history_rule(expr)
 
         if (
-            not self.hold_assign 
+            not self.hold_assign
             and not hold_assign
             and not self.hold_all
             and not hold_all
@@ -132,7 +131,7 @@ class FrontEnd():
             expr = self.active_assign_rule(expr)
 
         if (
-            not self.hold_default 
+            not self.hold_default
             and not hold_default
             and not self.hold_all
             and not hold_all
