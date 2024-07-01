@@ -1,8 +1,8 @@
 from truealgebra.core.expression import (
     ExprBase, Number, Container, CommAssoc
 )
-from truealgebra.core.rulebase import RuleBase
-from truealgebra.core.rule import JustOne, JustOneBU, Rules, RulesBU
+#from truealgebra.core.rulebase import RuleBase
+from truealgebra.core.rules import Rule, JustOne, JustOneBU, Rules, RulesBU
 from truealgebra.core.abbrv import isNu, isCo, num0, num1
 
 from truealgebra.std.eval import evalmathsingle, evalmathdouble, math
@@ -338,7 +338,7 @@ class PseudoPlus:
         self.items = new_items
 
 
-class ConvertTo(RuleBase):
+class ConvertTo(Rule):
     """Facilitate algebraic simplification of TrueAlgebra expressions.
 
     Star-power-plus Form
@@ -475,7 +475,7 @@ convert2starpwr_bu = ConvertTo(bottomup=True)
 
 
 
-class ChainBase(RuleBase):
+class ChainBase(Rule):
     """Creates a chain of methods/functions to apply to an expression.
 
     This is a concrete base class that by itself is not useful.
@@ -518,7 +518,7 @@ class StarPwrModify(ChainBase):
 
     StarPwrModify vs StarPwrModifier
     ================================
-    StarPwrModify is a RuleBase subclass, with predicate and base methods that a user
+    StarPwrModify is a Rule subclass, with predicate and base methods that a user
     does not need to overwrite. A StarPwrModify instance contains instances of 
     StarPwrModifier subclasses.
 
@@ -728,7 +728,7 @@ step2_bu = JustOneBU(
 
 # Step 3
 # ======
-class ConvertToDiv(RuleBase):
+class ConvertToDiv(Rule):
     def predicate(self, expr):
         return isSP(expr)
 
@@ -777,7 +777,7 @@ class ConvertToDiv(RuleBase):
         return complex_list, positive_list, negative_list
 
 
-class ConvertPlusBack(RuleBase):
+class ConvertPlusBack(Rule):
     def predicate(self, expr):
         return isPl(expr)
 

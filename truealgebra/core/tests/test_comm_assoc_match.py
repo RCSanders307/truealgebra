@@ -1,11 +1,9 @@
-from truealgebra.core.rulebase import RuleBase
-from truealgebra.core.rule import RulesBU
+from truealgebra.core.rules import Rule, RulesBU
 from truealgebra.core.expression import (
     CommAssoc, Number, Container, Symbol, CommAssocMatch,
     null, true, false, any__
 )
 import pytest
-#import truealgebra.std.settings
 
 
 class Num:
@@ -78,7 +76,7 @@ pred = Pred()
 
 
 # Predicate rules
-class IsIntRule(RuleBase):
+class IsIntRule(Rule):
     def predicate(self, expr):
         return (isinstance(expr, Container)
                 and expr.name == 'isint'
@@ -91,7 +89,7 @@ class IsIntRule(RuleBase):
             return false
 
 
-class IsRealRule(RuleBase):
+class IsRealRule(Rule):
     def predicate(self, expr):
         return (isinstance(expr, Container)
                 and expr.name == 'isreal'
@@ -107,7 +105,7 @@ class IsRealRule(RuleBase):
             return false
 
 
-class HasOneRule(RuleBase):
+class HasOneRule(Rule):
     def predicate(self, expr):
         return (
             isinstance(expr, Container)

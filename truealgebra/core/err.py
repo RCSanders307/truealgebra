@@ -6,16 +6,17 @@ This module is not complete and requires more work and testing.
 There will be four options for a user with a TALogger instance.
 
 print
-    An error message is printed out (on stdout). This is the default, which is 
-    ideal for users of TrueAlgebra in an interactive session such as Jupyter or ipython.
+    An error message is printed out (on stdout). This is the default, which is
+    ideal for users in interactive session such as Jupyter or ipython.
     The user will immediately see the error message printed on their screen
     after the error occurs.
 
-    The primary intended purpose of TrueAlgebra is for use in interactive sessions, 
-    or in the creation of documents using Jupyter or sphinx (with ipython directives)
+    TrueAlgebra is designed for use in interactive sessions, or in the
+    creation of documents using Jupyter or sphinxi (with ipython directives)
 
 makeexception
-    A TrueAlgebraError exception is raised. Intended for use in TrueAlgebra scripts.
+    A TrueAlgebraError exception is raised.
+    Intended for use in TrueAlgebra scripts.
 
 mute
     No printing or raising TrueAlgebraError exceptions.
@@ -33,11 +34,14 @@ stderr_handler = logging.StreamHandler(sys.stderr)
 logger.handlers = [stderr_handler]
 logger.setLevel(logging.ERROR)
 
+
 def print_error(msg):
     print('TRUEALGEBRA ERROR!\n' + msg)
 
+
 def mute(msg):
     pass
+
 
 # log_dict can probably be done away with
 log_dict = dict()
@@ -45,6 +49,7 @@ log_dict['error'] = logger.error
 log_dict['exception'] = logger.exception
 log_dict['print'] = print_error
 log_dict['mute'] = mute
+
 
 class TrueAlgebraError(Exception):
     """Raise when TrueAlgebra Error is to cause session to crash and burn."""
@@ -62,6 +67,7 @@ class TALogger:
 
     def set_make_exception(self):
         self.make_exception = True
+
     def clear_make_exception(self):
         self.make_exception = False
 
@@ -72,5 +78,5 @@ class TALogger:
         else:
             print(complete_msg)
 
-ta_logger = TALogger(log_dict, 'print')
 
+ta_logger = TALogger(log_dict, 'print')

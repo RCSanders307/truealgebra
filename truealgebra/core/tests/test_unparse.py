@@ -4,7 +4,7 @@ from truealgebra.core.unparse import (
 from truealgebra.core.settings import SettingsSingleton
 from truealgebra.core.expression import CommAssoc, Symbol, Null, End
 from truealgebra.core.abbrv import Sy, Co, Nu
-from truealgebra.core.rulebase import RuleBase
+from truealgebra.core.rules import Rule
 from truealgebra.core.parse import Parse
 import pytest
 
@@ -38,7 +38,7 @@ def settings(scope='module'):
 
 @pytest.fixture
 def flatten(scope='module'):
-    class Flatten(RuleBase):
+    class Flatten(Rule):
         def predicate(self, expr):
             return isinstance(expr, CommAssoc)
 
@@ -82,7 +82,7 @@ def readspecial(SpecialObject, settings):
 @pytest.mark.parametrize(
     "string",
     [
-        '+ b',
+        '+ bj',
         'a *',
         'a - b',
         '+ (a - b)',

@@ -1,9 +1,9 @@
 from truealgebra.core.abbrv import Sy, Nu, Co, Asn
 from truealgebra.core.expression import CommAssoc, Assign, true, false
 from truealgebra.core.frontend import FrontEnd, AssignRule, HistoryRule
-from truealgebra.core.rulebase import RuleBase, placebo_rule
-from truealgebra.core.rule import RulesBU, NaturalRule
-from truealgebra.core.parse import Parse
+from truealgebra.core.rules import Rule, RulesBU, donothing_rule
+from truealgebra.core.naturalrules import NaturalRule
+from truealgebra.core.parse import parse, Parse
 from truealgebra.core.settings import SettingsSingleton
 import pytest
 
@@ -26,6 +26,8 @@ def settings(scope='module'):
     settings.set_categories('forall', '@')
     settings.set_categories('forall', 'forall')
 
+    settings.active_parse = parse
+
     yield settings
     settings.reset()
 
@@ -33,37 +35,7 @@ def settings(scope='module'):
 parse = Parse()
 
 
-class IsInt(RuleBase):
-    def predicate(self, expr):
-        return (
-            expr.name == 'isint'
-            and isinstance(expr, Co)
-            and len(expr) == 1
-        )
-
-    def body(self, expr):
-        if isinstance(expr[0], Nu) and isinstance(expr[0].value, int):
-            return true
-        else:
-            return false
-
-
-isint = IsInt()
-
-
-class Rule0(NaturalRule):
-    parse = parse
-    predicate_rule = isint
-    var_defn = NaturalRule.create_var_dict(
-        ' @x | isint(x); @y | isint(y); @z | isint(z) ', parse
-    )
-
-
-rule0 = Rule0(
-    pattern=' star(x, y, z) ',
-    outcome=' star(y, x, z) ',
-)
-
+rule0 = NaturalRule()
 
 # Test HistoryRule
 # ================
@@ -217,7 +189,7 @@ def test_frontend_init_default():
     assert fe.assign_rules[0].frontend == fe
     assert fe.assign_rules[0].active is True
     assert fe.active_assign_rule == fe.assign_rules[0]
-    assert fe.default_rule == placebo_rule
+    assert fe.default_rule == donothing_rule
     assert fe.mute is False
     assert fe.session_rules.rule_list == list()
     assert isinstance(fe.session_rules, RulesBU)
@@ -278,13 +250,15 @@ def test_frontend_print_expr(capsys):
 #    session_rule chages Symbol 's' to 'ss'
 #    default_rule changes Symbol 'd'  to 'dd'
 #    Each test shows what rule(s) a hold parameter controls
-class Default(RuleBase):
-    """ RuleBase subclass used for tests."""
+class Default(Rule):
+    """ Rule subclass used for tests."""
     bottomup = True
 
-    def postinit(self, targetname, replacename):
-        self.targetname = targetname
-        self.replacename = replacename
+    def __init__(self, *args, **kwargs):
+        self.targetname = args[0]
+        self.replacename = args[1]
+
+        super().__init__(*args, **kwargs)
 
     def predicate(self, expr):
         return isinstance(expr, Sy) and expr.name == self.targetname
@@ -311,7 +285,7 @@ def test_frontend_init_no_hold(settings):
     assert fe.history[1] == parse('f(aa, ss, dd)')
 
 
-def test_frontend_init_hold_assign():
+def test_frontend_init_hold_assign(settings):
     """instance attribute hold_assign set to True;
     the assign_rule is not used.
     """
@@ -371,7 +345,7 @@ def test_frontend_init_hold_all(settings):
 # ==================================
 # These tests are done in a similar manner as the previous four tests.
 #  The difference is the hold parameters are for the __call__ method.
-def test_frontend_call_hold_assign():
+def test_frontend_call_hold_assign(settings):
     """instance attribute hold_assign set to True;
     the assign_rule is not used.
     """

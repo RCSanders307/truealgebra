@@ -1,22 +1,22 @@
 from truealgebra.core.expression import Symbol, Number, Container, Null
-from truealgebra.core.rulebase import RuleBase
+from truealgebra.core.rules import Rule
 
 null = Null()
 
-class PathRule(RuleBase):
+class PathRule(Rule):
     def predicate(self, expr):
         return isinstance(expr, Symbol)
     def body(self, expr):
         return Symbol('x')
 
-class SymbolXRule(RuleBase):
+class SymbolXRule(Rule):
     """ Convert all symbols to the symbol x. """
     def predicate(self, expr):
         return isinstance(expr, Symbol)
     def body(self, expr):
         return Symbol('x')
 
-class Number7Rule(RuleBase):
+class Number7Rule(Rule):
     """ Convert all numbers to the number 7. """
     def predicate(self, expr):
         return isinstance(expr, Number)

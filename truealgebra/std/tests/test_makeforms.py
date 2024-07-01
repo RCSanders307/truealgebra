@@ -1,8 +1,19 @@
-# import abbreviations
 from truealgebra.core.abbrv import Sy, Co, Nu, CA
 from truealgebra.core.expression import null
-from truealgebra.core.rule import RuleBase, RulesBU
-from truealgebra.std.std_settings import parse
+from truealgebra.core.rules import Rule, RulesBU
+#from truealgebra.std.std_settings import parse
+
+from truealgebra.std.stdsettings_function import set_stdsettings
+from truealgebra.core.settings import settings
+
+# The statement below generates an error from std.eval
+# the import must be done inside of a fixture that has the proper environment
+#   @pytest.fixture
+#   def mf(stdsettings, scope='module'):
+#       from truealgebra.std import makeforms
+#       return makeforms
+
+# then StarPwrModify can be accessed by mf.StarPwrModify
 from truealgebra.std.makeforms import (
     SP, PSP, Pl, PPl, isSP, isPl, spfinalcheck, plfinalcheck,
     StarPwr, PseudoStarPwr, Plus, PseudoPlus, ConvertTo, ChainBase,
@@ -18,6 +29,16 @@ import pytest
 #from IPython import embed
 #import ipdb
 
+@pytest.fixture
+def stdsettings(scope='module'):
+    yield set_stdsettings()
+    settings.reset()
+
+
+@pytest.fixture
+def makeforms(stdsettings, scope='module'):
+    from truealgebra.std import makeforms
+    return makeforms
 
 # =============================
 # Expression and Pseudo Classes
@@ -66,7 +87,7 @@ def test_starpwr_copy():
 
 @pytest.fixture
 def tmprulebu():
-    class TmpRuleBU(RuleBase):
+    class TmpRuleBU(Rule):
         def predicate(self, expr):
             return isinstance(expr, Sy) or isSP(expr) or isPl(expr)
 
@@ -885,11 +906,10 @@ def test_plrechecksp():
 #
 
 
-
-
-
 # Functional and Integrtion Tests
 # ===============================
+    
+
 @ pytest.mark.parametrize(
     'input_str, correct_str',
     [
@@ -908,9 +928,9 @@ def test_plrechecksp():
         (' sin(x) - sin(x + x - x) ', ' 0 ' ),
     ]
 )
-def test_functional(input_str, correct_str):
-    input = parse(input_str)
-    correct = parse(correct_str)
+def test_functional(input_str, correct_str, stdsettings):
+    input = settings.active_parse(input_str)
+    correct = settings.active_parse(correct_str)
 
     out = toform0(input)
 

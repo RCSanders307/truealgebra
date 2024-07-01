@@ -1,12 +1,31 @@
 from truealgebra.core.abbrv import *   # import abbreviations
 from truealgebra.core.expression import true, false
-from truealgebra.std.predicate import(
-    number_type_rules, logic_rules, comparison_rules, if_rules,
-)
-from truealgebra.std.std_settings import parse
+#from truealgebra.std.predicate import(
+#    number_type_rules, logic_rules, comparison_rules, if_rules,
+#)
+#from truealgebra.std.std_settings import parse
+from truealgebra.std.stdsettings_function import set_stdsettings
+from truealgebra.core.settings import settings
 from fractions import Fraction
 import pytest
 from IPython import embed
+
+
+@pytest.fixture
+def stdsettings(scope='module'):
+    yield set_stdsettings()
+    settings.reset()
+    
+
+@pytest.fixture
+def predicate(stdsettings, scope='module'):
+    from truealgebra.std import predicate
+    return predicate
+
+
+@pytest.fixture
+def parse(stdsettings, scope='module'):
+    return settings.active_parse
 
 
 # ======================
@@ -46,10 +65,10 @@ from IPython import embed
         'isreal, complex',
     ]
 )
-def test_number_type_rules(string, correct):
+def test_number_type_rules(string, correct, predicate, parse):
     expr = parse(string)
 
-    out = number_type_rules(expr)
+    out = predicate.number_type_rules(expr)
 
     assert out == correct
 
@@ -69,8 +88,8 @@ def test_number_type_rules(string, correct):
         'isreal, Fraction',
     ]
 )
-def test_number_type_rules_fraction(expr, correct):
-    out = number_type_rules(expr)
+def test_number_type_rules_fraction(expr, correct, predicate):
+    out = predicate.number_type_rules(expr)
 
     assert out == correct
 
@@ -111,10 +130,10 @@ def test_number_type_rules_fraction(expr, correct):
         'not 5',
     ],
 )
-def test_logic_rules(string, correct):
+def test_logic_rules(string, correct, predicate, parse):
     pattern = parse(string)
 
-    outcome = logic_rules(pattern)
+    outcome = predicate.logic_rules(pattern)
 
     outcome == correct
 
@@ -177,10 +196,10 @@ def test_logic_rules(string, correct):
         'lesserthanequal, symbols',
     ]
 )
-def test_comparison_rules(string, correct):
+def test_comparison_rules(string, correct, predicate, parse):
     pattern = parse(string)
 
-    outcome = comparison_rules(pattern)
+    outcome = predicate.comparison_rules(pattern)
 
     outcome == correct
 
@@ -203,9 +222,9 @@ def test_comparison_rules(string, correct):
         'elif false',
     ]
 )
-def test_if(string, correct_string):
+def test_if(string, correct_string, predicate, parse):
     ex = parse(string)
     correct = parse(correct_string)
-    out = if_rules(ex)
+    out = predicate.if_rules(ex)
 
     assert out == correct

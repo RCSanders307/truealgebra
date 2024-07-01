@@ -34,7 +34,7 @@ A match method will return True or False and in some cases
 will modify the subdict dictionary.
 
 """
-from truealgebra.core.rulebase import Substitute, TrueThing
+from truealgebra.core.rules import Substitute, TrueThing
 from truealgebra.core.err import ta_logger
 
 
