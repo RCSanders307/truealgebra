@@ -174,7 +174,7 @@ pred_rule = IsInt(bottomup=True)
 vardict = {
     Symbol('c') : Container('isint', (Symbol('c'),)),
     Symbol('d') : Container('isint', (any__,)),
-    Symbol('e') : null,
+    Symbol('e') : true,
 }
 
 

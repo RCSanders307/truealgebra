@@ -129,11 +129,11 @@ def test_truethinghnr(settings):
 @pytest.mark.parametrize(
     'varstring, vardict',
     [
-        (' forall(x, 7, y, sin(z)) ', {Sy('x'): null, Sy('y'): null}),
+        (' forall(x, 7, y, sin(z)) ', {Sy('x'): true, Sy('y'): true}),
         ('suchthat(forall(x), isint(x))', {Sy('x'): Co('isint', (Sy('x'),))}),
         (
             'forall(x, y); forall(z) ',
-            {Sy('x'): null, Sy('y'): null, Sy('z'): null}
+            {Sy('x'): true, Sy('y'): true, Sy('z'): true}
         ),
     ],
     ids=[
@@ -161,7 +161,6 @@ def test_create_vardict_exception(capsys, settings):
 def test_naturalrulebase_default(settings):
     assert NaturalRuleBase.predicate_rule is donothing_rule
     assert NaturalRuleBase.pattern is null
-    assert NaturalRuleBase.varstring == ''
     assert NaturalRuleBase.vardict == dict()
     assert type(NaturalRuleBase.vardict) is types.MappingProxyType
 
@@ -191,31 +190,28 @@ def test_naturalrulebase_init_pattern_error(badsettings, capsys):
     assert 'settings.active_parse must point to a Parse instance' in output.out
 
 
-def test_naturalrulebase_init_varstring(settings):
-    rule = NaturalRule(varstring='forall(x)')
+def test_naturalrulebase_init_vardict(settings):
+    rule = NaturalRule(vardict='forall(x)')
 
-    assert rule.vardict == {Sy('x'): null}
+    assert rule.vardict == {Sy('x'): true}
 
 
 def test_naturalrulebase_convert_classvar(settings):
     class NewClass(NaturalRule):
-        varstring = 'foral(x, y)'
+        vardict = 'forall(x, y)'
 
     newinstance = NewClass()
 
-    assert NewClass.varstring == ''
-    assert NewClass,vardict == {Sy('x'): null, Sy('y'): null}
-    assert newinstance,vardict == {Sy('x'): null, Sy('y'): null}
+    assert NewClass.vardict == {Sy('x'): true, Sy('y'): true}
+    assert newinstance.vardict == {Sy('x'): true, Sy('y'): true}
 
 
 def test_naturalrulebase_convert_classvar_2(settings):
     class NewClass(NaturalRule):
-        varstring = ''
+        vardict = ''
 
     newinstance = NewClass()
 
-    assert NewClass.varstring == ''
-    assert newinstance.varstring == ''
     assert NewClass.vardict ==  dict()
     assert newinstance.vardict ==  dict()
 
@@ -329,7 +325,7 @@ def test_naturalrule_tbody(settings):
 # ==============================
 def test_naturalrule_functional_case_0(settings):
     rule = NaturalRule(
-        varstring=" forall(ex0, ex1, ex2, ex3) ",
+        vardict=" forall(ex0, ex1, ex2, ex3) ",
         pattern=" (ex0 = ex1) * (ex2 = ex3) ",
         outcome=" ex0 * ex2 = ex1 * ex3  ",
     )
@@ -346,7 +342,7 @@ def test_naturalrule_functional_case_0(settings):
 def test_naturalrule_functional_case_12(settings):
     rule = NaturalRule(
         predicate_rule=predrule,
-        varstring=" suchthat( forall(__x), isint(__x)); forall(__1) ",
+        vardict=" suchthat( forall(__x), isint(__x)); forall(__1) ",
         pattern=" star(__x, 3.7, __1) ",
         outcome=" star( 3.7, __x, __1) ",
     )
@@ -384,7 +380,7 @@ def test_naturalrule_functional_case_3(settings):
 
 def test_naturalrule_functional_case_4(settings):
     rule = NaturalRule(
-        varstring=" suchthat( forall(x), isint(x)); forall(y) ",
+        vardict=" suchthat( forall(x), isint(x)); forall(y) ",
         predicate_rule=predrule,
         pattern=" star(x, y, 3) ",
         outcome=" f(3, x, y) ",
@@ -411,7 +407,7 @@ def test_hnr_varnames(settings):
 @pytest.fixture
 def HNR0(settings):
     class HNR0(HalfNaturalRule):
-        varstring = (
+        vardict = (
             ' suchthat(forall(x), isint(x)); '
             ' suchthat(forall(y), isreal(y)); '
             ' forall(_) '

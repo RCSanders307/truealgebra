@@ -175,9 +175,26 @@ class Symbol(ExprBase):
 
         The input parameters and purpose are described in the module docstring.
         """
+#       if self in subdict:
+#           return subdict[self] == expr
+#       elif vardict[self]:
+#           pred_subdict = {self: expr, any__: expr}
+#           sub_rule = Substitute(subdict=pred_subdict, bottomup=True)
+#           pred_eval = pred_rule(sub_rule(vardict[self]))
+#           if pred_eval == true:
+#               subdict[self] = expr
+#               return True
+#           else:
+#               return False
+#       else:
+#           subdict[self] = expr
+#           return True
         if self in subdict:
             return subdict[self] == expr
-        elif vardict[self]:
+        elif vardict[self] == true:
+            subdict[self] = expr
+            return True
+        else:
             pred_subdict = {self: expr, any__: expr}
             sub_rule = Substitute(subdict=pred_subdict, bottomup=True)
             pred_eval = pred_rule(sub_rule(vardict[self]))
@@ -186,9 +203,6 @@ class Symbol(ExprBase):
                 return True
             else:
                 return False
-        else:
-            subdict[self] = expr
-            return True
 
 
 # truealgebra boolean expressions

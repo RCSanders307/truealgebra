@@ -3,7 +3,7 @@ from truealgebra.core.rules import (
 )
 from truealgebra.core.settings import settings
 from truealgebra.core.parse import meta_parser
-from truealgebra.core.expression import null, Symbol
+from truealgebra.core.expression import null, Symbol, true
 from truealgebra.core.err import ta_logger
 import types
 
@@ -47,8 +47,11 @@ class NaturalRuleBase(RuleBase):
                 'settings.active_parse must point to a Parse instance'
             )
 
-        if "varstring" in kwargs:
-            self.vardict = self.create_vardict(kwargs['varstring'])
+        if "vardict" in kwargs:
+            if isinstance(kwargs['vardict'], str):
+                self.vardict = self.create_vardict(kwargs['vardict'])
+            else:
+                self.vardict = kwargs['vardict']
 
         self.convert_classvar()
 
@@ -56,9 +59,8 @@ class NaturalRuleBase(RuleBase):
 
     @classmethod
     def convert_classvar(cls):
-        if cls.varstring:
-            cls.vardict = cls.create_vardict(cls.varstring)
-            cls.varstring = ''
+        if isinstance(cls.vardict, str):
+            cls.vardict = cls.create_vardict(cls.vardict)
 
     @classmethod
     def create_vardict(cls, string):
@@ -82,7 +84,7 @@ class NaturalRuleBase(RuleBase):
                 if ex.name in settings.categories['forall']:
                     for item in ex.items:
                         if isinstance(item, Symbol):
-                            vardict[item] = null
+                            vardict[item] = true
                 elif ex.name in settings.categories['suchthat']:
                     if (
                         ex[0].name in settings.categories['forall']

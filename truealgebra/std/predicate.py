@@ -8,7 +8,7 @@ from fractions import Fraction
 # =================
 class HalfNaturalRulePred(HalfNaturalRule):
     """Base class, defines one variable."""
-    varstring = ' @ex '
+    vardict = ' @ex '
 
 
 class IsNumber(HalfNaturalRulePred):
@@ -90,7 +90,7 @@ number_type_rules = JustOne(
 # Logic Rules
 # ===========
 class NaturalRulePredicate(NaturalRule):
-    varstring = ' @ex '
+    vardict = ' @ex '
 
 
 not_true = NaturalRulePredicate(
@@ -228,7 +228,7 @@ predicate_rule_bu = JustOneBU(
 # ========
 
 class IfRule(NaturalRule):
-    varstring = ' forall(ex0, ex1) '
+    vardict = ' forall(ex0, ex1) '
 
 if_ = IfRule(
     pattern = ' if(true, ex0) ',
