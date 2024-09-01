@@ -6,33 +6,38 @@ To provide TrueAlgebra examples in a python script, modify the sys.path and impo
 .. ipython::
 
     In [1]: from truealgebra.core.rules import (
-       ...:     Rule, Rules, RulesBU, JustOne, JustOneBU
+       ...:     Rule, Rules, RulesBU, JustOne, JustOneBU, Substitute,
+       ...:     donothing_rule 
        ...: )
        ...: from truealgebra.core.naturalrules import (
-       ...:     NaturalRule, HalfNaturalRule
+       ...:     NaturalRuleBase, NaturalRule, HalfNaturalRule
        ...: )
        ...: from truealgebra.core.expression import (
        ...:     ExprBase, Symbol, Number, true, false,
        ...:     Container,Restricted, Assign, Null, End)
        ...: from truealgebra.core.settings import settings
        ...: from truealgebra.core.parse import parse
+       ...: from truealgebra.core.unparse import unparse 
        ...:
        ...: settings.active_parse = parse 
        ...: settings.set_symbol_operators("and", 75, 75)
+       ...: ExprBase.set_unparse(unparse) 
 
 
-RuleBase
-========
+RuleBase Class
+==============
 RuleBase is an abstract class that provides the basis for all truealgebra rules.
 All RuleBase objects are called rules or truealgebra rules.
 
-Rule, NaturalRule, and HalfNaturalRule are important RuleBase subclasses used to create rules that
-modify truealgebra expressions. The Rules and JustOne subclasses create rules that apply groups
-of other rules to truealgebra expressions.
+Rule, NaturalRule, and HalfNaturalRule are important RuleBase subclasses used
+to create rules that modify truealgebra expressions. The Rules and JustOne
+subclasses create rules that apply groups of other rules to truealgebra
+expressions.
 
-Never say never, but it is highly unlikely at least in the near future that additional major
-subclasses of RuleBase will be added to TrueAlgebra. 
-The five subclasses mentioned in the above paragraph should be sufficient for creating rules.
+Never say never, but it is highly unlikely at least in the near future that
+additional major subclasses of RuleBase will be added to TrueAlgebra. 
+The five subclasses mentioned in the above paragraph should be sufficient
+for creating rules.
 
 __call__ Method
 ---------------
@@ -69,36 +74,76 @@ takes a truealgebra expression as an argument, the steps are:
 
     * step 5. The __call__ method returns the result of the tbody method.
 
-donothing Rule
-=======
-The donothing rule is the instance of Rule. The donothing rule has all the featurs of a rule
-but it always does nothing
+Rule Class
+==========
+Rule is a subclass of RuleBase. Rule and its subclasses are the primary means
+of generating rules.
 
-Example
-=======
-Rule is a subclass of RuleBase and is the primary means of generating rules.
+All Rule instanace have a predicate method, that is called by its tpredicate 
+method. The predicate method detemrines if the rule's tbody method will be 
+applied to the input expression.
+
+There is also a body meod which is called by the tbody method. The output of
+the body method will be the output of the tbody body and in may cases the
+output of the rule itself.
+
+.. _donothing-tag:
+
+donothing_rule Rule
+-------------------
+The  donothing_rule rule is a Rule instance. All Rule instances have the same charachteristics
+as  donothing_rule. A  donothing_rule rule always returns its  input expressions, unchanged.
+The donothing_rule always does nothing.
+
+The  donothing_rule rule is sometimes useful as a default rule, For example it is
+the value for the NaturalRule predicate_rule attribute which act as a default
+for NaturalRule instances.
+
+How to Create Rule Instances
+----------------------------
+To create rules that actually do something, unlike the  donothing_rule rule, first
+create a Rule subclass. Three methods are over written below in the IsSym class.
+
+__init__ method
+    The __init__ method allows for passing arguments for use by the rule.
+    The last line of the __init__ metod in the example below is very imporatant
+    and must always be included, otherwise the __init__ methods of parent classes
+    will not be executd.
+predicate method
+    The predicate method requires one positional parameter, which will be the 
+    input expression of the rule. The method must returns either True or False.
+    If True, the body method will be involked.
+body method
+    The predicate method requires one positional parameter, which will be the 
+    input expression of the rule. The method must return a truealgebra
+    expression. If this method is involked, its output will be the output
+    of the rule.
 
 .. ipython::
 
     In [1]: class IsSym(Rule):
        ...:     def __init__(self, *args, **kwargs):
        ...:         self.names = args
+       ...:         # The line below must be included
        ...:         super().__init__(*args, **kwargs)
        ...:
-       ...:     def predicate(self, expr):
+       ...:     def predbcate(self, expr):  # expr is rule input expresion
+       ...:         # This method must return True or False
        ...:         return (
        ...:             isinstance(expr, Container)
        ...:             and expr.name == 'issym'
        ...:             and len(expr.items) > 0
        ...:         )
        ...:
-       ...:     def body(self, expr):
+       ...:     def body(self, expr):  # expr is rule input expresion
        ...:         if isinstance(expr[0], Symbol) and expr[0].name in self.names:
        ...:             return Symbol('true')
        ...:         else:
        ...:             return Symbol('false')
+       ...:         # This method must return a truealgebra expression 
 
-Next create the rule
+
+The example below creates and tests the rule issym_rule from the class IsSym.
 
 .. ipython::
 
@@ -126,8 +171,6 @@ Next create the rule
        ...: print('    Apply the rule issym_rule to the truealgebra expression.')
        ...: print('issym_rule(expr) =  ', issym_rule(expr))
        ...: print('    The result is the truealgebra expression "false".')
-       ...: 
-       ...:
 
 In the above first two cases, the rule predicate method evaluated to True and
 as a result, the body method evaluated the input algebraic expression and the rule returned
@@ -135,52 +178,26 @@ the result. However in the third case, the predicate method returned False
 resulting in the rule returning its input expression unevaluated by the body method.
 expression.
 
+Logic and Predicate Rules
+=========================
+Predicate rules are rules that evaluaate truealgebra expressions that represent
+logic to either ``true`` or ``false``.
+The Symbol ``true`` represents  mathematical truth and the Symbol ``false``
+represents mathematical falsehood. Lower case names are used to prevent
+confusion with python True and False.
 
-NaturalRule
-===========
+A logical expression would be expressions such as `` 3 < 7 ``, ``true and false``,
+or ``isint(6)`` that are mathematically meaningful to be evaluated to true or false..
+When a predicate rule cannot evaluate an input expression to either
+true or false, it returns the input expression.
 
-Instatiation
-------------
-
-.. code-block:: python
-    :linenos:
-
-    <new rule> = NaturalRule(
-        predicate_rule=<a predicate rule>
-        pattern=<string that can be parsed>
-        vardict=<string that can be parsed>
-        outcome=<string thatcan be parsed>
-        outcome_rule=<a rule>
-    )
-
-Look at each of the parameters:
-
-    * **predicate_rule**
-    * **pattern**
-
-
-Predicate rules
----------------
-TrueAlgebra uses the Symbol ``true`` to represent  mathematical truth and the Symbol ``false``
-represents mathematical falsehood. Lower case names are used to prevent confusion with
-python True and False.
-
-The pertinent definition here of a predicate "..is a property, characteristic,
-or attribute that may be affirmed or denied of something." (the free dictionary).
-
-A **predicate expression** is a Container object with a name that connotes some
-specific property, characteristic, or attribute of its one or more arguments.
-
-A predicate rule evaluates a one or more predicate expressions to true or false.
-All other expressions are returned without evaluation by a predicate rule.
-
-In the example below, the predicate rule ``isintrule`` evaluates predicate expressions
+In the example below, the predicate rule ``isintrule`` evaluates expressions
 of the form ``isint(x)``. The evaluation is to ``true`` if ``x`` is an
 integer and ``false`` otherwise. ``isintrule`` will return but not 
 evaluate any other expressions.
 
 Predicate Rule isintrule
-++++++++++++++++++++++++
+------------------------
 The ``isintrule`` below will make a predicate evaluation of the ``isint``
 predicate expression. This determines if the contents of ``isint`` is an
 integer number.
@@ -225,7 +242,7 @@ predicate and returns ``true``. In case 2, the rule returns ``false``.
 In case 3, the rule makes no evaluation and returns its input expression.
 
 Predicate Rule lessthanrule
-+++++++++++++++++++++++++++
+---------------------------
 The ``lessthanrule`` below will make a predicate evaluation of the ``<``
 predicate expression. This determines if the first argument of ``<`` is larger than
 its second argument. Both arguments must be numbers.
@@ -266,6 +283,10 @@ its second argument. Both arguments must be numbers.
        ...:     lessthanrule(parse('  x**2  '))
        ...: )
 
+Predicate Rule andrule
+------------------------
+Next look at the andrule which evaluates expressions such as ``true and false``.
+
 .. ipython::
 
     In [1]: class And(Rule):
@@ -304,23 +325,317 @@ its second argument. Both arguments must be numbers.
        ...:     lessthanrule(parse('  x**2  '))
        ...: )
 
-Create ``predrule``
+Combine Multiple Prredicate Rules
+---------------------------------
+Create the predicate rule ``predrule`` by combining isintrule, lessthanrule,
+and andrule.
 
 .. ipython::
 
     In [1]: predrule = JustOneBU(isintrule, lessthanrule, andrule) 
 
-The end.
+The predrule will be used in the examples below.
 
-Example 1
+NaturalRule Class
+=================
+The name 'NaturualRule' for this class is used because the mathematical-like syntax of the 
+pattern, vardict and outcome arguments used to instantiate the rules. 
+
+.. rubric:: tpredicate Method
+
+The tpredicate method compares its pattern attribute to the input expression.
+If the pattern matches the input expression, the tbody method is involked
+
+.. rubric:: tbody Method
+
+Replaces any variables in the outcome expression with the appropriate expressions from the pattern
+matching process. The apply the outcome_rule to the outcome expression.
+
+NaturalRule instance trys to match its pattern attribute to the input expression. 
+
+.. rubric:: Pattern Matching
+
+For a pattern to match the input expressions, both expressions and all of the subexpressions must essentially be the same or equal to each other. 
+
+However a natural rule can have symbols called variables that can match expressions other than themselves. 
+
+Variables are defined by the vardict attribute which is a python dictionary. This dictionary also defines a preicate expression for eavery variable  that the matching expression must satisfy. 
+
+If the pattern contains variaable then the varuiables can match subexpressions of the input expression.
+
+Natural Rule Example
+--------------------
+In order to illustrate more features of a NaturalRule rule, the following example is a bit
+contrived.
+
+
+.. ipython::
+
+    In [1]: natrule = NaturalRule( 
+       ...:     predicate_rule = predrule,
+       ...:     vardict = (
+       ...:         'forall(e0, e1);'
+       ...:         'suchthat(forall(n0), isint(n0) and (n0 < 7))'
+       ...:     ), 
+       ...:     pattern='  (e0 = e1) + (x = n0)  ',
+       ...:     outcome='  (eo + x) = (e1 + n0)  ',
+       ...: )
+
+
+
+Case 1
+++++++
+consider the case below where the rule ``natrule`` is applied to the ``ex1``. 
+The result, ``out1``,  of the rule is different from but algebrsically equal to ``ex1``.
+
+.. ipython::
+
+    In [1]: ex1 = parse('  (cos(theta) = exp(7)) + (x = 6)  ')
+       ...: print('ex1 =  ', ex1)
+       ...: out1 = natrule(ex1) 
+       ...: print('natrule(ex1) =  ', out1)
+
+addrule tpredicate method
+"""""""""""""""""""""""""
+Knowlege of the tpredicate method aids with debugging and understanding of how a NaturalRule rule works.
+When the tpredicate output is truthy, the tbody method is involked.
+
+.. ipython::
+
+    In [1]: truething = natrule.tpredicate(ex1) # call the tpredicate result: truething.
+       ...: print('bool(truething) =  ', bool(truething), '    , thus truething is truthy') 
+
+The tpredicate returns a truthy result when the input expression (ex1)  matches the pattern subject to 
+the conditions of the variable dictionary (vardict). Consider the following:
+
+.. ipython::
+
+    In [1]: print('     natrule.vardict =  ', natrule.vardict) 
+       ...: print('     natrule.pattern =  ', natrule.pattern) 
+       ...: print('input expression ex1 =  ') 
+
+Both the pattern and input expression have the same form with operators ``=`` and ``+`` occuring
+in the same locations.
+
+The variable dictionary has three keys which are variablse, Variables are symbols that can match
+expressions other than themselves. The two variables, ``e0` and ``e1`` point to ``true`` which
+means they are wild and can match any expression. In this case ``e0`` matches ``xxx``.
+
+The variable ``n`` in the vardict is where it gets interesting and complicated.
+
+The symbol ``x`` in the pattern is not a variable and it can only match itself, which it does with
+the ``x`` occuring in the input expresion
+
+The requirements of the addrule tpredicate method are satiffied and the tbody method gets involked.
+
+addrule tbody method
+""""""""""""""""""""
+
+.. ipython::
+
+    In [1]: print(addrule.vardict)
+       ...: bb = addrule.tpredicate(ex1) 
+       ...: print(bb) 
+       ...: print(predrule(parse(' isint(6) '))) 
+       ...: print(predrule(parse(' 6 < 7 ')))
+       ...: print(predrule(parse(' (6<7) and isint(6) '))) 
+       ...:  
+       ...: subdict = dict() 
+       ...: predresult = addrule.pattern.match( 
+       ...:     addrule.vardict, 
+       ...:     subdict, 
+       ...:     predrule, 
+       ...:     ex1, 
+       ...: ) 
+       ...: print(predresult) 
+       ...:  
+
+
+.. ipython::
+
+    In [1]: aa = parse(' x ** y ')
+       ...: print(aa) 
+       ...: print(str(aa)) 
+       ...: print(repr(aa)) 
+
+Example 2
 ---------
 
 .. ipython::
 
-    In [1]: convert_xyz = NaturalRule(
-       ...:     predicate_rule=issym_rule,
-       ...:     varstring='  suchthat(forall(xyz), issym(xyz))  ',
-       ...:     pattern='  g(xyz, 7)  ',
-       ...:     outcome='  f(7)  ',
+    In [1]: convert_test_rule = NaturalRule(
+       ...:     predicate_rule=predrule,
+       ...:     vardict=
+       ...:         '  forall(e0, e1, e2);  ' +
+       ...:         '  suctthat(forall(n0), isint(n0) and  (n0 > 7))  '
+       ...:     , 
+       ...:     pattern='  (e0 = n0) * (e1 = e2)  ',
+       ...:     outcome='  (e0 * e1) = (n0 * e2)  ',
+       ...:     #outcome_rule = flatten
        ...: )
+
+How a Naural Rule
+-----------------
+
+NaturalRule Class Attributes
+++++++++++++++++++++++++++++
+
+predicate_rule attribute
+    :ref:`donothing_rule<donothing-tag>`
+vardict attribute
+    empty dictionary
+pattern attribute
+    null expression
+outcome attribute
+    null expression
+outcome_rule attribute
+    :ref:`donothing_rule<donothing-tag>`
+
+How to Create a NaturalRule Subclass
+++++++++++++++++++++++++++++++++++++
+The quasi python code below illustrates how to create a NaturalRule subclass. A
+subclass is useful when a group of rules must be created that share
+common attributes. All of the attribute assignments below, are optional.
+
+.. code-block:: python
+    :linenos:
+
+    class NaturalRuleSubclass(NaturalRule):
+        predicate_rule = <a predicate rule>
+        vardict = <string >
+                  # after the first instance is instantiated, this class
+                  # attribute is converted to a variable dictionary
+        pattern = <string>
+                  # after the first instance is instantiated, this class
+                  # attribute is converted to a truealgebra expression
+        outcome = <string>
+                  # after the first instance is instantiated, this class
+                  # attribute is converted to a truealgebra expression
+        outcome_rule = <a truealgebra rule>
+
+How to Instantiate a NaturalRule Rule
++++++++++++++++++++++++++++++++++++++
+The quasi python code below illustrates how to create a rule from NaturalRule
+or one of its subclasses.
+All of the arguments below are optional and are converted into an instance
+attribute with the same name as the parameter.
+
+.. code-block:: python
+    :linenos:
+
+    new_rule =  NaturalRuleSubclass(
+        predicate_rule = <a predicate rule>
+        vardict = <string >
+                  # The string is converted into a variable dictionary.
+        pattern = <string>
+                  # The string is parsed into a truealgebra expression.
+        outcome = <string>
+                  # The string is parsed into a truealgebra expression.
+        outcome_rule = <a truealgebra rule>
+
+
+If any instance attribute is not assigned, then default is the
+corresponding class attribute.
+
+How NaturalRule Rule Works
+--------------------------
+
+Variable Dictionary Conversion
+++++++++++++++++++++++++++++++
+Initially a user enters a string as a vardict class attribute or an
+instantiation vardict argument. The string gets converted to a variable
+dictionary by a somewhat involved process. The variable dictionary is
+created when a NaturalRule instance is instantiated, and it remains unchanged
+afterwards.
+
+A variable dictionary is a python dictionary. The dictionary keys must be
+truealgebra Symbol instances which will be called variables. The dictionary
+values must be truealgebra expressions. The values are logic that must be 
+satisfied in order for the variable to be matched during the matching process.
+
+Conversion
+''''''''''
+The first step in the conversion is to parse the string
+The function meta_parse parses the string with line breaks and ';'
+charaters into a sequence of python expressions. Each parsed expression if it
+has proper syntax will add to the variable dictionary.
+
+In the second step an empty dictionary named vardict is defined.
+Each parsed expression is looked at for truealgebra Container objects named 
+forall and suchthat. The content of the forall and suchthat
+objects are inspected and if the syntax is correct are made into the
+variable dictionary.
+
+forall Function Example
+'''''''''''''''''''''''
+The class method create_vardict does the conversion process. This method
+is usful to a user for debugging and investigations.
+
+Below the ``vardict_string_1`` gets parsed into a  ``forall`` Container object
+that represents a mathematical function. The ``forall`` contains two symbols
+``e0`` and ``e1``. These two symbols become keys in the 
+``vardict_dict_1`` dictionary with values of ``true``.
+
+.. ipython::
+
+    In [1]: vardict_string_1 = ' forall(e0, e1) '
+       ...: vardict_1 = NaturalRule.create_vardict(vardict_string_1) 
+       ...: vardict_1 
+
+
+The variables ``e0`` and ``e1`` in ``vardict_1``, each have a value of ``true``.
+Because of the ``true``, these variables are essentially wild, to use a card playing
+term. These variables  can represent anything in the :ref:`pattern matching<matching-tag>` process of a NaturalRule
+instance..
+
+suchthat Function Example
+'''''''''''''''''''''''''
+The ``suchthat`` function below is the top level of the expression and
+contains two arguments. The first argument is a forall function with one
+argument that is a symbol.
+
+.. ipython::
+
+    In [1]: vardict_dict_2 = NaturalRule.create_vardict( 
+       ...:     '  suchthat( forall(n0),  isint(n0) and (n0 < 7) )  ' 
+       ...:  )
+       ...:  vardict_dict_2
+       ...:  
+       ...: #aa = Substitute(xx, var)(vardict_dict_1[var])
+       ...: #out = predrule(aa) 
+
+The ``vardict_dict_2`` dictionary has one key the symbol ``n0``. The value for
+that key is the logical expression  for ``n0``. The logical expression contains
+the key, which is typical.
+
+In a matching process an arbitrary expression can match ``n0`` in a pattern,
+only if the following two steps are taken:
+
+    # the arbtrary expression is substituted for ``n0`` into the logical expression.
+    # The predicate rule is then applied to the result of the previous step
+
+and the result of step 2, is ``true``.
+
+
+
+
+.. _matching-tag:
+
+Matching Process
+++++++++++++++++
+blah blah blah 
+
+.. ipython::
+
+    In [1]: pattern = parse(' n0 = e0 ')
+       ...: vardict = vardict_1 + vardict_2 
+
+Next
+
+.. ipython::
+
+    In [1]: 
+    
+
+
 
