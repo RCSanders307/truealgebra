@@ -14,13 +14,16 @@ To provide TrueAlgebra examples in a python script, modify the sys.path and impo
        ...: )
        ...: from truealgebra.core.expression import (
        ...:     ExprBase, Symbol, Number, true, false,
-       ...:     Container,Restricted, Assign, Null, End)
+       ...:     Container,Restricted, Assign, Null, End, CommAssoc,
+       ...: ) 
        ...: from truealgebra.core.settings import settings
        ...: from truealgebra.core.parse import parse
        ...: from truealgebra.core.unparse import unparse 
        ...:
        ...: settings.active_parse = parse 
        ...: settings.set_symbol_operators("and", 75, 75)
+       ...: settings.set_custom_bp("=", 50, 50) 
+       ...: settings.set_container_subclass("*", CommAssoc) 
        ...: ExprBase.set_unparse(unparse) 
 
 
@@ -45,6 +48,8 @@ The __call__ method is defined in RuleBase. As a result, rules behave like funct
 Consider a python expression of the form ``rule(expr)`` where ``rule`` is a truealgebra rule
 and ``expr`` is a truealgebra expression. The ``rule`` here takes ``expr`` as an argument and
 evaluates it. The intent is that rules be viewed as fancy functions.
+
+.. _tpred-and-tbody-tag:
 
 tpredicate and tbody Methods
 ----------------------------
@@ -98,6 +103,9 @@ The donothing_rule always does nothing.
 The  donothing_rule rule is sometimes useful as a default rule, For example it is
 the value for the NaturalRule predicate_rule attribute which act as a default
 for NaturalRule instances.
+
+Substitute Rule
+---------------
 
 How to Create Rule Instances
 ----------------------------
@@ -177,6 +185,28 @@ as a result, the body method evaluated the input algebraic expression and the ru
 the result. However in the third case, the predicate method returned False
 resulting in the rule returning its input expression unevaluated by the body method.
 expression.
+
+Flatten Rule
+------------
+
+.. ipython::
+
+    In [1]: class Flatten(Rule):
+       ...:     def predicate(self, expr):  
+       ...:         return isinstance(expr, CommAssoc) and expr.name == '*'
+       ...:  
+       ...:     def body(self, expr):
+       ...:         newitems = list()
+       ...:         for item in expr.items:
+       ...:             if isinstance(item, CommAssoc) and item.name == '*':
+       ...:                 newitems.extend(item.items)
+       ...:             else:
+       ...:                 newitems.append(item)
+       ...:         return CommAssoc('*', newitems)
+       ...:  
+       ...:     bottomup = True
+       ...:  
+       ...: flatten = Flatten() 
 
 Logic and Predicate Rules
 =========================
@@ -338,36 +368,14 @@ The predrule will be used in the examples below.
 
 NaturalRule Class
 =================
-The name 'NaturualRule' for this class is used because the mathematical-like syntax of the 
-pattern, vardict and outcome arguments used to instantiate the rules. 
-
-.. rubric:: tpredicate Method
-
-The tpredicate method compares its pattern attribute to the input expression.
-If the pattern matches the input expression, the tbody method is involked
-
-.. rubric:: tbody Method
-
-Replaces any variables in the outcome expression with the appropriate expressions from the pattern
-matching process. The apply the outcome_rule to the outcome expression.
-
-NaturalRule instance trys to match its pattern attribute to the input expression. 
-
-.. rubric:: Pattern Matching
-
-For a pattern to match the input expressions, both expressions and all of the subexpressions must essentially be the same or equal to each other. 
-
-However a natural rule can have symbols called variables that can match expressions other than themselves. 
-
-Variables are defined by the vardict attribute which is a python dictionary. This dictionary also defines a preicate expression for eavery variable  that the matching expression must satisfy. 
-
-If the pattern contains variaable then the varuiables can match subexpressions of the input expression.
+The name 'NaturualRule' for this class is used because the natural
+mathematical-like syntax of the pattern, vardict and outcome arguments used to
+instantiate its rules. 
 
 Natural Rule Example
 --------------------
 In order to illustrate more features of a NaturalRule rule, the following example is a bit
 contrived.
-
 
 .. ipython::
 
@@ -378,15 +386,15 @@ contrived.
        ...:         'suchthat(forall(n0), isint(n0) and (n0 < 7))'
        ...:     ), 
        ...:     pattern='  (e0 = e1) + (x = n0)  ',
-       ...:     outcome='  (eo + x) = (e1 + n0)  ',
+       ...:     outcome='  (e0 + x) = (e1 + n0)  ',
+       ...:     outcome_rule = Substitute(
+       ...:         subdict={Symbol('theta'): Symbol('phi')}, 
+       ...:         bottomup=True 
+       ...:     ) 
        ...: )
 
-
-
-Case 1
-++++++
-consider the case below where the rule ``natrule`` is applied to the ``ex1``. 
-The result, ``out1``,  of the rule is different from but algebrsically equal to ``ex1``.
+Apply the rule ``natrule`` , below, to the expression``ex1``. 
+The result, ``out1``,  of the rule is algebraically equal to ``ex1``.
 
 .. ipython::
 
@@ -394,154 +402,12 @@ The result, ``out1``,  of the rule is different from but algebrsically equal to 
        ...: print('ex1 =  ', ex1)
        ...: out1 = natrule(ex1) 
        ...: print('natrule(ex1) =  ', out1)
+       
+How a NaturalRule Rule Works
+----------------------------
 
-addrule tpredicate method
-"""""""""""""""""""""""""
-Knowlege of the tpredicate method aids with debugging and understanding of how a NaturalRule rule works.
-When the tpredicate output is truthy, the tbody method is involked.
-
-.. ipython::
-
-    In [1]: truething = natrule.tpredicate(ex1) # call the tpredicate result: truething.
-       ...: print('bool(truething) =  ', bool(truething), '    , thus truething is truthy') 
-
-The tpredicate returns a truthy result when the input expression (ex1)  matches the pattern subject to 
-the conditions of the variable dictionary (vardict). Consider the following:
-
-.. ipython::
-
-    In [1]: print('     natrule.vardict =  ', natrule.vardict) 
-       ...: print('     natrule.pattern =  ', natrule.pattern) 
-       ...: print('input expression ex1 =  ') 
-
-Both the pattern and input expression have the same form with operators ``=`` and ``+`` occuring
-in the same locations.
-
-The variable dictionary has three keys which are variablse, Variables are symbols that can match
-expressions other than themselves. The two variables, ``e0` and ``e1`` point to ``true`` which
-means they are wild and can match any expression. In this case ``e0`` matches ``xxx``.
-
-The variable ``n`` in the vardict is where it gets interesting and complicated.
-
-The symbol ``x`` in the pattern is not a variable and it can only match itself, which it does with
-the ``x`` occuring in the input expresion
-
-The requirements of the addrule tpredicate method are satiffied and the tbody method gets involked.
-
-addrule tbody method
-""""""""""""""""""""
-
-.. ipython::
-
-    In [1]: print(addrule.vardict)
-       ...: bb = addrule.tpredicate(ex1) 
-       ...: print(bb) 
-       ...: print(predrule(parse(' isint(6) '))) 
-       ...: print(predrule(parse(' 6 < 7 ')))
-       ...: print(predrule(parse(' (6<7) and isint(6) '))) 
-       ...:  
-       ...: subdict = dict() 
-       ...: predresult = addrule.pattern.match( 
-       ...:     addrule.vardict, 
-       ...:     subdict, 
-       ...:     predrule, 
-       ...:     ex1, 
-       ...: ) 
-       ...: print(predresult) 
-       ...:  
-
-
-.. ipython::
-
-    In [1]: aa = parse(' x ** y ')
-       ...: print(aa) 
-       ...: print(str(aa)) 
-       ...: print(repr(aa)) 
-
-Example 2
----------
-
-.. ipython::
-
-    In [1]: convert_test_rule = NaturalRule(
-       ...:     predicate_rule=predrule,
-       ...:     vardict=
-       ...:         '  forall(e0, e1, e2);  ' +
-       ...:         '  suctthat(forall(n0), isint(n0) and  (n0 > 7))  '
-       ...:     , 
-       ...:     pattern='  (e0 = n0) * (e1 = e2)  ',
-       ...:     outcome='  (e0 * e1) = (n0 * e2)  ',
-       ...:     #outcome_rule = flatten
-       ...: )
-
-How a Naural Rule
------------------
-
-NaturalRule Class Attributes
-++++++++++++++++++++++++++++
-
-predicate_rule attribute
-    :ref:`donothing_rule<donothing-tag>`
-vardict attribute
-    empty dictionary
-pattern attribute
-    null expression
-outcome attribute
-    null expression
-outcome_rule attribute
-    :ref:`donothing_rule<donothing-tag>`
-
-How to Create a NaturalRule Subclass
-++++++++++++++++++++++++++++++++++++
-The quasi python code below illustrates how to create a NaturalRule subclass. A
-subclass is useful when a group of rules must be created that share
-common attributes. All of the attribute assignments below, are optional.
-
-.. code-block:: python
-    :linenos:
-
-    class NaturalRuleSubclass(NaturalRule):
-        predicate_rule = <a predicate rule>
-        vardict = <string >
-                  # after the first instance is instantiated, this class
-                  # attribute is converted to a variable dictionary
-        pattern = <string>
-                  # after the first instance is instantiated, this class
-                  # attribute is converted to a truealgebra expression
-        outcome = <string>
-                  # after the first instance is instantiated, this class
-                  # attribute is converted to a truealgebra expression
-        outcome_rule = <a truealgebra rule>
-
-How to Instantiate a NaturalRule Rule
-+++++++++++++++++++++++++++++++++++++
-The quasi python code below illustrates how to create a rule from NaturalRule
-or one of its subclasses.
-All of the arguments below are optional and are converted into an instance
-attribute with the same name as the parameter.
-
-.. code-block:: python
-    :linenos:
-
-    new_rule =  NaturalRuleSubclass(
-        predicate_rule = <a predicate rule>
-        vardict = <string >
-                  # The string is converted into a variable dictionary.
-        pattern = <string>
-                  # The string is parsed into a truealgebra expression.
-        outcome = <string>
-                  # The string is parsed into a truealgebra expression.
-        outcome_rule = <a truealgebra rule>
-
-
-If any instance attribute is not assigned, then default is the
-corresponding class attribute.
-
-How NaturalRule Rule Works
---------------------------
-
-Variable Dictionary Conversion
-++++++++++++++++++++++++++++++
+Variable Dictionary
++++++++++++++++++++
 Initially a user enters a string as a vardict class attribute or an
 instantiation vardict argument. The string gets converted to a variable
 dictionary by a somewhat involved process. The variable dictionary is
@@ -550,7 +416,7 @@ afterwards.
 
 A variable dictionary is a python dictionary. The dictionary keys must be
 truealgebra Symbol instances which will be called variables. The dictionary
-values must be truealgebra expressions. The values are logic that must be 
+values must be truealgebra expressions. The values represent logic that must be 
 satisfied in order for the variable to be matched during the matching process.
 
 Conversion
@@ -566,8 +432,8 @@ forall and suchthat. The content of the forall and suchthat
 objects are inspected and if the syntax is correct are made into the
 variable dictionary.
 
-forall Function Example
-'''''''''''''''''''''''
+forall Function 
+'''''''''''''''
 The class method create_vardict does the conversion process. This method
 is usful to a user for debugging and investigations.
 
@@ -582,24 +448,18 @@ that represents a mathematical function. The ``forall`` contains two symbols
        ...: vardict_1 = NaturalRule.create_vardict(vardict_string_1) 
        ...: vardict_1 
 
-
-The variables ``e0`` and ``e1`` in ``vardict_1``, each have a value of ``true``.
-Because of the ``true``, these variables are essentially wild, to use a card playing
-term. These variables  can represent anything in the :ref:`pattern matching<matching-tag>` process of a NaturalRule
-instance..
-
-suchthat Function Example
-'''''''''''''''''''''''''
+suchthat Function
+'''''''''''''''''
 The ``suchthat`` function below is the top level of the expression and
 contains two arguments. The first argument is a forall function with one
 argument that is a symbol.
 
 .. ipython::
 
-    In [1]: vardict_dict_2 = NaturalRule.create_vardict( 
+    In [1]: vardict_2 = NaturalRule.create_vardict( 
        ...:     '  suchthat( forall(n0),  isint(n0) and (n0 < 7) )  ' 
        ...:  )
-       ...:  vardict_dict_2
+       ...:  vardict_2
        ...:  
        ...: #aa = Substitute(xx, var)(vardict_dict_1[var])
        ...: #out = predrule(aa) 
@@ -608,34 +468,250 @@ The ``vardict_dict_2`` dictionary has one key the symbol ``n0``. The value for
 that key is the logical expression  for ``n0``. The logical expression contains
 the key, which is typical.
 
-In a matching process an arbitrary expression can match ``n0`` in a pattern,
-only if the following two steps are taken:
-
-    # the arbtrary expression is substituted for ``n0`` into the logical expression.
-    # The predicate rule is then applied to the result of the previous step
-
-and the result of step 2, is ``true``.
-
-
-
-
 .. _matching-tag:
 
-Matching Process
+Pattern Matching
 ++++++++++++++++
-blah blah blah 
+The :ref:`tpredicate method<tpred-and-tbody-tag>` implements the pattern method
+process desribed in this section. 
+
+The input expression is compared to the rule's pattern attribute to
+determine if the input expression matches the pattern expression.
+
+For a pattern to match the input expressions, both expressions and all of the subexpressions must essentially be the same or equal to each other. 
+
+Matching Without Variables
+''''''''''''''''''''''''''
+The following rules apply when the pattern or pattern or pattern subexpression is not a variable.
+
+    * For Container expressions to match, they must be of the same python type, have the same name attribute, and have the same number of items in thier items attribute.  
+
+    * Also each item in the items attribute of the inut expression must match the
+      corresponding item in the patern's items attribute. 
+
+    * Number instances match Number instances. Thier value attributes must
+      muust be equal.
+
+    * Symbol instances will match Symbol instances if they have the same
+      name attribute.
+
+Matching With Variables
+'''''''''''''''''''''''
+For an example look at the vardict and pattern attributes of natrule.
 
 .. ipython::
 
-    In [1]: pattern = parse(' n0 = e0 ')
-       ...: vardict = vardict_1 + vardict_2 
+    In [1]: print('vardict =   ', natrule.vardict)
+       ...: print('vardict[e0]=  ', natrule.vardict[Symbol('e0')])
+       ...: print('vardict[e1]=  ', natrule.vardict[Symbol('e1')]) 
+       ...: print('vardict[n0]=  ', natrule.vardict[Symbol('n0')]) 
+    
+The variables ``e0`` and ``e1`` in  the variable dictionary ``vardict``,
+each have a value of ``true``.
+which makes these variables essentially wild, to use a card playing
+term. These variables  can match any truealgebra expression during pattern matching.
 
-Next
+The variable ``n0`` in the dictionary has a value of ``isint(n0) and n0 < 7``.
+This value is the logical requirement that any expression must satisfy in order
+to match ``n0``. The variable ``n0`` can only match expressions that are and intreger and less than 7.
+
+The code below shows if the number ``5`` can match the variable ``n0``.
 
 .. ipython::
+
+    In [1]: input_5 = parse(' 5 ') 
+       ...: n0 = parse('  n0  ') 
+       ...: logic = natrule.vardict[n0]
+       ...: subrule = Substitute(subdict={n0: input_5}, bottomup=True)
+       ...: subed_logic = subrule(logic)
+       ...: evaluation = natrule.predicate_rule(subed_logic)
+       ...: print(logic) 
+       ...: print(subed_logic) 
+       ...: print(evaluation)
+
+It is a two step process, First ``5`` is substituted for ``n0`` into the
+logic. Then the result is evaluated by the predicat_rule. The second result
+is``true`` which means that ``5`` matches ``n0``.
+
+Next investigate if the real ``5.0`` matches ``n0``
+
+.. ipython::
+
+    In [1]: input_5_real = parse(' 5.0 ') 
+       ...: subrule = Substitute(subdict={n0: input_5_real}, bottomup=True)
+       ...: subed_logic = subrule(logic)
+       ...: evaluation = natrule.predicate_rule(subed_logic)
+       ...: print('logic =       ', logic) 
+       ...: print('subed_logic = ', subed_logic) 
+       ...: print('evaluation =  ', evaluation)
+
+The real ``5.0`` does not match ``n0`` because it is not an integer.
+
+match Method
+''''''''''''
+The matching process is initiated by rules, but the heavy lifting is done the
+match methods of expressions. Normally TrueAlgebra user does not directly involk
+expression match methods. A user does not need to even know of the
+existance of the match methods.
+
+However match methods can be used for debugging, and experience with match
+methods can help explain some of the magic behind natural rules.
+
+   .. ipython::
 
     In [1]: 
-    
+       ...: subdict = dict()
+       ...: matchout = natrule.pattern.match(  
+       ...:     natrule.vardict,
+       ...:     subdict, 
+       ...:     predrule, 
+       ...:     ex1 
+       ...: ) 
+       ...: print('matchout=  ', matchout) 
+       ...: print('subdict=   ', subdict) 
+
+The ``matchout`` is True, which causes the rule ``natrule`` to call the rule's
+tbody method. The ``subdict`` dictiionary is passed to the tbobody method as
+well.
+
+If ``matchout`` had been False, the rule would returned the input expression ``ex1`` unchanged.
 
 
+Substitution
+++++++++++++
+When the rule's tbody method is called, A substitution is initially performed.
+Look at ``subdict`` from above. subdict stands for substitution dictionary:
 
+.. ipython::
+
+    In [1]: print('subdict=   ', subdict) 
+
+Replaces any variables in the outcome expression with the appropriate expressions from the pattern
+matching process. The apply the outcome_rule to the outcome expression.
+
+NaturalRule instance trys to match its pattern attribute to the input expression. 
+
+
+The tpredicate returns a truthy result when the input expression (ex1)  matches the pattern subject to 
+the conditions of the variable dictionary (vardict). Consider the following:
+
+If the pattern matches the input expression, the tbody method is involked
+
+NauralRule Subclasses
+---------------------
+When a group of natural rules must be create that will share common attributes,
+it is expediant to create a NaturalRule subclass that has the common
+attributes and then instantiate the rules from the subclass.
+
+NaturalRule Class Attributes
+++++++++++++++++++++++++++++
+These are the NaturalRule class attribute:
+
+predicate_rule attribute
+    :ref:`donothing_rule<donothing-tag>`
+vardict attribute
+    empty dictionary
+pattern attribute
+    null expression
+outcome attribute
+    null expression
+outcome_rule attribute
+    :ref:`donothing_rule<donothing-tag>`
+
+Create a NaturalRule Subclass
+++++++++++++++++++++++++++++++++++++
+The quasi python code below illustrates how to create a NaturalRule subclass. A
+subclass is useful when a group of rules must be created that share
+common attributes. All of the attribute assignments below, are optional.
+
+.. code-block:: python
+    :linenos:
+
+    class NaturalRuleSubclass(NaturalRule):
+        predicate_rule = <a predicate rule>
+        vardict = <string >
+                  # after the first instance is instantiated, this class
+                  # attribute is converted to a variable dictionary
+        pattern = <string>
+                  # after the first instance is instantiated, this class
+                  # attribute is parsed into a truealgebra expression
+        outcome = <string>
+                  # after the first instance is instantiated, this class
+                  # attribute is parsed into a truealgebra expression
+        outcome_rule = <a truealgebra rule>
+
+HalfNaturalRule Class
+=====================
+The HalfNaturalRule is similar to the NaturalRule. Below shows the creatiion
+of the PlusIntEval subclass and its instance, the rule plus_int_eval. This
+rule preforms a numeric evaluation, when two integers are added together.
+
+In a HalfNaturalRule rule there are no outcome or outcome_rule attributes.
+But there is a body method defined which has (besides self) two positional
+parameters, ``expr`` and ``var``. The ``expr`` parameter will be the rule
+input expression.
+
+The ``var`` parameter will is a var object. It will have a parmeter for every
+variable in the substitution dictionry ``subdict`` in [[match method]].
+The attribute name will be the variable name. Each var attribute points to the
+value of the variable in the sustitution dictionary.
+
+In the body method below:
+
+``var.n0``
+    is the expression that matches the variable ``n0``.
+``var.n1``
+    is the expression that matches the variable ``n1``.
+
+.. ipython::
+
+    In [1]: class PlusIntEval(HalfNaturalRule): 
+       ...:     predicate_rule = predrule 
+       ...:     vardict = ( 
+       ...:         '  suchthat(forall(n0), isint(n0));' + 
+       ...:         '  suchthat(forall(n0), isint(n0))' 
+       ...:     ) 
+       ...:     pattern = '  n0 + n1  ' 
+       ...:  
+       ...:     def body(self, expr, var):
+       ...:         n0 = var.n0.value 
+       ...:         n1 = var.n1.value 
+       ...:         return Number(n0 + n1) 
+       ...:  
+       ...: plus_int_eval = PlusIntEval()
+
+In a HalfNaturalRule, the body method is called by the tbody method. When a
+rule is applied to an input expression and
+finds a match, the body method result will be the result of the rule.
+
+Rules Class
+===========
+A Rules Class instance is a rule that applies other rules.
+The quasi python code below shows ``newrule`` being assigned a sequence
+of rules.
+rule below 
+
+.. code-block:: python
+
+   newrule = Rules(rule0, rule2, rule3, ..., rule_max)
+
+A Rules instance
+can take any number of other rules as arguments. These rules are executed
+from left to right. The firat rule takes the input expression as an argument.
+The rest of the rules take the previous rule's result as an input. The
+reuslt of the last rule is the resut of 
+
+.. ipython::
+
+    In [1]: a = parse('a')
+       ...: b = parse('b')
+       ...: c = parse('c')
+       ...: d = parse('d')
+
+.. ipython::
+
+    In [1]: cyclerule = Rules( 
+       ...:     Substitute(subdict={a: b})  # convert a to b 
+       ...:     Substitute(subdict={b: c})  # convert b to c 
+       ...:     Substitute(subdict={c: d})  # convert c to d 
+       ...: ) 

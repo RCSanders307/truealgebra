@@ -10,7 +10,7 @@ Algebra System). Hover the core modules by themselves are not a CAS.
 **Content**
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
 
    rules.rst
