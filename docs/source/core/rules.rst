@@ -1,7 +1,28 @@
 ﻿=====
 Rules
 =====
-To provide TrueAlgebra examples in a python script, modify the sys.path and import the necessary packages, modules, and objects.
+
+.. _Yacas:
+
+.. rubric:: Rules, Yacas and Mathematical Theorems
+
+TrueAlgebra rules have a similar approach as the rules in the computer algebra
+system Yacas yacas.org. There are differences in the nomenclature. Yacas rules
+have a predicate and body which correspond to the truealgebra rule's tpredicate
+and tbody methods.
+
+The Yacas procedure mimics very well the application of mathematical theorems to
+mathematical expression.
+In Yacas, a rule has a predicate and a body. The predicate determines if the body can be applied to a Yacas mathematical object.
+
+The Yacas rule predicate evaluate the input expression. If the predicate outputs true then the body of the rule evaluates the input expression and transforms it into the output expression of the rule. If the predicate returns false, then the input expression of the rule becomes its output expression.
+
+When applied to mathematics, the predicate of a rule performs the role of the introduction to a mathematical theorem which specifies the scope, and specific stipulations for the theorem to be true. When a predicate returns true, it has verified that the input expression meets the conditions for the mathematical theorem. The body of the rule then transforms the input expression into an output expressions in accordance with the theorem statement.
+
+
+Import and Setup
+================
+Import the necessary packages, modules, and objects.
 
 .. ipython::
 
@@ -42,30 +63,28 @@ additional major subclasses of RuleBase will be added to TrueAlgebra.
 The five subclasses mentioned in the above paragraph should be sufficient
 for creating rules.
 
-__call__ Method
----------------
-The __call__ method is defined in RuleBase. As a result, rules behave like functions.
-Consider a python expression of the form ``rule(expr)`` where ``rule`` is a truealgebra rule
-and ``expr`` is a truealgebra expression. The ``rule`` here takes ``expr`` as an argument and
-evaluates it. The intent is that rules be viewed as fancy functions.
+The RuleBase class is the basis for all truealgebra rules.  All truealgebra rules have their  __call__ method defined and will take arguments in the same manner as functions. All rules will take one and only one argument which has to be a truealgebra expression. The result of a rule will always be a truealgebra expression.
+
 
 .. _tpred-and-tbody-tag:
 
-tpredicate and tbody Methods
-----------------------------
-A user does not need to know anything about the tbody and tpredicate methods.
-They are hidden inside of every rule object but a user does not
-interact with them. However it is easier to explain coherently how rules work when references are made to
-the tpredicate and tbody methods. The first character "t" of tpredicate and tbody stands for "truealgebra".
+Abstract Methods: tpredicate and tbody
+--------------------------------------
+The tbody and tpredicate methods were developed using techniques from
+the :ref:`Yacas Computer Algebra System<Yacas>`.
 
-The tbody and tpredicate methods were developed using techniques from the Yacas Computer
-Algebra System. The Yacas procedure mimics very well the application of mathematical theorems to
-mathematical expression.
-In Yacas, a rule has a predicate and a body. The predicate determines if the body can be applied to a Yacas mathematical object.
+All rules have tpredicate and tbody methods. The first character "t" of both
+names stands for "truealgebra". A user does not need to know
+anything about these methods. They are hidden inside of every rule object and
+a user does not interact directly with them. 
+
+However it is easier to explain coherently how rules work when references are
+made to
+the tpredicate and tbody methods as in the step by step procedure below. 
 
 Primarily because of the complexity of the JustOne class, The steps used
-in TrueAlgebra are a more complicated than in Yacas. When a truealgebra rule
-takes a truealgebra expression as an argument, the steps are:
+in applying TrueAlgebra rules are a more complicated than in Yacas. When a
+truealgebra rule takes a truealgebra expression as an argument, the steps are:
 
     * step 1. The rule's __call__ method calls the tpredicate method and passes the input expression as an argument. 
 
@@ -78,6 +97,47 @@ takes a truealgebra expression as an argument, the steps are:
     * step 4. The tbody method evaluates the input expression (and any other information in the TrueThing object) and returns (in most cases) a new algebraic expression.
 
     * step 5. The __call__ method returns the result of the tbody method.
+
+
+The Concrete __call__ Method
+----------------------------
+The __call__ method is defined in RuleBase. As a result, rules behave like
+functions. Consider a python expression of the form ``rule(expr)`` where
+``rule`` is a truealgebra rule
+and ``expr`` is a truealgebra expression. The ``rule`` here takes ``expr``
+as an argument and evaluates it. The intent is that rules be viewed 
+iand used as fancy functions.
+
+The__call__ method. It is a fundamental part of the
+five step procedure outlined above. It can also implement the path and 
+bottomup procedures.
+
+path and bottomup Attributes
+----------------------------
+bottomup attribute
+    If the attribute is True, the rule will be applied at all levels of an
+    expression, starting at the lowest levels and proceeding progressively
+    up to the top most level. 
+
+    RuleBase sets bottomup to False, in which case the rule will be applied
+    only to the top level of an expression.
+
+path attribute
+    When path is a tuple of integers representing a path to a specific
+    sub-expression inside the expression. The rule will be applied to to
+    that specific sub-expression.
+
+    RuleBase path is an empty tuple, and the expression will be applied to
+    the top level expression.
+
+ChangeSymbolName Example
+------------------------
+Create the Rule subclass ``ChangeSymbolName``. The rules from this class server no mathematical purpose but illustrates the features of rules.
+
+The ``ChangeSymbolName`` class overrides the ``postinit``, ``predicate``, and ``body`` methods. The ``postinit`` method  takes two arguments and assigns them to the attributes ``from_`` and ``to_`` which should be python strings. The ``predicate`` method returns ``True`` if the input expression is a Symbol instance with a name equal to ``from_``. The ``body`` method creates a new `Symbol` instance with name ``to_``.
+
+The ``predicate`` method does not use python duck typing, ``expr`` is tested to see if it is an instance of Symbol. The technique used in this method is not object orientated programming.
+
 
 Rule Class
 ==========
@@ -94,23 +154,21 @@ output of the rule itself.
 
 .. _donothing-tag:
 
-donothing_rule Rule
--------------------
-The  donothing_rule rule is a Rule instance. All Rule instances have the same charachteristics
-as  donothing_rule. A  donothing_rule rule always returns its  input expressions, unchanged.
-The donothing_rule always does nothing.
+The Rule Instance donothing_rule
+--------------------------------
+The  donothing_rule rule is a Rule instance. All Rule instances have the same
+characteristics as  donothing_rule. A  donothing_rule rule always returns its
+input expressions, unchanged. The donothing_rule always does nothing.
 
 The  donothing_rule rule is sometimes useful as a default rule, For example it is
 the value for the NaturalRule predicate_rule attribute which act as a default
 for NaturalRule instances.
 
-Substitute Rule
----------------
-
-How to Create Rule Instances
-----------------------------
-To create rules that actually do something, unlike the  donothing_rule rule, first
-create a Rule subclass. Three methods are over written below in the IsSym class.
+How to Create Useful Rule Instances
+-----------------------------------
+To create rules that actually do something, unlike the  donothing_rule rule,
+first create a Rule subclass. Three methods are over written below in the
+IsSym subclass. Instances of IsSym 
 
 __init__ method
     The __init__ method allows for passing arguments for use by the rule.
@@ -121,12 +179,31 @@ predicate method
     The predicate method requires one positional parameter, which will be the 
     input expression of the rule. The method must returns either True or False.
     If True, the body method will be involked.
+
+
+``predicate`` method
+    The ``predicate`` method should always return ``True`` or ``False``. It takes one and only one argument which is the input expression of the rule. 
+
+    The ``predicate`` should return ``True`` only if the ``body`` method should be used to transform the input expression. If ``predicate`` returns ``False``, the input expression will be the output of the rule.
+
+    By default the ``predicate`` of RuleBase always returns ``False``????
+
+
+
 body method
     The predicate method requires one positional parameter, which will be the 
     input expression of the rule. The method must return a truealgebra
     expression. If this method is involked, its output will be the output
     of the rule.
 
+``body``  method
+    ``body`` takes only one argument, the input expression of the rule. The ``body`` method transforms the input expression into a new expression which is output by the rule. The input expression cannot be mutated.
+
+    The ``body`` method is only called when the predicate method has returned ``True``.  By default, the ``body`` method of RuleBase returns the input expression unchanged.
+
+
+
+    
 .. ipython::
 
     In [1]: class IsSym(Rule):
@@ -135,12 +212,12 @@ body method
        ...:         # The line below must be included
        ...:         super().__init__(*args, **kwargs)
        ...:
-       ...:     def predbcate(self, expr):  # expr is rule input expresion
+       ...:     def predicate(self, expr):  # expr is rule input expresion
        ...:         # This method must return True or False
        ...:         return (
        ...:             isinstance(expr, Container)
-       ...:             and expr.name == 'issym'
-       ...:             and len(expr.items) > 0
+       ...:             and (expr.name == 'issym')
+       ...:             and (len(expr.items) > 0)
        ...:         )
        ...:
        ...:     def body(self, expr):  # expr is rule input expresion
@@ -150,8 +227,30 @@ body method
        ...:             return Symbol('false')
        ...:         # This method must return a truealgebra expression 
 
+Create the xyz_rule
 
-The example below creates and tests the rule issym_rule from the class IsSym.
+.. ipython::
+
+    In [1]: xyz_rule = IsSym('x', 'y', 'z')
+
+Case 1 - predicate not satisfied.
+
+Create an expression with a Container instance with the name 'wrongname'.
+
+.. ipython::
+
+    In [1]: expr = parse('  wrongname(x)  ') 
+       ...: expr
+
+Case 2 - predicate satisfied
+
+.. ipython::
+
+    In [1]: expr = parse('  issym(y)  ')
+       ...: xyz_rule.predicate(expr)
+
+
+Th example below creates and tests the rule issym_rule from the class IsSym.
 
 .. ipython::
 
@@ -185,6 +284,112 @@ as a result, the body method evaluated the input algebraic expression and the ru
 the result. However in the third case, the predicate method returned False
 resulting in the rule returning its input expression unevaluated by the body method.
 expression.
+
+
+
+
+
+ChangeSymbolName Example
+------------------------
+Create the RuleBase subclass ``ChangeSymbolName``. The rules from this class server no mathematical purpose but illustrates the features of rules.
+
+The ``ChangeSymbolName`` class overrides the ``postinit``, ``predicate``, and ``body`` methods. The ``postinit`` method  takes two arguments and assigns them to the attributes ``from_`` and ``to_`` which should be python strings. The ``predicate`` method returns ``True`` if the input expression is a Symbol instance with a name equal to ``from_``. The ``body`` method creates a new `Symbol` instance with name ``to_``.
+
+The ``predicate`` method does not use python duck typing, ``expr`` is tested to see if it is an instance of Symbol. The technique used in this method is not object orientated programming.
+
+.. ipython::
+
+   In [1]: class ChangeSymbolName(Rule):
+      ...:     def __init__(self, *args, **kwargs):
+      ...:         if "from_" in kwargs:
+      ...:             self.from_ = kwargs["from_"]
+      ...:         if "to_" in kwargs:
+      ...:             self.to_ = kwargs["to_"]
+      ...:         super().__init__(*args, **kwargs)
+      ...:     def predicate(self, expr):
+      ...:         return isinstance(expr, Symbol) and expr.name == self.from_
+      ...:     def body(self, expr):
+      ...:         return Symbol(self.to_)
+
+Create three rules from ``ChangeSymbolName``\:
+
+    * ``a_b_rule`` changes a Symbol instance with name attribute ``"a"`` to a Symbol instance with name attribute ``"b"``.
+    * ``b_c_rule`` changes a Symbol instance with name attribute ``"b"`` to a Symbol instance with name attribute ``"c"``.
+    * ``c_d_rule`` changes a Symbol instance with name attribute ``"c"`` to a Symbol instance with name attribute ``"d"``.
+
+.. ipython::
+
+   In [1]: a_b_rule = ChangeSymbolName(from_="a",to_="b")
+      ...: b_c_rule = ChangeSymbolName(from_="b",to_="c")
+      ...: c_d_rule = ChangeSymbolName(from_="c",to_="d")
+
+Apply the ``a_b_rule`` to the Symbol instance ``expr_a`` which has the ``name`` attribute ``"a"``. The output is an all new expression Symbol instance with the ``name`` attribute `"b"`.
+
+.. ipython::
+
+   In [1]: # create expr_a which is a Symbol instance with name "a"
+      ...: expr_a = parse(" a ")
+      ...: print("expr_a = " + str(expr_a))
+      ...: # apply a_b_rule to expr_a
+      ...: out = a_b_rule(expr_a)
+      ...: print("a_b_rule(expr_a)= " + str(out))
+
+What happened internally with ``a_b_rule`` when it evaluated ``expr_a``? The ``predicate`` method returned ``True`` and the ``body`` method was called. The output of ``body`` becomes the output of the rule.
+
+Next, apply the rule `a_b_rule`` to a Container instance containing a lone argument: a Symbol with ``name`` attribute ``a``.  
+
+.. ipython::
+
+   In [1]: expr_sin = parse(" sin(a) ")
+      ...: print("expr_sin= " + str(expr_sin))
+      ...: out = a_b_rule(expr_sin)
+      ...: print("a_b_rule(expr_sin)= " + str(out))
+
+In this example, the input expression ``expr_sin`` was returned by the rule ``a_b_rule`` because the ``predicate`` method of the rule returned ``False``. The ``body`` method was not executed. 
+
+This example also illustrates that the ``a2a_symbol_rule`` only acts on the top level of an expression. The lower level Symbol instance with name attribute ``a`` was unaffected by the rule, whereas in the previous example, the same expression (which was top level) was modified. 
+
+This behavior of ``a_b_rule`` results from  its bottomup attribute being ``False``.
+
+.. ipython::
+
+   In [1]: print("a_b_rule.bottomup=  " + str(a_b_rule.bottomup))
+
+ChangeContainerName Example
+---------------------------
+Create a second subclass of RuleBase that will take any Container class instance with a certain ``name`` and create a new Container class instance with a specified ``name``. 
+
+.. ipython::
+
+   In [1]: class ChangeContainerName(Rule):
+      ...:     def __init__(self, *args, **kwargs):
+      ...:         if "from_" in kwargs:
+      ...:             self.from_ = kwargs["from_"]
+      ...:         if "to_" in kwargs:
+      ...:             self.to_ = kwargs["to_"]
+      ...:         super().__init__(*args, **kwargs)
+      ...:     def predicate(self, expr):
+      ...:         return isinstance(expr, Container) and expr.name == self.from_
+      ...:     def body(self, expr):
+      ...:         return Container(self.to_, items=tuple(expr.items))
+
+Create three rules from ``ChangeContainerName`` for use in examples below\:
+
+    * ``f_f1_rule`` changes a Container instance with name attribute ``"f"`` to  a ``Conainer`` instance with name attribute ``"f1"``.
+    * ``g_g1_rule`` changes a Container instance with name attribute ``"g"`` to  a ``Conainer`` instance with name attribute ``"g1"``. 
+    * ``h_h1_rule`` changes a Container instance with name attribute ``"h"`` to  a ``Conainer`` instance with name attribute ``"h1"``.
+
+.. ipython::
+
+   In [1]: f_g_rule = ChangeContainerName(from_="f",to_="g")
+      ...: f_f1_rule = ChangeContainerName(from_="f",to_="f1")
+      ...: g_g1_rule = ChangeContainerName(from_="g",to_="g1")
+      ...: h_h1_rule = ChangeContainerName(from_="h",to_="h1")
+
+
+
+Substitute Rule
+---------------
 
 Flatten Rule
 ------------
@@ -711,7 +916,311 @@ reuslt of the last rule is the resut of
 .. ipython::
 
     In [1]: cyclerule = Rules( 
-       ...:     Substitute(subdict={a: b})  # convert a to b 
-       ...:     Substitute(subdict={b: c})  # convert b to c 
-       ...:     Substitute(subdict={c: d})  # convert c to d 
+       ...:     Substitute(subdict={a: b}),  # convert a to b 
+       ...:     Substitute(subdict={b: c}),  # convert b to c 
+       ...:     Substitute(subdict={c: d}),  # convert c to d 
        ...: ) 
+
+
+
+Apply Rules using Path and Bottomup Attributes
+==============================================
+All rules have path and bottomup attributes. By default the ``path`` attribute is an empty tuple and the bottomup attribute is ``False``. A rule with inon-default settings to these attributes can be applied to sub-expressions inside of an expression.
+
+Create a new RuleBase subclass to help demonstrate use of the rule ``path`` and bottomup attributes.
+
+.. ipython::
+
+    In [1]: class ContainerNameX(Rule):
+       ...:     def predicate(self, expr):
+       ...:         return isinstance(expr, Container)
+       ...: 
+       ...:     def body(self, expr):
+       ...:         return Container('X', expr.items)
+
+
+Below is the definition of the ``test_expr`` expression that will be used to help illustrate the path and bottomup features. The top level of the expression is a Container instance with name ``f0``. Nested inside at increasingly lower levels are Container instances named ``f1``, ``f2``, and ``f3``. The lowest level are the Symbol instances ``a``.
+
+.. ipython::
+
+   In [1]: test_expr = parse(
+      ...:      'f0('
+      ...:    +    'f1('
+      ...:    +         'f2(),'
+      ...:    +         'f2(f3(a) , f3(a))'
+      ...:    +     ')'
+      ...:    +  ')'
+      ...: )
+      ...: print('test_expr =  ' + str(test_expr))
+
+.. _path-label:
+
+Path
+----
+RuleBase and all of its subclasses, when instantiated, will take a ``path`` keyword argument which can be  a list, tuple, or other collection. The ``path`` argument can only be positive or negative integers. The value of the ``path`` argument is assigned as a tuple to the ``path`` attribute.
+
+As an example, create a ``ContainerNameX`` rule with an empty ``path``.  This rule has the same capabilities as a rule created with no ``path`` argument. Apply this rule to ``test_expr``. Only the top level ``f0`` container is changed to ``X``.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=())
+      ...: rule(test_expr)
+
+A ``(0,)`` path causes the rule to be applied to the 0 index of the ``f0`` Container instance's ``items`` atrribute. The ``f1`` name changes to ``X``. 
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,))
+      ...: rule(test_expr)
+
+A ``(0, 1)`` path causes the rule to be applied to the 1 index of the ``f1`` Container instance's ``items`` attribute. The second Container instance named ``f2`` is replaced with the name ``X``.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0, 1))
+      ...: rule(test_expr)
+
+Negative indexes can be used in paths. A ``(0, -1)`` path produces the same result as the last example
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0, -1))
+      ...: rule(test_expr)
+
+A path can be of any length needed. Apply a rule that changes the second Symbol instance ``a`` to ``b``.
+
+.. ipython::
+
+   In [1]: rule = ChangeSymbolName(from_='a', to_='b', path=(0, 1, 1, 0))
+      ...: rule(test_expr)
+
+Path Errors
+-----------
+An error is created when a path is improper. The default in TrueAlgebra is to capture these errors and print out an error message. Also the sub-expression where the error occurred will become a Null instance.
+
+Below is the error message when an index of a path is of a type other than ``int``.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0, 'one'))
+      ...: rule(test_expr)
+
+Below is the error message when an index in the path is too large for the corresponding Container instance ``items`` attribute.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0, 1, 100))
+      ...: rule(test_expr)
+
+Atoms, such as Number and Symbol instances do not contain sub-expressions. When a path leads to an atom and still has superfluous indexes, this error message occurs:
+
+.. ipython::
+
+   In [1]: rule = ChangeSymbolName(from_='a', to_='b', path=(0, 1, 1, 0, 3))
+      ...: rule(test_expr)
+
+.. _bottomup-label:
+
+Bottomup
+---------
+A rule applied bottom up to an expression will be applied to the expression and all available sub-expressions within the expression. The application of the rule starts at the bottom, lowest achievable level of the expression and progresses up until the rule is applied to the top level of the expression. 
+
+Apply a ContainerNameX rule bottomup.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(bottomup=True)
+      ...: rule(test_expr)
+
+Every Container instance name throughout ``test_expr`` was changed to ``X``.
+
+Path and Bottomup
+-----------------
+A rule is applied first to its path if it is non-empty, and second the rule is applied bottom up if its ``bottomup attribute`` is ``True``.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0, 1), bottomup=True)
+      ...: rule(test_expr)
+
+In the above example the Container names at path ``(0,1)`` and its sub-expressions are changed to ``X``.
+
+.. _restricted-label:
+
+Restricted Class Expressions
+----------------------------
+The class Restricted is a subclass of Container. Both classes have the same ``name`` and ``items`` atrributes. But some of their methods differ and as a result the Restricted class instances respond differently to rules applied with to a path or bottom up.
+
+A rule with a nonempty ``path`` can be successfully applied when pointed to a Restricted instance, but will generate an error when pointed to the sub-expressions in the instance's ``items`` attribute. The internal sub-expressions are restricted to rules applied using path.
+
+.. ipython::
+   
+    In [1]: another_test_expr = Container('f', (Restricted('restricted', (
+       ...:     Container('f', ()),
+       ...:     Container('f', ()),
+       ...:     Container('f', ()),
+       ...:     )),))
+       ...: another_test_expr
+
+Apply ContainerNameX rule to the Resistriced expression. The application works and the ``restricted`` name chages to ``X``,
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,))
+      ...: rule(another_test_expr)
+
+Now apply the rule with a path to all three sub-expressions inside the Restricted expression. In all cases an error is generated.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,0))
+      ...: rule(another_test_expr)
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,1))
+      ...: rule(another_test_expr)
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,2))
+      ...: rule(another_test_expr)
+
+Apply a ContainerNameX rule bottom up. The Restricted expression's name is changes but not he names of the sub-expressions insde the Restricted expression are not chaged.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(bottomup=True)
+      ...: rule(another_test_expr)
+
+.. _assign-label:
+
+Assign Class Expressions
+------------------------
+The class Assign is also a subclass of Container. Assign is the same as the Restricted class except the last sub-expression in the ``items`` attribute is not restricted to the application of fule by path or bottom up.
+
+
+For testing, create yet another test expression that contains an Assign sub-expression named ``assign``.
+
+.. ipython::
+   
+    In [1]: yet_another_test_expr = Container('f', (Assign('assign', (
+       ...:     Container('f', ()),
+       ...:     Container('f', ()),
+       ...:     Container('f', ()),
+       ...:     )),))
+       ...: another_test_expr
+
+Apply ContainerNameX rule to the Resistriced expression. The application works and the ``assign`` name chages to ``X``,
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,))
+      ...: rule(yet_another_test_expr)
+
+Now apply the rule with a path to all three sub-expressions inside the Assign sub-expression. In the first two cases an error is generated. But in the last case, the rule is successfully applied to the last sub-exression and its name is changed to ``X``.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,0))
+      ...: rule(yet_another_test_expr)
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,1))
+      ...: rule(yet_another_test_expr)
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(path=(0,2))
+      ...: rule(yet_another_test_expr)
+
+Apply a ContainerNameX rule bottom up. The Assign expression's name is changes but not he names of the first two sub-expressions insde the Assign expression are not changed. But the name of the last sub-expression was changed.
+
+.. ipython::
+
+   In [1]: rule = ContainerNameX(bottomup=True)
+      ...: rule(yet_another_test_expr)
+
+Rules and RulesBU
+=================
+
+``Rules`` is a subclass of ``RulesBase`` and ``RulesBU`` is a subclass or ``Rules``. ``Rules`` and ``RulesBU`` are the same except the former has a bottomup attribute of ``True``.
+
+Instances of the ``Rules`` and ``RulesBU`` classes have a ``rule_list`` attribute that is a list containing rules. ``Rules``  and ``RulesBU`` provide to users a powerful means of organizing and grouping rules to perform mathematical operations.
+
+Rules
+-----
+When a Rules instance is instantiated, all position arguments (which must be rules) are placed in the ``rule_list`` attribute. The order of the position arguments is preserved in the list.
+
+When a ``Rules`` instance is applied to an expression, the rules in ``rule_list`` will be applied in sequence from left to right. The process is the first rule in ``rule_list`` is applied to the input expression. Its output becomes the input for the next rule in ``rule_list`` . The process continues until the output of last rule in ``rule_list`` becomes the output of the ``Rules`` instance.
+
+Below, the ``rule`` is a ``Rules`` instance that contains three rules defined in the RuleBase section above. The ``test_expr`` is a Symbol instance with name ``a``. The ``rule`` is applied to the ``test_expr`` and the result is the symbol ``d``.
+
+.. ipython::
+
+    In [1]: rule = Rules(a_b_rule, b_c_rule, c_d_rule)
+       ...: test_expr = Symbol('a')
+       ...: rule(test_expr)
+
+What happened in the above example, is ``a_b_rule`` replaced the name ``a`` with the name ``b``.  The ``b_c_rule`` then replaced the name ``b`` with the name  ``c`` Then ``c_d_rule`` replaced the name ``c`` with the name ``d`` which was the final output of ``rule``.
+
+RulesBU
+-------
+``RulesBU`` is useful for applying one or more rules bottom up. For a demonstration of ``RulesBU``, create below the expression ``another_test_expr``.
+
+.. ipython::
+
+    In [1]: sym_a = Symbol('a')
+       ...: another_test_expr = Container('f', (sym_a, sym_a, sym_a))
+       ...: another_test_expr
+
+Create a rule using ``RuleBU`` that contains the sames three rules as the previous example with ``Rules``. Apply the new ``RuleBU`` rule to ``another_test_expr``.
+
+.. ipython::
+
+    In [1]: rule = RulesBU(a_b_rule, b_c_rule, c_d_rule)
+       ...: rule(another_test_expr)
+
+The three rules inside ``rule`` changed the all of the Symbol expressions names from ``a`` to ``b`` to ``c`` to ``d``.
+
+Consider the case when there is a need to apply a single existing rule bottom up and the rule's bottomup attribute is ``False``. The recomended procedure is not to change the bottomup attribute but instead to wrap the rule in ``RulesBU`` as was done above. 
+
+Bottom Up Rules Inside RulesBU
+------------------------------
+Consider the case when a RulesBU instance contains a rule that has its bottomup attribute set to ``True``.  When the RulesBU instance is applied to an expression, the internal rule can be applied numerous times to the same sub-expressions inside the expression. This can lead to a great increase in the execution time for a script. This behavior is in most cases, probably not useful.
+
+JustOne and JustOneBU
+=====================
+``JustOne`` is a subclass of RuleBase that is similar to ``Rules``.  A  ``JustOne`` instance has a ``rule_list`` attribute that is a list. When a ``JustOne`` instance is instantiated, ``rule_list`` is filled with truealgebra rules, the same as with a ``Rules`` instance.
+
+The unique feature of ``JustOne`` is that, in order to save on execution time, its instance will fully apply at most just one of the rules in its ``rule_list`` attribute.
+
+When a ``JustOne`` instance is applied to an expression, the internal rules in the ``rule_list`` attribute are tested one by one, applying the predicate to the input expression. When an internal rule's predicate returns true it becomes the selected rule and the testing stops. The selected rule`s body is applied to the input expression and that result becomes the result of the ``JustOne`` rule.
+
+In the example below,  ``justone_rule`` is created containing three other rules defined in the ChangeSymbolName Section above. These internal rules change the names of Symbol expressions.
+
+.. ipython::
+
+    In [1]: justone_rule = JustOne( a_b_rule, b_c_rule, c_d_rule)
+       ...: test_expr = Symbol(" b ")
+       ...: justone_rule(test_expr)
+
+``justone_rule`` transformed the expression ``b`` to ``c``. The selected rule that accomplished this transformation was the second rule ``b_c_rule``.
+
+It is important to notice above, that the third rule ``c_d_rule`` was not used. If the third rule had been applied, the expression ``c`` would have been transformed to ``d``. 
+
+``JustOne`` rules can be nested. A ``JustOne`` rule can have a ``justOne`` rule in its ``rule_list`` attribute. Consider the ``test_rule`` below with a nested ``JustOne`` rule. 
+
+.. ipython::
+
+    In [1]: new_rule = JustOne(a_b_rule, rule, c_d_rule)
+       ...: new_rule(test_expr)
+
+The b_c_rule inside the nested JustOne rule was selected to transform the ``b`` into a ``c``. JustOne instances 
+
+One characteristic of a ``JustOne`` rule is that it will ignore the ``path`` and bottomup attributes of all rules in its ``rule_list``. The reason for this characteristic is that a ``JustOne`` instance does not utilize the __call__ method of the rules in its ``rule_list``. It is the __call__ method that implements  ``path`` and bottomup.
+
+``JustOneBU`` is a subclass of ``JustOne`` with the bottomup attribute set to ``True``.
+
+

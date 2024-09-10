@@ -62,6 +62,8 @@ from truealgebra.core.constants import (
 
 
 # a bp object stores two binding powers
+# bp works as the class in isinstace. Also I can make a suclass of it.
+# bp appears to be like a class
 bp = namedtuple("bp", ["lbp", "rbp"])
 
 
