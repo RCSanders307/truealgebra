@@ -322,34 +322,29 @@ class Assign(Container):
     """
 
     def bottomup(self, rule):
-        newitems = list(self.items[:-1])
-        try:
-            newitems.append(self.items[-1].bottomup(rule))
-        except IndexError:
-            ta_logger.log("Assigned requires at least one argument")
-            return null
+        newitems = list(self.items[:1])
+        for item in self.items[1:]:
+            newitems.append(item.bottomup(rule))
         return rule(
             self.__class__(self.name, newitems),
             _pathinhibit=True,
             _buinhibit=True
         )
-# you can Yank from anywhere, the Put is restricted
 
+# you can Yank from anywhere, the Put is restricted
     def apply2path(self, path, rule, _buinhibit=False):
         if not path:
             return rule(self, _pathinhibit=True, _buinhibit=_buinhibit)
         try:
             nxt = path[0]
             path = path[1:]
-            if nxt == -1 or nxt == len(self.items) - 1:
-                result = self[nxt].apply2path(
-                    path, rule, _buinhibit=_buinhibit
-                )
-                newitems = (self[:nxt] + (result,))
-                return self.__class__(self.name, newitems)
-            else:
-                ta_logger.log("Assign argument closed to bottomup")
+            if nxt == 0 or nxt == -len(self.items):
+                ta_logger.log("Assign 0 item closed to bottomup")
                 return null
+            else:
+                result = self[nxt].apply2path(path, rule, _buinhibit=_buinhibit)
+                newitems = (self[:nxt] + (result,) + self[nxt:][1:])
+                return self.__class__(self.name, newitems)
         except IndexError:
             ta_logger.log("index error in path")
             return null
@@ -368,14 +363,22 @@ class Assign(Container):
         ):
             return False
 
-        if len(self) == 0:
+        if len(self) == 0 or self[0] == expr[0]:
             return True
-        if not self[0].match(vardict, subdict, pred_rule, expr[0]):
-            return False
-        for ndx, item in enumerate(self[1:]):
-            if item != expr[1:][ndx]:
+
+        iterexpr = iter(expr[1:])
+        for item in self:
+            if not item.match(vardict, subdict, pred_rule, next(iterexpr)):
                 return False
         return True
+
+        
+#       if not self[0].match(vardict, subdict, pred_rule, expr[0]):
+#           return False
+#       for ndx, item in enumerate(self[1:]):
+#           if item != expr[1:][ndx]:
+#               return False
+#       return True
 
 
 class CommAssoc(Container):

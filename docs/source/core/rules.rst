@@ -1204,45 +1204,56 @@ Apply a ContainerNameX rule bottom up. The Restricted expression's name is chang
 
 Assign Class Expressions
 ------------------------
-The class Assign is also a subclass of Container. Assign is the same as the Restricted class except the last sub-expression in the ``items`` attribute is not restricted to the application of fule by path or bottom up.
+The class Assign is a subclass of Container. The first item (with index 0) in the
+items attribute of an Assign instance is protected from the application of a
+rule through path or bottomup actions. 
 
-
-For testing, create yet another test expression that contains an Assign sub-expression named ``assign``.
+For demonstraion, create yet another test expression that has an Assign instance
+containing sub-expressions ``f()``, ``g()``, and ``h()``.
 
 .. ipython::
    
-    In [1]: yet_another_test_expr = Container('f', (Assign('assign', (
+    In [1]: yet_another_test_expr = Assign('assign', (
        ...:     Container('f', ()),
-       ...:     Container('f', ()),
-       ...:     Container('f', ()),
-       ...:     )),))
+       ...:     Container('g', ()),
+       ...:     Container('h', ()),
+       ...:     ))
        ...: yet_another_test_expr
 
-Apply ContainerNameX rule to the Resistriced expression. The application works and the ``assign`` name chages to ``X``,
+.. rubric:: Path Demonstatration
+
+Now apply the ContainerNameX rule with a path pointing to ``f()``, the first
+item in ``assign(f(), g(), h())``:
 
 .. ipython::
 
    In [1]: rule = ContainerNameX(path=(0,))
       ...: rule(yet_another_test_expr)
 
-Now apply the rule with a path to all three sub-expressions inside the Assign sub-expression. In the first two cases an error is generated. But in the last case, the rule is successfully applied to the last sub-exression and its name is changed to ``X``.
+The output is ``null`` accompanied by an  error message. The rule cannot be
+applied to the first item ``f()``.
+
+Now apply the rule, successfully, using a path attribute to ``g()`` and
+```h()``. 
 
 .. ipython::
 
-   In [1]: rule = ContainerNameX(path=(0,0))
+   In [1]: rule = ContainerNameX(path=(1,))
       ...: rule(yet_another_test_expr)
 
 .. ipython::
 
-   In [1]: rule = ContainerNameX(path=(0,1))
+   In [1]: rule = ContainerNameX(path=(2,))
       ...: rule(yet_another_test_expr)
 
-.. ipython::
+The path can be succussfully directed to any item except the first in the items
+attribute of an Assign instance.
 
-   In [1]: rule = ContainerNameX(path=(0,2))
-      ...: rule(yet_another_test_expr)
+.. rubric:: Bottomup Demonstration
 
-Apply a ContainerNameX rule bottom up. The Assign expression's name is changes but not he names of the first two sub-expressions insde the Assign expression are not changed. But the name of the last sub-expression was changed.
+Apply a ContainerNameX rule bottom up. The Assign expression's name is changed.
+All of the names of the sub-expressions inside the Assign expression are
+changed except for the first. The first sub-expression is protected.
 
 .. ipython::
 
