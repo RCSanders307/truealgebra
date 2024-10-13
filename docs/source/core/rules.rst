@@ -152,17 +152,6 @@ up to the top most level.
 The bottomup evaluation process starts at the bottom and
 proceeds up to the top. 
 
-
-
-ChangeSymbolName Example
-------------------------
-Create the Rule subclass ``ChangeSymbolName``. The rules from this class server no mathematical purpose but illustrates the features of rules.
-
-The ``ChangeSymbolName`` class overrides the ``postinit``, ``predicate``, and ``body`` methods. The ``postinit`` method  takes two arguments and assigns them to the attributes ``from_`` and ``to_`` which should be python strings. The ``predicate`` method returns ``True`` if the input expression is a Symbol instance with a name equal to ``from_``. The ``body`` method creates a new `Symbol` instance with name ``to_``.
-
-The ``predicate`` method does not use python duck typing, ``expr`` is tested to see if it is an instance of Symbol. The technique used in this method is not object orientated programming.
-
-
 Rule Class
 ==========
 Rule is a subclass of RuleBase. Rule and its subclasses are the primary means
@@ -330,106 +319,30 @@ Substitute Rule
 ---------------
 Blah blah blah.
 
+.. ipython::
+
+    In [1]: a = parse('a')
+       ...: b = parse('b')
+       ...: c = parse('c')
+       ...: d = parse('d')
 
 
-ChangeSymbolName Example
-------------------------
-Create the RuleBase subclass ``ChangeSymbolName``. The rules from this class server no mathematical purpose but illustrates the features of rules.
+.. _change-symbol-tag:
 
-The ``ChangeSymbolName`` class overrides the ``postinit``, ``predicate``, and ``body`` methods. The ``postinit`` method  takes two arguments and assigns them to the attributes ``from_`` and ``to_`` which should be python strings. The ``predicate`` method returns ``True`` if the input expression is a Symbol instance with a name equal to ``from_``. The ``body`` method creates a new `Symbol` instance with name ``to_``.
-
-The ``predicate`` method does not use python duck typing, ``expr`` is tested to see if it is an instance of Symbol. The technique used in this method is not object orientated programming.
+Create three rules that change Symbols
 
 .. ipython::
 
-   In [1]: class ChangeSymbolName(Rule):
-      ...:     def __init__(self, *args, **kwargs):
-      ...:         if "from_" in kwargs:
-      ...:             self.from_ = kwargs["from_"]
-      ...:         if "to_" in kwargs:
-      ...:             self.to_ = kwargs["to_"]
-      ...:         super().__init__(*args, **kwargs)
-      ...:     def predicate(self, expr):
-      ...:         return isinstance(expr, Symbol) and expr.name == self.from_
-      ...:     def body(self, expr):
-      ...:         return Symbol(self.to_)
+    In [1]:  a_b_rule = Substitute(subdict={a: b})  # convert a to b 
+       ...:  b_c_rule = Substitute(subdict={b: c})  # convert b to c 
+       ...:  c_d_rule = Substitute(subdict={c: d})  # convert c to d 
 
-.. _ChangeSymbolName-rules:
-
-Create three rules from ``ChangeSymbolName``\:
+The rules:
 
     * ``a_b_rule`` changes a Symbol instance with name attribute ``"a"`` to a Symbol instance with name attribute ``"b"``.
     * ``b_c_rule`` changes a Symbol instance with name attribute ``"b"`` to a Symbol instance with name attribute ``"c"``.
     * ``c_d_rule`` changes a Symbol instance with name attribute ``"c"`` to a Symbol instance with name attribute ``"d"``.
 
-.. ipython::
-
-   In [1]: a_b_rule = ChangeSymbolName(from_="a",to_="b")
-      ...: b_c_rule = ChangeSymbolName(from_="b",to_="c")
-      ...: c_d_rule = ChangeSymbolName(from_="c",to_="d")
-
-Apply the ``a_b_rule`` to the Symbol instance ``expr_a`` which has the ``name`` attribute ``"a"``. The output is an all new expression Symbol instance with the ``name`` attribute `"b"`.
-
-.. ipython::
-
-   In [1]: # create expr_a which is a Symbol instance with name "a"
-      ...: expr_a = parse(" a ")
-      ...: print("expr_a = " + str(expr_a))
-      ...: # apply a_b_rule to expr_a
-      ...: out = a_b_rule(expr_a)
-      ...: print("a_b_rule(expr_a)= " + str(out))
-
-What happened internally with ``a_b_rule`` when it evaluated ``expr_a``? The ``predicate`` method returned ``True`` and the ``body`` method was called. The output of ``body`` becomes the output of the rule.
-
-Next, apply the rule `a_b_rule`` to a Container instance containing a lone argument: a Symbol with ``name`` attribute ``a``.  
-
-.. ipython::
-
-   In [1]: expr_sin = parse(" sin(a) ")
-      ...: print("expr_sin= " + str(expr_sin))
-      ...: out = a_b_rule(expr_sin)
-      ...: print("a_b_rule(expr_sin)= " + str(out))
-
-In this example, the input expression ``expr_sin`` was returned by the rule ``a_b_rule`` because the ``predicate`` method of the rule returned ``False``. The ``body`` method was not executed. 
-
-This example also illustrates that the ``a2a_symbol_rule`` only acts on the top level of an expression. The lower level Symbol instance with name attribute ``a`` was unaffected by the rule, whereas in the previous example, the same expression (which was top level) was modified. 
-
-This behavior of ``a_b_rule`` results from  its bottomup attribute being ``False``.
-
-.. ipython::
-
-   In [1]: print("a_b_rule.bottomup=  " + str(a_b_rule.bottomup))
-
-ChangeContainerName Example
----------------------------
-Create a second subclass of RuleBase that will take any Container class instance with a certain ``name`` and create a new Container class instance with a specified ``name``. 
-
-.. ipython::
-
-   In [1]: class ChangeContainerName(Rule):
-      ...:     def __init__(self, *args, **kwargs):
-      ...:         if "from_" in kwargs:
-      ...:             self.from_ = kwargs["from_"]
-      ...:         if "to_" in kwargs:
-      ...:             self.to_ = kwargs["to_"]
-      ...:         super().__init__(*args, **kwargs)
-      ...:     def predicate(self, expr):
-      ...:         return isinstance(expr, Container) and expr.name == self.from_
-      ...:     def body(self, expr):
-      ...:         return Container(self.to_, items=tuple(expr.items))
-
-Create three rules from ``ChangeContainerName`` for use in examples below\:
-
-    * ``f_f1_rule`` changes a Container instance with name attribute ``"f"`` to  a ``Conainer`` instance with name attribute ``"f1"``.
-    * ``g_g1_rule`` changes a Container instance with name attribute ``"g"`` to  a ``Conainer`` instance with name attribute ``"g1"``. 
-    * ``h_h1_rule`` changes a Container instance with name attribute ``"h"`` to  a ``Conainer`` instance with name attribute ``"h1"``.
-
-.. ipython::
-
-   In [1]: f_g_rule = ChangeContainerName(from_="f",to_="g")
-      ...: f_f1_rule = ChangeContainerName(from_="f",to_="f1")
-      ...: g_g1_rule = ChangeContainerName(from_="g",to_="g1")
-      ...: h_h1_rule = ChangeContainerName(from_="h",to_="h1")
 
 .. _logic-and-predicate:
 
@@ -1008,7 +921,7 @@ arguments are rules that are assigned to the attribute
     In [1]: justone_rule = JustOne( a_b_rule, b_c_rule, c_d_rule)
 
 The three rules in ``justone_rule.rule_list`` are
-defined in the :ref:`ChangeSymbolName<ChangeSymbolName-rules>` section above.
+defined in the :ref:`Subtitute rule class<change-symbol-tag>` section above.
 
 Apply ``justone_rule`` to the symbol ``b``. The result is the symbol ``c``.
 
