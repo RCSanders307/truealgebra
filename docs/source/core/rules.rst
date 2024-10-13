@@ -114,29 +114,45 @@ bottomup procedures.
 
 .. _rulebase-path-bottomup:
 
-path and bottomup Attributes
-----------------------------
-path attribute
-    When path is a tuple of integers representing a path to a specific
-    sub-expression inside the expression. The rule will be applied to to
-    that specific sub-expression.
+.. _rulebase-path-tag:
 
-    RuleBase path is an empty tuple, and the expression will be applied to
-    the top level expression.
+path Attribute
+--------------
+The RuleBase path attribute is an empty tuple, which causes a rule to be
+applied to the top level of an input expression.
 
-    RuleBase and all of its subclasses, when instantiated, will take a
-    ``path`` keyword argument which can be  a list, tuple, or other
-    collection. The ``path`` argument can only be positive or negative
-    integers. The value of the ``path`` argument is assigned as a tuple
-    to the ``path`` attribute.
+When the path attribute is a tuple of integers, it represents a path to a
+specific sub-expression inside the input expression. The rule will be applied
+to that specific sub-expression.
 
-bottomup attribute
-    If the attribute is True, the rule will be applied at all levels of an
-    expression, starting at the lowest levels and proceeding progressively
-    up to the top most level. 
+RuleBase and all of its subclasses, when instantiated, will take a
+path keyword argument which can be  a list, tuple, or other
+collection. The path argument can only be positive or negative
+integers. The value of the path argument is assigned as a tuple
+to the path attribute.
 
-    RuleBase sets bottomup to False, in which case the rule will be applied
-    only to the top level of an expression.
+.. _bottomup-attribute-tag:
+
+bottomup Attribute
+------------------
+The RuleBase bottomup attribute is False.
+A False bottomup attribute causes a rule to be applied
+only to the top level of an input expression.
+
+If the bottomup attribute is True, a rule, if applied to a Container instance
+will first be applied to the items in the Container instance items attribute and
+last be applied to the Container instance itself.
+
+If the bottomup attribute is True, and a rule is applied to a expression with
+nested Container instances (Container instances that contain Container instances), the rule
+will be applied at all levels of the input expression
+starting at the lowest levels and proceeding progressively
+up to the top most level. 
+
+The bottomup evaluation process starts at the bottom and
+proceeds up to the top. 
+
+
 
 ChangeSymbolName Example
 ------------------------
@@ -337,6 +353,8 @@ The ``predicate`` method does not use python duck typing, ``expr`` is tested to 
       ...:         return isinstance(expr, Symbol) and expr.name == self.from_
       ...:     def body(self, expr):
       ...:         return Symbol(self.to_)
+
+.. _ChangeSymbolName-rules:
 
 Create three rules from ``ChangeSymbolName``\:
 
@@ -923,15 +941,14 @@ reuslt of the last rule is the resut of
        ...:     Substitute(subdict={c: d}),  # convert c to d 
        ...: ) 
 
-
-
-
 Rules and RulesBU
 =================
 
 ``Rules`` is a subclass of ``RulesBase`` and ``RulesBU`` is a subclass or ``Rules``. ``Rules`` and ``RulesBU`` are the same except the former has a bottomup attribute of ``True``.
 
 Instances of the ``Rules`` and ``RulesBU`` classes have a ``rule_list`` attribute that is a list containing rules. ``Rules``  and ``RulesBU`` provide to users a powerful means of organizing and grouping rules to perform mathematical operations.
+
+.. _rules-tag:
 
 Rules
 -----
@@ -976,43 +993,71 @@ Consider the case when a RulesBU instance contains a rule that has its bottomup 
 
 JustOne and JustOneBU
 =====================
-``JustOne`` is a subclass of RuleBase that is similar to ``Rules``.  A  ``JustOne`` instance has a ``rule_list`` attribute that is a list. When a ``JustOne`` instance is instantiated, ``rule_list`` is filled with truealgebra rules, the same as with a ``Rules`` instance.
+JustOne is a RuleBase subclass that is similar but different to
+:ref:`rules-tag`. Whereas a Rules rule will apply to all of the rules in its
+rule_list attribute to an input expression, a JustOne rule applies just
+one of the rules in its rules_list attribute.
 
-The unique feature of ``JustOne`` is that, in order to save on execution time, its instance will fully apply at most just one of the rules in its ``rule_list`` attribute.
-
-When a ``JustOne`` instance is applied to an expression, the internal rules in the ``rule_list`` attribute are tested one by one, applying the predicate to the input expression. When an internal rule's predicate returns true it becomes the selected rule and the testing stops. The selected rule`s body is applied to the input expression and that result becomes the result of the ``JustOne`` rule.
-
-In the example below,  ``justone_rule`` is created containing three other rules defined in the ChangeSymbolName Section above. These internal rules change the names of Symbol expressions.
+In the example below,
+the JustOne instance ``justone_rule`` is created. The three positional
+arguments are rules that are assigned to the attribute
+``justone_rule.rule_list``.
 
 .. ipython::
 
     In [1]: justone_rule = JustOne( a_b_rule, b_c_rule, c_d_rule)
-       ...: test_expr = Symbol(" b ")
-       ...: justone_rule(test_expr)
 
-``justone_rule`` transformed the expression ``b`` to ``c``. The selected rule that accomplished this transformation was the second rule ``b_c_rule``.
+The three rules in ``justone_rule.rule_list`` are
+defined in the :ref:`ChangeSymbolName<ChangeSymbolName-rules>` section above.
 
-It is important to notice above, that the third rule ``c_d_rule`` was not used. If the third rule had been applied, the expression ``c`` would have been transformed to ``d``. 
-
-``JustOne`` rules can be nested. A ``JustOne`` rule can have a ``justOne`` rule in its ``rule_list`` attribute. Consider the ``test_rule`` below with a nested ``JustOne`` rule. 
+Apply ``justone_rule`` to the symbol ``b``. The result is the symbol ``c``.
 
 .. ipython::
 
-    In [1]: new_rule = JustOne(a_b_rule, rule, c_d_rule)
+    In [1]: test_expr = Symbol("b")
+       ...: justone_rule(test_expr)
+
+When a JustOne rule is applied to an expression, the rules in the
+rule_list attribute are tested one by one using each rule's tpredicate method.
+If the tpredicate's result is  is a python ``False``, then the next rule in
+rule_list is tested. But if the rule's tpredicate
+result is truthy, then the rule's tbody method is applied to the input
+expression and the result becomes the result of the JustOne Rule. All remaining
+rules in the rule_list are ignored.
+
+In the example above, ``justone_rule`` transformed the symbol ``b`` to the
+symbol ``c``.
+The rule in ``justone_rule.rule_list`` that accomplished this transformation
+was the second rule ``b_c_rule``.
+
+It is important to notice above, that the third rule ``c_d_rule`` was ignored.
+If the third rule had been applied, the symbol ``c`` would have been
+transformed to the symbol ``d``. 
+
+.. rubric:: Nesting JustOne Rules
+
+JustOne rules can be nested. Below, ``justone_rule`` is nested inside of
+``new_rule.rule_list``
+
+.. ipython::
+
+    In [1]: new_rule = JustOne(a_b_rule, justone_rule, c_d_rule)
        ...: new_rule(test_expr)
 
-The b_c_rule inside the nested JustOne rule was selected to transform the ``b`` into a ``c``. JustOne instances 
+The b_c_rule inside the nested JustOne_rule was selected to transform the ``b`` into a ``c``.
 
-One characteristic of a ``JustOne`` rule is that it will ignore the ``path`` and bottomup attributes of all rules in its ``rule_list``. The reason for this characteristic is that a ``JustOne`` instance does not utilize the __call__ method of the rules in its ``rule_list``. It is the __call__ method that implements  ``path`` and bottomup.
+.. rubric:: Ignore path and bottomup 
 
-``JustOneBU`` is a subclass of ``JustOne`` with the bottomup attribute set to ``True``.
+A JustOne rule will ignore the :ref:`path and bottomup attributes<rulebase-path-bottomup>` of all rules in its rule_list.
 
+.. rubric:: JustOneBU
 
-Apply Rules using Path and Bottomup Attributes
-==============================================
-All rules have :ref:`path and bottomup attributes<rulebase-path-bottomup>`. By default the ``path`` attribute is an empty tuple and the bottomup attribute is ``False``. A rule with inon-default settings to these attributes can be applied to sub-expressions inside of an expression.
+``JustOneBU`` is a subclass of ``JustOne`` with the :ref:`bottomup-attribute-tag` set to ``True``.
 
-Create a new RuleBase subclass to help demonstrate use of the rule ``path`` and bottomup attributes.
+Use of Path and Bottomup Attributes
+===================================
+Create a new RuleBase subclass to help demonstrate use of the 
+:ref:`path and bottomup attributes<rulebase-path-bottomup>` of rules.
 
 .. ipython::
 
@@ -1162,35 +1207,28 @@ A rule with a nonempty ``path`` can be successfully applied when pointed to a Re
 
 .. ipython::
    
-    In [1]: another_test_expr = Container('f', (Restricted('restricted', (
+    In [1]: another_test_expr = Restricted('restricted', (
        ...:     Container('f', ()),
-       ...:     Container('f', ()),
-       ...:     Container('f', ()),
-       ...:     )),))
+       ...:     Container('g', ()),
+       ...:     Container('h', ()),
+       ...:     ))
        ...: another_test_expr
 
-Apply ContainerNameX rule to the Resistriced expression. The application works and the ``restricted`` name chages to ``X``,
+Now apply the rule with a path to all three sub-expressions inside the Restricted expression. In all cases an error is generated.
 
 .. ipython::
 
    In [1]: rule = ContainerNameX(path=(0,))
       ...: rule(another_test_expr)
 
-Now apply the rule with a path to all three sub-expressions inside the Restricted expression. In all cases an error is generated.
-
 .. ipython::
 
-   In [1]: rule = ContainerNameX(path=(0,0))
+   In [1]: rule = ContainerNameX(path=(1,))
       ...: rule(another_test_expr)
 
 .. ipython::
 
-   In [1]: rule = ContainerNameX(path=(0,1))
-      ...: rule(another_test_expr)
-
-.. ipython::
-
-   In [1]: rule = ContainerNameX(path=(0,2))
+   In [1]: rule = ContainerNameX(path=(2,))
       ...: rule(another_test_expr)
 
 Apply a ContainerNameX rule bottom up. The Restricted expression's name is changes but not he names of the sub-expressions insde the Restricted expression are not chaged.
@@ -1208,7 +1246,7 @@ The class Assign is a subclass of Container. The first item (with index 0) in th
 items attribute of an Assign instance is protected from the application of a
 rule through path or bottomup actions. 
 
-For demonstraion, create yet another test expression that has an Assign instance
+For a demonstration, create yet another test expression that has an Assign instance
 containing sub-expressions ``f()``, ``g()``, and ``h()``.
 
 .. ipython::
@@ -1259,3 +1297,14 @@ changed except for the first. The first sub-expression is protected.
 
    In [1]: rule = ContainerNameX(bottomup=True)
       ...: rule(yet_another_test_expr)
+
+Tips
+----
+Of course, if a rule already exists, its path and bottomup attributes can be
+reassigned. However, if a existing rule is to be applied  bottomup or pathfor a one time use the quasi code below shows the recommended procedures.
+code below .
+
+``temprule = RulesBU(rule)``
+    ``temprule`` acts the same as ``rule`` except the  bottomup attriute is True.
+
+``newrule = Rules(rule, path=<a path>)``

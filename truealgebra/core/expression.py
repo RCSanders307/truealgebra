@@ -331,7 +331,6 @@ class Assign(Container):
             _buinhibit=True
         )
 
-# you can Yank from anywhere, the Put is restricted
     def apply2path(self, path, rule, _buinhibit=False):
         if not path:
             return rule(self, _pathinhibit=True, _buinhibit=_buinhibit)
@@ -339,7 +338,7 @@ class Assign(Container):
             nxt = path[0]
             path = path[1:]
             if nxt == 0 or nxt == -len(self.items):
-                ta_logger.log("Assign 0 item closed to bottomup")
+                ta_logger.log("Assign 0 item closed to path")
                 return null
             else:
                 result = self[nxt].apply2path(path, rule, _buinhibit=_buinhibit)
