@@ -822,65 +822,51 @@ In a HalfNaturalRule, the body method is called by the tbody method. When a
 rule is applied to an input expression and
 finds a match, the body method result will be the result of the rule.
 
-Rules Class
-===========
-A Rules Class instance is a rule that applies other rules.
-The quasi python code below shows ``newrule`` being assigned a sequence
-of rules.
-rule below 
-
-.. code-block:: python
-
-   newrule = Rules(rule0, rule2, rule3, ..., rule_max)
-
-A Rules instance
-can take any number of other rules as arguments. These rules are executed
-from left to right. The firat rule takes the input expression as an argument.
-The rest of the rules take the previous rule's result as an input. The
-reuslt of the last rule is the resut of 
-
-.. ipython::
-
-    In [1]: a = parse('a')
-       ...: b = parse('b')
-       ...: c = parse('c')
-       ...: d = parse('d')
-
-.. ipython::
-
-    In [1]: cyclerule = Rules( 
-       ...:     Substitute(subdict={a: b}),  # convert a to b 
-       ...:     Substitute(subdict={b: c}),  # convert b to c 
-       ...:     Substitute(subdict={c: d}),  # convert c to d 
-       ...: ) 
+.. _rules-tag:
 
 Rules and RulesBU
 =================
+Rules is a subclass of RuleBase. Rules instances contain and apply a
+list of other rules. They provide to users a powerful means of organizing
+and grouping rules to perform mathematical operations.
 
-``Rules`` is a subclass of ``RulesBase`` and ``RulesBU`` is a subclass or ``Rules``. ``Rules`` and ``RulesBU`` are the same except the former has a bottomup attribute of ``True``.
-
-Instances of the ``Rules`` and ``RulesBU`` classes have a ``rule_list`` attribute that is a list containing rules. ``Rules``  and ``RulesBU`` provide to users a powerful means of organizing and grouping rules to perform mathematical operations.
-
-.. _rules-tag:
-
-Rules
------
-When a Rules instance is instantiated, all position arguments (which must be rules) are placed in the ``rule_list`` attribute. The order of the position arguments is preserved in the list.
-
-When a ``Rules`` instance is applied to an expression, the rules in ``rule_list`` will be applied in sequence from left to right. The process is the first rule in ``rule_list`` is applied to the input expression. Its output becomes the input for the next rule in ``rule_list`` . The process continues until the output of last rule in ``rule_list`` becomes the output of the ``Rules`` instance.
-
-Below, the ``rule`` is a ``Rules`` instance that contains three rules defined in the RuleBase section above. The ``test_expr`` is a Symbol instance with name ``a``. The ``rule`` is applied to the ``test_expr`` and the result is the symbol ``d``.
+Below, ``rules_rule`` is instantiated as a Rules instance. The three
+positional argumes are rules
+defined in the :ref:`Subtitute rule class<change-symbol-tag>` section above.
 
 .. ipython::
 
-    In [1]: rule = Rules(a_b_rule, b_c_rule, c_d_rule)
-       ...: test_expr = Symbol('a')
-       ...: rule(test_expr)
+    In [1]: rules_rule = Rules(a_b_rule, b_c_rule, c_d_rule)
 
-What happened in the above example, is ``a_b_rule`` replaced the name ``a`` with the name ``b``.  The ``b_c_rule`` then replaced the name ``b`` with the name  ``c`` Then ``c_d_rule`` replaced the name ``c`` with the name ``d`` which was the final output of ``rule``.
+The Rules class takes none to unlimited postional arguments that must be rules.
+These rules are assignied to the rule_list attribute in the same order they
+appear as arguments. 
 
-RulesBU
--------
+In the example below rules_rule is applied to a input expression
+of the symbol ``a``. 
+
+.. ipython::
+
+    In [1]: test_expr = Symbol('a')
+       ...: rules_rule(test_expr)
+
+What happened in the above example, is rule ``a_b_rule`` in the rule_list
+replaced the symbol ``a`` with the symbol ``b``.
+The rule ``b_c_rule`` then replaced the symbol ``b`` with the symbol  ``c``.
+Then rule ``c_d_rule`` replaced the symbol ``c`` with symbol ``d``
+which was the final output of ``rules_rule``.
+
+In general, When a Rules instance is applied to an input expression, the rules
+in its rule_list attribute will be applied in sequence from left to right.
+The process is the first rule in rule_list is applied to the input expression.
+Its output becomes the input for the next rule in rule_list.
+The process continues until the output of last rule in rule_list
+becomes the output of the Rules instance.
+
+.. rubric:: RulesBU
+
+``RulesBU`` is a subclass of ``Rules`` with the :ref:`bottomup-attribute-tag` set to ``True``.
+
 ``RulesBU`` is useful for applying one or more rules bottom up. For a demonstration of ``RulesBU``, create below the expression ``another_test_expr``.
 
 .. ipython::
@@ -898,11 +884,15 @@ Create a rule using ``RuleBU`` that contains the sames three rules as the previo
 
 The three rules inside ``rule`` changed the all of the Symbol expressions names from ``a`` to ``b`` to ``c`` to ``d``.
 
-Consider the case when there is a need to apply a single existing rule bottom up and the rule's bottomup attribute is ``False``. The recomended procedure is not to change the bottomup attribute but instead to wrap the rule in ``RulesBU`` as was done above. 
 
-Bottom Up Rules Inside RulesBU
-------------------------------
-Consider the case when a RulesBU instance contains a rule that has its bottomup attribute set to ``True``.  When the RulesBU instance is applied to an expression, the internal rule can be applied numerous times to the same sub-expressions inside the expression. This can lead to a great increase in the execution time for a script. This behavior is in most cases, probably not useful.
+.. rubric:: Bottomup Rules Inside RulesBU
+
+Consider the case when a RulesBU instance contains a rule that has its
+bottomup attribute set to True.  When the RulesBU instance is applied
+to an expression, the internal rule can be applied numerous times to the
+same sub-expressions inside the expression. This can lead to a great
+increase in the execution time for a script.
+This behavior is in most cases, probably not useful.
 
 JustOne and JustOneBU
 =====================
@@ -930,12 +920,13 @@ Apply ``justone_rule`` to the symbol ``b``. The result is the symbol ``c``.
     In [1]: test_expr = Symbol("b")
        ...: justone_rule(test_expr)
 
-When a JustOne rule is applied to an expression, the rules in the
-rule_list attribute are tested one by one using each rule's tpredicate method.
+When a JustOne rule is applied to an input expression, the rules in the
+rule_list attribute are tested one by one by applying a rule's tpredicate
+method to the input expression.
 If the tpredicate's result is  is a python ``False``, then the next rule in
 rule_list is tested. But if the rule's tpredicate
 result is truthy, then the rule's tbody method is applied to the input
-expression and the result becomes the result of the JustOne Rule. All remaining
+expression and that result becomes the result of the JustOne Rule. All remaining
 rules in the rule_list are ignored.
 
 In the example above, ``justone_rule`` transformed the symbol ``b`` to the
@@ -1000,6 +991,8 @@ Below is the definition of the ``test_expr`` expression that will be used to hel
 
 Use of Path Attribute
 ---------------------
+The path attribute gives a user the ability to apply a rule to a specific
+sub-expression inside of an expression with surgical precision.
 
 Examples
 ++++++++
