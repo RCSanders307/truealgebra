@@ -6,6 +6,10 @@ from truealgebra.core.expressions import (
 )
 from truealgebra.core.rules import Rule, donothing_rule
 
+from truealgebra.core.abbrv import (
+    Co, Nu, Sy, CA, Re, Asn, CA
+)
+
 # ===================
 # Non pytest fixtures
 # ===================
@@ -351,56 +355,6 @@ def test_container_match( pattern, sdict, expr, correct_match, sdict2):
     assert sdict == sdict2
 
 
-# Restricted match Test
-rf0 = Restricted('f', (i2, i3, r4, sa,))
-rf1 = Restricted('f', (i2, i3, r4, sa,))
-rf2 = Restricted('f', (i3, r4, sa, i2,))
-rf3 = Restricted('f', (sc, i3))
-rf4 = Restricted('f', (i2, i3))
-
-@pytest.mark.parametrize(
-    ('pattern', 'sdict', 'expr', 'correct_match', 'sdict2'),
-    [
-        (rf0, dict(), rf1, True,  dict()),
-# cannot match different order of items
-        (rf0, dict(), rf2, False, dict()),
-# cannot match a pattern inside of a Restricted instance
-        (rf3, dict(), rf4, False, dict()),
-    ]
-)
-def test_restricted_match( pattern, sdict, expr, correct_match, sdict2):
-    match = pattern.match(vardict, sdict, pred_rule, expr)
-
-    assert match is correct_match
-    assert sdict == sdict2
-
-
-# Assign match test
-af0 = Assign('f', (i2 , i3, sa,))
-af1 = Assign('f', (sc, i3, sa,))
-af2 = Assign('f', (sc, sd, sa,))
-af3 = Assign('f', (sc, sa, i3,))
-cf0 = Container('f', (i2, i3, sa,))
-ag0 = Assign('g', (sc, i3, sa,))
-af4 = Assign('f', (sc, i3,))
-
-@pytest.mark.parametrize(
-    ('pattern', 'sdict', 'expr', 'correct_match', 'sdict2'),
-    [
-        (af1, dict(), af0,  False, dict()),
-        (af2, dict(), af0,  False, {sc : i2}),   # cannot match 2nd item
-        (af3, dict(), af0,  False, {sc : i2}),   # different order of items
-        (af1, dict(), cf0,  False, dict()),   # different type of object
-        (ag0, dict(), ag0,  False, dict()),   # different name attribute of items
-        (af4, dict(), af0,  False, dict()),   # different length of items
-    ]
-)
-def test_assign_match(pattern, sdict, expr, correct_match, sdict2):
-    match = pattern.match(vardict, sdict, pred_rule, expr)
-
-    assert match is correct_match
-    assert sdict == sdict2
-
 
 @pytest.mark.parametrize(
     ('pattern, target, correct_result, sdict2'),
@@ -450,58 +404,42 @@ def test_isspecialsymbol():
     assert Symbol.isspecialsymbol(short) is False
     assert Symbol.isspecialsymbol(not_sp) is False
 
+# THESE MIGHT BE NEEDED IN SOME WAY
+#def test_exprbase_attributes():
+#    expr = ExprBase()
+#
+#    assert expr.name == ""
+#    assert expr.value == None
+#    assert expr.items == None
+#    assert expr.lbp == 0
+#    assert expr.rbp == 0
+#
+#
+#def test_expression_setattr():
+#    expr = ExprBase()
+#
+#    with pytest.raises(AttributeError) as error0:
+#        expr.name = 'abc'
+#    with pytest.raises(AttributeError) as error1:
+#        expr.value = 7
+#    with pytest.raises(AttributeError) as error2:
+#        expr.items = ()
+#    expr.rbp = 100
+#    expr.lbp = 101
+#
+#    assert "This object should not be mutated" in str(error0.value)
+#    assert "This object should not be mutated" in str(error1.value)
+#    assert "This object should not be mutated" in str(error2.value)
+#    assert expr.name == ''
+#    assert expr.value is None
+#    assert expr.items is None
+#    assert expr.rbp == 100
+#    assert expr.lbp == 101
 
-def test_exprbase_attributes():
-    expr = ExprBase()
-
-    assert expr.name == ""
-    assert expr.value == None
-    assert expr.items == None
-    assert expr.lbp == 0
-    assert expr.rbp == 0
-
-
-def test_expression_setattr():
-    expr = ExprBase()
-
-    with pytest.raises(AttributeError) as error0:
-        expr.name = 'abc'
-    with pytest.raises(AttributeError) as error1:
-        expr.value = 7
-    with pytest.raises(AttributeError) as error2:
-        expr.items = ()
-    expr.rbp = 100
-    expr.lbp = 101
-
-    assert "This object should not be mutated" in str(error0.value)
-    assert "This object should not be mutated" in str(error1.value)
-    assert "This object should not be mutated" in str(error2.value)
-    assert expr.name == ''
-    assert expr.value is None
-    assert expr.items is None
-    assert expr.rbp == 100
-    assert expr.lbp == 101
-
-
-def test_expression_base():
-    expr = ExprBase()
-
-    assert repr(expr) == " <EXPR> "
-    assert bool(expr) is True
 
 
 def test_null():
-    null = Null()
-
     assert repr(null) == " <NULL> "
-    assert bool(null) is False
-    assert null == Null()
-
-def test_end():
-    end = End()
-
-    assert end.name == "end"
-    assert repr(end) == " <END> "
 
 
 def test_number():

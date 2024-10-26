@@ -117,6 +117,9 @@ class NullSingleton(ExprBase):
     def __hash__(self):
         return hash(type(self))
 
+    def __repr__(self):
+        return " <NULL> "
+
 null = NullSingleton()
 
 class Atom(ExprBase):
@@ -348,25 +351,6 @@ class Assign(Container):
             ta_logger.log("type error in path")
             return null
 
-    def match(self, vardict, subdict, pred_rule, expr):
-        """ match cannot enter protected items.
-        This prevents NaturalRules from being applied inside
-        """
-        if (
-            type(expr) is not type(self)
-            or expr.name != self.name
-            or len(expr) != len(self)
-        ):
-            return False
-
-        if len(self) == 0 or self[0] == expr[0]:
-            return True
-
-        iterexpr = iter(expr[1:])
-        for item in self:
-            if not item.match(vardict, subdict, pred_rule, next(iterexpr)):
-                return False
-        return True
 
 # used with units and complete_natural/-rule
 class Restricted(Container):
@@ -380,14 +364,6 @@ class Restricted(Container):
             return null
         else:
             return rule(self, _pathinhibit=True, _buinhibit=True)
-
-    def match(self, vardict, subdict, pred_rule, expr):
-        """ match cannot enter inside the content of individual items
-        To do so would allow a NaturalRule rule to be applied inside.
-        for example when a Resricted instance represents units.
-        """
-        return self == expr
-
 
 
 class CommAssoc(Container):
