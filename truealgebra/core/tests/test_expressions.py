@@ -41,8 +41,11 @@ class ARule(Rule):
 arule = ARule(bottomup=True)
 brule = ARule(path=(0, 1))
 
-# ===================
+base_msg = 'TRUEALGEBRA ERROR!\n'
+
+#=================================== ===================
 # Test aspects of ExprBase, requres use of other objects
+#=================================== ===================
 def test_exprbase_mutate():
     expr = Symbol('a')
     with pytest.raises(AttributeError) as error0:
@@ -57,150 +60,9 @@ def test_exprbase_mutate():
 
 
 
-
-# Test the null object
-def test_null_singleton():
-    assert null2 is null
-
-def test_null_bottomup():
-    assert arule(null) is null
-
-def test_null_path():
-    assert brule(null) is null
-
-def test_null_match():
-    match1 = null.match(dict(), dict(), donothing_rule, null2)
-    match2 = null.match(dict(), dict(), donothing_rule, x)
-
-    assert match1 is True
-    assert match2 is False
-
-def test_null_eq():
-    assert null == null2
-    assert null != x
-
-
-# ===========
-# Test Symbol
-# ===========
-# Include tests of Atom
-
-def test_simple_bottmup():
-    expr = Symbol('a')
-
-    assert expr.bottomup(applyF) == Container('F', (expr,))
-
-def test__eq__name():
-    assert Symbol("a") != Symbol("b")
-    assert Symbol("c") == Symbol("c")
-
-# ===========
-# Test Number
-# ===========
-
-def test__eq__value():
-    assert Number(3) != Number(4.5)
-    assert Number(4) == Number(4)
-
-
-
-
-# ==============
-# Test Container
-# ==============
-
-def test_commassoc_bottomup():
-    expr = CommAssoc("comas", (Number(0), Number(1), Number(2)))
-    a = Container('F', (Number(0),))
-    b = Container('F', (Number(1),))
-    c = Container('F', (Number(2),))
-    correct = Container('F', (CommAssoc('comas', (a, b, c)),))
-
-    new = expr.bottomup(applyF)
-
-    assert new == correct
-
-# ===============
-# Test Restricted
-# ===============
-def test_restricted_bottomup():
-    expr = Restricted('`', (Number(2.3), Symbol('ft')))
-    correct = Container("F", (expr,))
-
-    new = expr.bottomup(applyF)
-
-    assert new == correct
-
-
-# ==============
-# Test CommAssoc
-# ==============
-
-def test_inner_eq():
-    ca = CommAssoc("comas", ())
-
-    assert ca.inner_eq(
-        [], 
-        []
-    )
-    assert ca.inner_eq(
-        [Number(3)],
-        [Number(3)]
-    )
-    assert ca.inner_eq(
-        [Number(0), Number(1), Number(2)],
-        [Number(2), Number(0), Number(1)]
-    )
-    assert not (ca.inner_eq(
-        [Number(0), Number(1), Number(3)],
-        [Number(3), Number(1), Number(2)]
-    ))
-
-def test_commassoc__eq__():
-    ca = CommAssoc("comas", (Symbol("a"), Symbol("b")))
-    ca2 = CommAssoc("comas2", (Symbol("a"), Symbol("b"), Symbol("c")))
-    ca3 = CommAssoc("comas", (Symbol("b"), Symbol("a")))
-    ns = Container("sin", (Symbol("a"), Symbol("b")))
-
-    assert ca != ns
-    assert ca != ca2
-    assert ca == ca3
-
-
-
-
-#################################
-# Below Are the old testss
-#################################
-
-rule = Rule()
-base_msg = 'TRUEALGEBRA ERROR!\n'
-
-
-def test__eq__name():
-    assert Symbol("a") != Symbol("b")
-    assert Symbol("c") == Symbol("c")
-
-
-def test__eq__value():
-    assert Number(3) != Number(4.5)
-    assert Number(4) == Number(4)
-
-
-
-def test_namedseq__eq__():
-    ns = Container("sin", (Symbol("a"),))
-    ns1 = Container("sin", (Symbol("a"), Symbol("b")))
-    ns2 = Container("sin", (Symbol("a"),))
-    object.__setattr__(ns2, 'lbp', 370)
-    le = Restricted("`", (Number(3.7), Symbol("m")))
-    le2 = Restricted("`", (Number(3.5), Symbol("m")))
-
-    assert ns != ns1
-    assert ns == ns2
-    assert le != le2
-    assert le == le
-
+# =========
+# Test path
+# =========
 
 class Test_Apply2path_Method:
     expr0 = Number(3.5)
@@ -241,8 +103,10 @@ class Test_Apply2path_Method:
 
         assert new_expr == null
         assert output.out == err_msg 
-#############
 
+# ==========
+# Test match
+# ==========
 class IsInt(Rule):
     def predicate(self, expr):
         return (isinstance(expr, Container)
@@ -404,42 +268,76 @@ def test_isspecialsymbol():
     assert Symbol.isspecialsymbol(short) is False
     assert Symbol.isspecialsymbol(not_sp) is False
 
-# THESE MIGHT BE NEEDED IN SOME WAY
-#def test_exprbase_attributes():
-#    expr = ExprBase()
-#
-#    assert expr.name == ""
-#    assert expr.value == None
-#    assert expr.items == None
-#    assert expr.lbp == 0
-#    assert expr.rbp == 0
-#
-#
-#def test_expression_setattr():
-#    expr = ExprBase()
-#
-#    with pytest.raises(AttributeError) as error0:
-#        expr.name = 'abc'
-#    with pytest.raises(AttributeError) as error1:
-#        expr.value = 7
-#    with pytest.raises(AttributeError) as error2:
-#        expr.items = ()
-#    expr.rbp = 100
-#    expr.lbp = 101
-#
-#    assert "This object should not be mutated" in str(error0.value)
-#    assert "This object should not be mutated" in str(error1.value)
-#    assert "This object should not be mutated" in str(error2.value)
-#    assert expr.name == ''
-#    assert expr.value is None
-#    assert expr.items is None
-#    assert expr.rbp == 100
-#    assert expr.lbp == 101
 
 
+# =========
+# Test null
+# =========
+def test_null_singleton():
+    assert null2 is null
+
+def test_null_bottomup():
+    assert arule(null) is null
+
+def test_null_path():
+    assert brule(null) is null
+
+def test_null_match():
+    match1 = null.match(dict(), dict(), donothing_rule, null2)
+    match2 = null.match(dict(), dict(), donothing_rule, x)
+
+    assert match1 is True
+    assert match2 is False
+
+def test_null_eq():
+    assert null == null2
+    assert null != x
 
 def test_null():
     assert repr(null) == " <NULL> "
+
+
+
+# ===========
+# Test Symbol
+# ===========
+# Include tests of Atom
+
+def test_symbol():
+    sym = Symbol("a")
+    symb = Symbol("b")
+
+    symb.rbp = 100
+    symb.lbp = 101
+    with pytest.raises(AttributeError) as error0:
+        symb.name = 'abc'
+
+    assert sym.name ==  "a"
+    assert repr(sym) ==  "a"
+    assert Symbol("true") ==  true
+    assert Symbol("false") ==  false
+    assert sym.lbp == 0
+    assert sym.rbp == 0
+    assert symb.rbp == 100
+    assert symb.lbp == 101
+    assert "This object should not be mutated" in str(error0.value)
+
+def test_simple_bottmup():
+    expr = Symbol('a')
+
+    assert expr.bottomup(applyF) == Container('F', (expr,))
+
+def test__eq__name():
+    assert Symbol("a") != Symbol("b")
+    assert Symbol("c") == Symbol("c")
+
+# ===========
+# Test Number
+# ===========
+
+def test__eq__value():
+    assert Number(3) != Number(4.5)
+    assert Number(4) == Number(4)
 
 
 def test_number():
@@ -449,15 +347,9 @@ def test_number():
     assert repr(num) == "5.7"
 
 
-def test_symbol():
-    sym = Symbol("a")
-
-    assert sym.name ==  "a"
-    assert repr(sym) ==  "a"
-    assert Symbol("true") ==  true
-    assert Symbol("false") ==  false
-
- 
+# ==============
+# Test Container
+# ==============
 def test_namedseq():
     f = Container("f", (Symbol("a"), Number(5)), 18, 19)
 
@@ -496,5 +388,77 @@ def test_bind_left():
     assert f == Container("^", (Container("**", (sc, sd)), sa))
     assert f.rbp == 300
     assert f.lbp == 0
+
+
+def test_namedseq__eq__():
+    ns = Container("sin", (Symbol("a"),))
+    ns1 = Container("sin", (Symbol("a"), Symbol("b")))
+    ns2 = Container("sin", (Symbol("a"),))
+    le = Restricted("`", (Number(3.7), Symbol("m")))
+    le2 = Restricted("`", (Number(3.5), Symbol("m")))
+    le3 = Restricted("`", (Number(3.7), Symbol("m")))
+
+    assert ns != ns1
+    assert ns == ns2
+    assert le != le2
+    assert le == le3
+
+
+def test_commassoc_bottomup():
+    expr = CommAssoc("comas", (Number(0), Number(1), Number(2)))
+    a = Container('F', (Number(0),))
+    b = Container('F', (Number(1),))
+    c = Container('F', (Number(2),))
+    correct = Container('F', (CommAssoc('comas', (a, b, c)),))
+
+    new = expr.bottomup(applyF)
+
+    assert new == correct
+
+# ===============
+# Test Restricted
+# ===============
+def test_restricted_bottomup():
+    expr = Restricted('`', (Number(2.3), Symbol('ft')))
+    correct = Container("F", (expr,))
+
+    new = expr.bottomup(applyF)
+
+    assert new == correct
+
+
+# ==============
+# Test CommAssoc
+# ==============
+
+def test_inner_eq():
+    ca = CommAssoc("comas", ())
+
+    assert ca.inner_eq(
+        [], 
+        []
+    )
+    assert ca.inner_eq(
+        [Number(3)],
+        [Number(3)]
+    )
+    assert ca.inner_eq(
+        [Number(0), Number(1), Number(2)],
+        [Number(2), Number(0), Number(1)]
+    )
+    assert not (ca.inner_eq(
+        [Number(0), Number(1), Number(3)],
+        [Number(3), Number(1), Number(2)]
+    ))
+
+def test_commassoc__eq__():
+    ca = CommAssoc("comas", (Symbol("a"), Symbol("b")))
+    ca2 = CommAssoc("comas2", (Symbol("a"), Symbol("b"), Symbol("c")))
+    ca3 = CommAssoc("comas", (Symbol("b"), Symbol("a")))
+    ns = Container("sin", (Symbol("a"), Symbol("b")))
+
+    assert ca != ns
+    assert ca != ca2
+    assert ca == ca3
 
 
