@@ -48,16 +48,59 @@ base_msg = 'TRUEALGEBRA ERROR!\n'
 #=================================== ===================
 def test_exprbase_mutate():
     expr = Symbol('a')
+    exprb = Symbol('b')
     with pytest.raises(AttributeError) as error0:
         expr.name = 'abc'
+    with pytest.raises(AttributeError) as error1:
+        del expr.name
     expr.rbp = 100
     expr.lbp = 101
 
     assert "This object should not be mutated" in str(error0.value)
+    assert "This object should not be mutated" in str(error1.value)
+    assert expr != exprb
     assert expr.name == 'a'
     assert expr.rbp == 100
     assert expr.lbp == 101
 
+def test_exprbase_abstract():
+    class BadClass(ExprBase):
+        pass
+
+    with pytest.raises(TypeError) as error0:
+        badinstance = BadClass()
+
+    assert (
+        "Can't instantiate abstract class BadClass " +
+        "with abstract methods __eq__, __hash__, apply2path, bottomup, match"
+        in str(error0.value)
+    )
+
+# NOTE: The ExprBase.__str__ and ExprBase.set_uunparse is not tested.
+# Not sure how to do that without invalidating the test below.
+
+
+@pytest.fixture()  # The scope has to be function
+def _uunparse():
+    _uunparse = ExprBase._uunparse
+    yield _uunparse
+    ExprBase._uunparse = None
+
+def newunparse(sym):
+    return 'The new unparse'
+
+# if fixture _uunparse is used in another test
+# That new test mus duplicate lines 1 and 8 of the test below
+def test_exprbase_uunparse(_uunparse):
+    original_uunparse = _uunparse
+    syma = Symbol('a')
+    unparse_out1 = syma.__str__()
+    ExprBase.set_unparse(newunparse)
+    unparse_out2 = syma.__str__()
+
+    assert original_uunparse is None
+    assert unparse_out1 == 'a'
+    assert unparse_out2 == 'The new unparse'
 
 
 # =========

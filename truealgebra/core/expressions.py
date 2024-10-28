@@ -72,10 +72,6 @@ class ExprBase(ABC):
     def __hash__(self):
         pass
 
-#   @abstractmethod
-#   def __repr__(self):
-#       pass
-
     lbp = 0     # left binding power
     rbp = 0     # right binding power
 
