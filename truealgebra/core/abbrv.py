@@ -4,7 +4,7 @@ from truealgebra.core.rules import (
 from truealgebra.core.naturalrules import (
     NaturalRule, HalfNaturalRule
 )
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     ExprBase, Symbol, Number, Container, Restricted, Assign, CommAssoc
 )
 

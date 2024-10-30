@@ -78,17 +78,23 @@ class ExprBase(ABC):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    _uunparse = None
+    str_func = None
 
     @classmethod
-    def set_unparse(cls, funct):
-        cls._uunparse = funct
+    def set_str_func(cls, func):
+        cls.str_func = func
+        # Note: When this class attribute is inherited by an instance
+        # it becomes an instance method ==> 
+        # the first function argument becomes the instance (i.e. self)
+        # See stackoverflow question 35321744
 
     def __str__(self):
-        if self._uunparse is None:
+        str_func = self.str_func
+       # xxx = 101; embed()
+        if self.str_func is None:
             return self.__repr__()
         else:
-            return self._uunparse(self)
+            return self.str_func()
 
 class NullSingleton(ExprBase):
     _instance = None

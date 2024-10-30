@@ -10,12 +10,11 @@ from truealgebra.core.abbrv import (
     Co, Nu, Sy, CA, Re, Asn, CA
 )
 
+from IPython import embed
+
 # ===================
 # Non pytest fixtures
 # ===================
-
-null2 = NullSingleton()
-x = Symbol('x')
 
 class ApplyF(Rule):
     """ encapsulate all expressions and subexpressions inside of a 
@@ -59,7 +58,6 @@ def test_exprbase_mutate():
     assert "This object should not be mutated" in str(error0.value)
     assert "This object should not be mutated" in str(error1.value)
     assert expr != exprb
-    assert expr.name == 'a'
     assert expr.rbp == 100
     assert expr.lbp == 101
 
@@ -76,45 +74,73 @@ def test_exprbase_abstract():
         in str(error0.value)
     )
 
-# NOTE: The ExprBase.__str__ and ExprBase.set_uunparse is not tested.
-# Not sure how to do that without invalidating the test below.
-
 
 @pytest.fixture()  # The scope has to be function
-def _uunparse():
-    _uunparse = ExprBase._uunparse
-    yield _uunparse
-    ExprBase._uunparse = None
+def str_func():
+    str_func = ExprBase.str_func
+    # Set up ends
+    yield str_func
+    # tear down begins
+    ExprBase.str_func = None
 
-def newunparse(sym):
+def unparse_func(sym):
     return 'The new unparse'
 
 # if fixture _uunparse is used in another test
 # That new test mus duplicate lines 1 and 8 of the test below
-def test_exprbase_uunparse(_uunparse):
-    original_uunparse = _uunparse
+def test_exprbasestr_func(str_func):
+    original_str_func = str_func
     syma = Symbol('a')
-    unparse_out1 = syma.__str__()
-    ExprBase.set_unparse(newunparse)
-    unparse_out2 = syma.__str__()
+    out1 = syma.__str__()
+    ExprBase.set_str_func(unparse_func)
+    out2 = syma.__str__()
 
-    assert original_uunparse is None
-    assert unparse_out1 == 'a'
-    assert unparse_out2 == 'The new unparse'
+    assert original_str_func is None
+    assert out1 == 'a'
+    assert out2 == 'The new unparse'
+
+
+# =========
+# Test null
+# =========
+null2 = NullSingleton()
+x = Symbol('x')
+
+def test_null_singleton():
+    assert null2 is null
+
+def test_null_bottomup():
+    assert arule(null) is null
+
+def test_null_path():
+    assert brule(null) is null
+
+def test_null_match():
+    match1 = null.match(dict(), dict(), donothing_rule, null2)
+    match2 = null.match(dict(), dict(), donothing_rule, x)
+
+    assert match1 is True
+    assert match2 is False
+
+def test_null_eq():
+    assert null == null2
+    assert null != x
+
+def test_null():
+    assert repr(null) == " <NULL> "
 
 
 # =========
 # Test path
 # =========
-
 class Test_Apply2path_Method:
-    expr0 = Number(3.5)
-    expr0F = Container('F', (expr0,))
-    expr1 = CommAssoc("comas", (Symbol('a'), Symbol('b')))
-    expr1F = Container('F', (Symbol('b'),))
-    expr1FF = CommAssoc("comas", (Symbol('a'), expr1F))
-    expr2 = Restricted("'", (Number(2.5), Symbol("m")))
-    expr2F = Container('F', (expr2,))
+    expr0 = Nu(3.5)
+    expr0F = Co('F', (expr0,))
+    expr1 = CA("comas", (Sy('a'), Sy('b')))
+    expr1F = Co('F', (Sy('b'),))
+    expr1FF = CA("comas", (Sy('a'), expr1F))
+    expr2 = Re("'", (Nu(2.5), Sy("m")))
+    expr2F = Co('F', (expr2,))
 
     @pytest.mark.parametrize(
         ('expr', 'path', 'correct'),
@@ -147,6 +173,23 @@ class Test_Apply2path_Method:
         assert new_expr == null
         assert output.out == err_msg 
 
+
+def test_good_path_assign():
+    expr = Assign(':=', (Sy('a'), Sy('a')))
+    path = (1,)
+    out = expr.apply2path(path, applyF)
+
+    assert out == Assign(':=', (Sy('a'), Co('F', (Sy('a'),))))
+
+def test_bad_path_assign(capsys):
+    expr = Assign(':=', (Sy('a'), Sy('a')))
+    path = (0,)
+    out = expr.apply2path(path, applyF)
+    output = capsys.readouterr()
+
+    assert out == null
+    assert  "Assign 0 item closed to path" in output.out
+
 # ==========
 # Test match
 # ==========
@@ -155,7 +198,6 @@ class IsInt(Rule):
         return (isinstance(expr, Container)
                 and expr.name == 'isint'
                 and len(expr) >=1)
-
 
     def body(self,expr):
         if isinstance(expr[0], Number) and isinstance(expr[0].value, int):
@@ -168,9 +210,9 @@ pred_rule = IsInt(bottomup=True)
 
 
 vardict = {
-    Symbol('c') : Container('isint', (Symbol('c'),)),
-    Symbol('d') : Container('isint', (any__,)),
-    Symbol('e') : true,
+    Sy('c') : Co('isint', (Sy('c'),)),
+    Sy('d') : Co('isint', (any__,)),
+    Sy('e') : true,
 }
 
 
@@ -190,9 +232,9 @@ sf = Symbol('f')
 @pytest.mark.parametrize(
     ('pattern', 'sdict', 'expr', 'correct_match', 'sdict2'),
     [
-        (r0, dict(), r00, True, dict()),
-        (r0, dict(), i2, False, dict()),
-        (r0, dict(), sa, False, dict()),
+        (Nu(0.0), dict(), Nu(0.0), True, dict()),
+        (Nu(0.0), dict(), Nu(2), False, dict()),
+        (Nu(0.0), dict(), Sy('a'), False, dict()),
     ]
 )
 def test_number_match( pattern, sdict, expr, correct_match, sdict2):
@@ -206,8 +248,8 @@ def test_number_match( pattern, sdict, expr, correct_match, sdict2):
 @pytest.mark.parametrize(
     ('pattern', 'sdict', 'expr', 'correct_match', 'sdict2'),
     [
-        (sf, dict(),    sf, True,  dict()), # pattern equals expression
-        (sf, dict(),    r4, False, dict()), # pattern does not equal expression
+        (Sy('f'), dict(),    Sy('f'), True,  dict()), # pattern equals expression
+        (Sy('f'), dict(),    Nu(4.0), False, dict()), # pattern does not equal expression
     ]
 )
 def test_symbol_match( pattern, sdict, expr, correct_match, sdict2):
@@ -221,12 +263,12 @@ def test_symbol_match( pattern, sdict, expr, correct_match, sdict2):
 @pytest.mark.parametrize(
     ('pattern', 'sdict', 'expr', 'correct_match', 'sdict2'),
     [
-        (sc, dict(),    i2, True,  {sc : i2}), # pattern in vardict, expr not in sdict
-        (sc, {sc : i2}, i3, False, {sc : i2}), # pattern in vardict and sdict, match
-        (sc, {sc : i2}, i2, True,  {sc : i2}), # pattern in vardict and sdict, no match
-        (sc, dict(),    r4, False,  dict()),   # pattern in vardict, 
+        (Sy('c'), dict(),    Nu(2), True,  {Sy('c') : Nu(2)}), # pattern in vardict, expr not in sdict
+        (Sy('c'), {Sy('c') : Nu(2)}, i3, False, {Sy('c') : Nu(2)}), # pattern in vardict and sdict, match
+        (Sy('c'), {Sy('c') : Nu(2)}, Nu(2), True,  {Sy('c') : Nu(2)}), # pattern in vardict and sdict, no match
+        (Sy('c'), dict(),    Nu(4.0), False,  dict()),   # pattern in vardict, 
                                                # pred_rule not satisfied
-        (se, dict(),    r4, True,  {se : r4}), # pattern in vardict, null predicate
+        (Sy('e'), dict(),    Nu(4.0), True,  {Sy('e') : Nu(4.0)}), # pattern in vardict, null predicate
     ]
 )
 def test_symbol_match_variable( pattern, sdict, expr, correct_match, sdict2):
@@ -312,35 +354,6 @@ def test_isspecialsymbol():
     assert Symbol.isspecialsymbol(not_sp) is False
 
 
-
-# =========
-# Test null
-# =========
-def test_null_singleton():
-    assert null2 is null
-
-def test_null_bottomup():
-    assert arule(null) is null
-
-def test_null_path():
-    assert brule(null) is null
-
-def test_null_match():
-    match1 = null.match(dict(), dict(), donothing_rule, null2)
-    match2 = null.match(dict(), dict(), donothing_rule, x)
-
-    assert match1 is True
-    assert match2 is False
-
-def test_null_eq():
-    assert null == null2
-    assert null != x
-
-def test_null():
-    assert repr(null) == " <NULL> "
-
-
-
 # ===========
 # Test Symbol
 # ===========
@@ -365,7 +378,7 @@ def test_symbol():
     assert symb.lbp == 101
     assert "This object should not be mutated" in str(error0.value)
 
-def test_simple_bottmup():
+def test_symbol_number_bottmup():
     expr = Symbol('a')
 
     assert expr.bottomup(applyF) == Container('F', (expr,))
