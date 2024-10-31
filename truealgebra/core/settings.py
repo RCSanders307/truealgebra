@@ -55,7 +55,7 @@ bp : namedtuple
 """
 from collections import namedtuple, defaultdict
 from truealgebra.core.err import ta_logger
-from truealgebra.core.expression import Container
+from truealgebra.core.expressions import Container
 from truealgebra.core.constants import (
     isbindingpower, issymbolname, isoperatorname,
 )

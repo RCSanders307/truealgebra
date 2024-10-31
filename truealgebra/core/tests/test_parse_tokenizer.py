@@ -14,7 +14,7 @@ Methods Tested
 """
 
 from truealgebra.core.parse import Parse
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     Number, Container, Symbol, null, end
 )
 import pytest

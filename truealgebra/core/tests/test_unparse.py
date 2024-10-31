@@ -2,7 +2,7 @@ from truealgebra.core.unparse import (
     unparse, ReadableString, UnparseSymbol, UnparseNumber, ReadableHandlerBase
 )
 from truealgebra.core.settings import SettingsSingleton
-from truealgebra.core.expression import CommAssoc, Symbol, Null, End
+from truealgebra.core.expressions import CommAssoc, Symbol, NullSingleton
 from truealgebra.core.abbrv import Sy, Co, Nu
 from truealgebra.core.rules import Rule
 from truealgebra.core.parse import Parse
@@ -158,17 +158,10 @@ def test_assorted_expressions(string, settings):
 
 
 def test_null(settings):
-    expr = Null()
+    expr = NullSingleton()
     strout = unparse(expr)
 
     assert strout == '<NULL>'
-
-
-def test_end(settings):
-    expr = End()
-    strout = unparse(expr)
-
-    assert strout == '<END>'
 
 
 # Test unparse Methods

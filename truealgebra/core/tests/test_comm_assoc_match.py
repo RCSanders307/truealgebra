@@ -1,9 +1,10 @@
 from truealgebra.core.rules import Rule, RulesBU
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     CommAssoc, Number, Container, Symbol, CommAssocMatch,
     null, true, false, any__
 )
 import pytest
+from IPython import embed
 
 
 class Num:
@@ -363,6 +364,7 @@ def test_special_match4():
     )
 
     out = m0.special_match(sym.sp0)
+#   xxx = 105; embed()
 
     assert out is True
     assert m0.subdict == {

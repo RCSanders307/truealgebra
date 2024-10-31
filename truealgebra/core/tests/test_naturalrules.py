@@ -1,7 +1,7 @@
 from truealgebra.core.abbrv import (
     Nu, Sy, Co, CA, NR, HNR, Ru, RsBU
 )
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     null, true, false, CommAssoc, Container, Number
 )
 from truealgebra.core.rules import (

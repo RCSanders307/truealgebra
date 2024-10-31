@@ -3,7 +3,7 @@ from truealgebra.core.rules import (
 )
 from truealgebra.core.settings import settings
 from truealgebra.core.parse import meta_parser
-from truealgebra.core.expression import null, Symbol, true
+from truealgebra.core.expressions import null, Symbol, true
 from truealgebra.core.err import ta_logger
 import types
 

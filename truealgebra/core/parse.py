@@ -1,5 +1,5 @@
 from truealgebra.core.err import ta_logger
-from truealgebra.core.expression import Container, Number, Symbol, null, end
+from truealgebra.core.expressions import Container, Number, Symbol, null, end
 from truealgebra.core.settings import settings
 from truealgebra.core.constants import (
     OPERATORS, DIGITS, WHITE_SPACE, LETTERS, META_DELIMITERS

@@ -1,5 +1,5 @@
 from truealgebra.core.abbrv import Sy, Nu, Co, Asn
-from truealgebra.core.expression import CommAssoc, Assign, true, false
+from truealgebra.core.expressions import CommAssoc, Assign, true, false
 from truealgebra.core.frontend import FrontEnd, AssignRule, HistoryRule
 from truealgebra.core.rules import Rule, RulesBU, donothing_rule
 from truealgebra.core.naturalrules import NaturalRule
@@ -7,6 +7,7 @@ from truealgebra.core.parse import parse, Parse
 from truealgebra.core.settings import SettingsSingleton
 import pytest
 
+from IPython import embed
 
 @pytest.fixture
 def settings(scope='module'):

@@ -2,7 +2,7 @@
 """
 
 from truealgebra.core.parse import Parse
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     Number, Container, Symbol, CommAssoc, null, end
 )
 from collections import namedtuple

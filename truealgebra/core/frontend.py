@@ -1,9 +1,11 @@
 from truealgebra.core.rules import Rule, RulesBU, donothing_rule
 from truealgebra.core.naturalrules import NaturalRule
 from truealgebra.core.parse import Parse, meta_parser
-from truealgebra.core.expression import Assign, Container
+from truealgebra.core.expressions import Assign, Container
 from truealgebra.core.err import ta_logger
 from truealgebra.core.abbrv import isNu
+
+from IPython import embed
 
 
 class HistoryRule(Rule):
@@ -16,8 +18,8 @@ class HistoryRule(Rule):
 
     def predicate(self, expr):
         return (
-            expr.name == self.frontend.history_name
-            and isinstance(expr, Container)
+            isinstance(expr, Container)
+            and expr.name == self.frontend.history_name
             and len(expr) == 1
             and isNu(expr[0])
             and isinstance(expr[0].value, int)
@@ -26,7 +28,7 @@ class HistoryRule(Rule):
 
     def body(self, expr):
         try:
-            if expr[0].name == '-' and isinstance(expr[0], Container):
+            if  isinstance(expr[0], Container) and expr[0].name == '-':
                 num = - expr[0][0].value
             else:
                 num = expr[0].value

@@ -1,4 +1,4 @@
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     CommAssoc, Number, Container, Symbol, Assign, Restricted,
     null, true, false, any__
 )

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from truealgebra.core.expression import CommAssoc, Assign, Number
+from truealgebra.core.expressions import CommAssoc, Assign, Number
 from truealgebra.core.settings import SettingsSingleton, bp
 import pytest
 

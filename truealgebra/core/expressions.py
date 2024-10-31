@@ -39,7 +39,6 @@ from abc import ABC, abstractmethod
 from truealgebra.core.rules import Substitute, TrueThing
 from truealgebra.core.err import ta_logger
 
-from IPython import embed
 
 class ExprBase(ABC):
     
@@ -49,6 +48,13 @@ class ExprBase(ABC):
         else:
             raise AttributeError("This object should not be mutated")
             
+    # The line below is undesirable.
+    # It is used to prevent errors with core/parse.py
+    # and core/tests/test_parse.py
+    # Next time core/parse is rewritten, the line below 
+    # Should be removed.
+    name = None
+
     def __delattr__(self, *args):
         raise AttributeError("This object should not be mutated")
 
@@ -570,7 +576,10 @@ class CommAssocMatch:
     def special_match(self, symbol):
         """symbol must be a special symbol that is a key in self.vardict
         """
-        if self.vardict[symbol]:
+        if self.vardict[symbol] is null:
+            instance_items = self.target_list
+            self.target_list = list()
+        else:
             new_target_list = list()
             instance_items = list()
             for item in self.target_list:
@@ -583,9 +592,6 @@ class CommAssocMatch:
                 else:
                     new_target_list.append(item)
             self.target_list = new_target_list
-        else:
-            instance_items = self.target_list
-            self.target_list = list()
         if len(instance_items) < self.find_minimum_length(symbol):
             return False
         instance = CommAssoc(self.pattern.name, instance_items)

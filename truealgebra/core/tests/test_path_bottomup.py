@@ -1,7 +1,6 @@
-from truealgebra.core.expression import Symbol, Number, Container, Null
+from truealgebra.core.expressions import Symbol, Number, Container, null
 from truealgebra.core.rules import Rule
 
-null = Null()
 
 class PathRule(Rule):
     def predicate(self, expr):

@@ -2,7 +2,7 @@ from truealgebra.core.rules import (
     RuleBase, TrueThing, Rule, donothing_rule, Substitute, Rules, RulesBU,
     JustOne, JustOneBU, TrueThingJO
 )
-from truealgebra.core.expression import ExprBase
+from truealgebra.core.expressions import ExprBase
 import pytest
 
 # =============
@@ -20,6 +20,9 @@ class Datum(ExprBase):
 
     def __eq__(self, other):
         return  type(self) is type(other) and self.datum == other.datum
+
+    def match(self, vardict, subdict, pred_rule, expr):
+        pass
 
     def __hash__(self):
         return hash((type(self), self.datum))
@@ -61,6 +64,9 @@ class Data(ExprBase):
             and self.data[0] == other.data[0]
             and self.data[1] == other.data[1]
         )
+
+    def match(self, vardict, subdict, pred_rule, expr):
+        pass
 
     def __hash__(self):
         return hash((

@@ -1,7 +1,7 @@
 # rules for communative/asscocative functions
 
 from . import rule as rule_m
-from . import expression as expr_m
+from . import expressions as expr_m
 
 
 def _index_filter(rmargs, expr):

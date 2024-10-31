@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from truealgebra.core.settings import settings
-from truealgebra.core.expression import (
-    Number, Symbol, Container, CommAssoc, Null, End
+from truealgebra.core.expressions import (
+    Number, Symbol, Container, CommAssoc, NullSingleton, End
 )
 from truealgebra.core.constants import isoperatorname, issymbolname
 
@@ -250,7 +250,7 @@ class UnparseCommAssoc(ReadableHandlerBase):
 
 class UnparseNull(ReadableHandlerBase):
     def handle_expr(self, expr):
-        if isinstance(expr, Null):
+        if isinstance(expr, NullSingleton):
             return '<NULL>'
 
 
