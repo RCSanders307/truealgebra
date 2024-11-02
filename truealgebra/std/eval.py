@@ -1,13 +1,12 @@
-from truealgebra.core.rule import (
-    HalfNaturalRule, Rules, RulesBU, JustOne, JustOneBU
+from truealgebra.core.rules import (
+    Rule, Rules, RulesBU, JustOne, JustOneBU
 )
-from truealgebra.core.rulebase import RuleBase
-from truealgebra.core.expression import Number, Container, null, true
+from truealgebra.core.naturalrules import HalfNaturalRule
+from truealgebra.core.expressions import Number, Container, null, true
 from truealgebra.core.err import ta_logger
 from truealgebra.core.abbrv import isCo, isNu, isCA
 
 from truealgebra.std.predicate import isfraction, iscomplex, isnumber
-from truealgebra.std.std_settings import parse
 from truealgebra.std.eval_commassoc import multiply, add
 
 import math
@@ -129,7 +128,6 @@ math = MathFunctions(
 # Clean Rules
 # ===========
 class CleanFraction(HalfNaturalRule):
-    parse = parse
     predicate_rule = isfraction
     var_defn = ' @fract | isfraction(fract) '
     pattern = ' fract '
@@ -142,7 +140,6 @@ class CleanFraction(HalfNaturalRule):
 
 
 class CleanComplex(HalfNaturalRule):
-    parse = parse
     predicate_rule = iscomplex
     var_defn = ' @cnum | iscomplex(cnum) '
     pattern = ' cnum '
@@ -161,7 +158,7 @@ cleancomplex = CleanComplex()
 # ============
 # EvalMathDict
 # ============
-class EvalMathDictSingle(RuleBase):
+class EvalMathDictSingle(Rule):
     arity = 1
 
     def __init__(self, *args, **kwargs):

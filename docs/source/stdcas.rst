@@ -334,3 +334,5 @@ the natural log function ``log``, and log base 10 function ``log10``.
 .. ipython::
 
     In [1]: fe('  exp(3.7); log(2.0 + 4.1*j); log10(2.5 *j)  ')
+
+xxx

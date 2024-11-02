@@ -3,15 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-TrueAlgebra Standard CAS documentation
-======================================
+TrueAlgebra Documentation
+=========================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
    intro
    stdcas
+   core/index.rst
 
 
 Indices and tables

@@ -1,11 +1,9 @@
-import truealgebra.core.rule as r 
-from truealgebra.core.rule import NaturalRule
-import truealgebra.core.expression as e 
-from truealgebra.std.std_settings import parse
+from truealgebra.core.rules import JustOne
+from truealgebra.core.naturalrules import NaturalRule
+import truealgebra.core.expressions as e 
 
 class EqnRule(NaturalRule):
-    var_defn=" forall(ex0, ex1, ex2, ex3) "
-    parse=parse
+    varstring=" forall(ex0, ex1, ex2, ex3) "
 
 eqnmul = EqnRule(
     pattern = "  (ex0 = ex1) * (ex2 = ex3)  ",
@@ -93,7 +91,7 @@ eqnsqrt = EqnRule(
 )
 
 
-eqnmath = r.JustOne(
+eqnmath = JustOne(
     eqnsub0, eqnsub1, eqnsub2, eqnpow0, eqnpow1, eqnpow2,
     eqndiv0, eqndiv1, eqndiv2, eqnneg, eqnsqrt, eqnmul, eqnadd,
     eqnadd0, eqnadd1, eqnmul0, eqnmul1,

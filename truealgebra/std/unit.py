@@ -1,5 +1,5 @@
-from truealgebra.core.rulebase import RuleBase
-from truealgebra.core.expression import (
+from truealgebra.core.rules import Rule 
+from truealgebra.core.expressions import (
     Container, CommAssoc, Restricted, Number, Symbol, null
 )
 #from truealgebra.core.settings import Settings
@@ -16,12 +16,12 @@ class UnitForm():
         self.coeff = coeff
 
 
-class SimplifyUnits(RuleBase):
+class SimplifyUnits(Rule):
     def postinit(self, *args, **kwargs):
         self.name = args[0]
 
     def predicate(self, expr):
-        return expr.name == self.name and isinstance(expr, Restricted)
+        return isinstance(expr, Restricted) and expr.name == '`'
 
     def body(self, expr):
         try:
@@ -141,7 +141,7 @@ class SimplifyUnits(RuleBase):
         else:
             return up
 
-class ConvertToBasis(RuleBase):
+class ConvertToBasis(Rule):
     """Convert units of a certain type to a specifird unit.
 
     unit_dict: dict
@@ -175,7 +175,7 @@ class ConvertToBasis(RuleBase):
             ta_logger.log('units expression requires two items')
             return null
 
-    class InnerRule(RuleBase):
+    class InnerRule(Rule):
         def postinit(self, *args, **kwargs):
             self.unit_dict = args[0]
             toname = args[1]
@@ -193,7 +193,7 @@ class ConvertToBasis(RuleBase):
             return Container('/', (up, self.tonum))
 
 
-class MultiplyUnitsByBasis(RuleBase):
+class MultiplyUnitsByBasis(Rule):
     parse = Parse()
 
     def postinit(self, *args, **kwargs):
@@ -212,7 +212,7 @@ class MultiplyUnitsByBasis(RuleBase):
             ta_logger.log('units expression requires two items')
             return null
 
-class AffineConvert(RuleBase):
+class AffineConvert(Rule):
     def postinit(self, *args, **kwargs):
         self.from_unit = Symbol(kwargs['from_unit'])
         self.to_unit = Symbol(kwargs['to_unit'])

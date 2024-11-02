@@ -1,6 +1,6 @@
 from fractions import Fraction
 
-from truealgebra.core import expression as e
+from truealgebra.core import expressions as e
 from truealgebra.core import rule as r
 
 # This module contains functions and expressions used inside rule body and inner_body methods.

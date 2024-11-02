@@ -55,14 +55,15 @@ bp : namedtuple
 """
 from collections import namedtuple, defaultdict
 from truealgebra.core.err import ta_logger
-from truealgebra.core.expression import Container
+from truealgebra.core.expressions import Container
 from truealgebra.core.constants import (
-    DIGITS, LETTERS, WHITE_SPACE, OPERATORS, META_DELIMITERS,
     isbindingpower, issymbolname, isoperatorname,
 )
 
 
 # a bp object stores two binding powers
+# bp works as the class in isinstace. Also I can make a suclass of it.
+# bp appears to be like a class
 bp = namedtuple("bp", ["lbp", "rbp"])
 
 
@@ -146,6 +147,9 @@ class SettingsSingleton():
         The values are sets. The contents of the sets must be either
         a symbol names or operator names.
         The set contents represent name attributes of Container instances.
+    active_parse : None
+        Points to Parse instance that will be used throughout a
+        truealgebra session.
 
     """
     _instance = None
@@ -166,8 +170,11 @@ class SettingsSingleton():
         self.container_subclass = dict()
         self.complement = dict()
         self.categories = defaultdict(set)
-        self.categories['suchthat']
-        self.categories['forall']
+# THIS HAS YET TO BE TESTED
+        self.categories['suchthat'].add('suchthat')
+# THIS HAS YET TO BE TESTED
+        self.categories['forall'].add('forall')
+        self.active_parse = None
 
     def set_default_bp(self, lbp, rbp):
         """Set default binding powers for operators.
@@ -440,5 +447,6 @@ class SettingsSingleton():
         set_ = self.categories[category]
         if name is not None:
             set_.add(name)
+
 
 settings = SettingsSingleton()

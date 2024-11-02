@@ -1,4 +1,4 @@
-""" expression module
+""" expressions module
 
 ExprBase match methods
 ----------------------
@@ -34,52 +34,103 @@ A match method will return True or False and in some cases
 will modify the subdict dictionary.
 
 """
-from truealgebra.core.rulebase import Substitute, TrueThing
+
+from abc import ABC, abstractmethod
+from truealgebra.core.rules import Substitute, TrueThing
 from truealgebra.core.err import ta_logger
 
 
-class TrueThingCAM(TrueThing):
-    """Used with CommAssocMatch instances.
-    """
-    def __init__(self, subdict, target_list):
-        self.subdict = subdict
-        self.target_list = target_list
-
-
-class ExprBase(object):
-    """ Base Class for Representing mathematic expressions
-        instances of subclasses are called expressions
-
-    Attributes:
-        lbp     left binding power,
-                used when parsing python strings to create expressions
-        rbp     right binding power,
-                used when parsing python strings to create expressions
-        name    python string, such as symbol name, function name
-        value   number of varied type, such as float, int, complex, fraction?
-        items   tuple, containing other expressions
-
-    """
-    _uunparse = None
-    name = ""
-    value = None
-    items = None
-    lbp = 0     # left binding power
-    rbp = 0     # right binding power
-
+class ExprBase(ABC):
+    
     def __setattr__(self, name, value):
-        if name in ('lbp', 'rbp', 'settings'):
+        if name in ('lbp', 'rbp'):
             object.__setattr__(self, name, value)
         else:
             raise AttributeError("This object should not be mutated")
+            
+    # The line below is undesirable.
+    # It is used to prevent errors with core/parse.py
+    # and core/tests/test_parse.py
+    # Next time core/parse is rewritten, the line below 
+    # Should be removed.
+    name = None
 
-# googled the subject. Not sure if this is needed.
-    def __delattr__(self, name, value):
+    def __delattr__(self, *args):
         raise AttributeError("This object should not be mutated")
 
-    def __bool__(self):
-        return True
+    @abstractmethod
+    def bottomup(self, rule):
+        pass
 
+    @abstractmethod
+    def apply2path(self, path, rule, _buinhibit=False):
+        pass
+
+    @abstractmethod
+    def match(self, vardict, subdict, pred_rule, expr):
+        pass
+
+    @abstractmethod
+    def __eq__(self, other):
+        pass
+
+    @abstractmethod
+    def __hash__(self):
+        pass
+
+    lbp = 0     # left binding power
+    rbp = 0     # right binding power
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    str_func = None
+
+    @classmethod
+    def set_str_func(cls, func):
+        cls.str_func = func
+        # Note: When this class attribute is inherited by an instance
+        # it becomes an instance method ==> 
+        # the first function argument becomes the instance (i.e. self)
+        # See stackoverflow question 35321744
+
+    def __str__(self):
+        str_func = self.str_func
+       # xxx = 101; embed()
+        if self.str_func is None:
+            return self.__repr__()
+        else:
+            return self.str_func()
+
+class NullSingleton(ExprBase):
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(NullSingleton, cls).__new__(cls)
+        return cls._instance
+
+    def bottomup(self, rule):
+        return null
+
+    def apply2path(self, path, rule, _buinhibit=False):
+        return null
+
+    def match(self, vardict, subdict, pred_rule, expr):
+        return expr is self
+
+    def __eq__(self, other):
+        return other is self
+
+    def __hash__(self):
+        return hash(type(self))
+
+    def __repr__(self):
+        return " <NULL> "
+
+null = NullSingleton()
+
+class Atom(ExprBase):
     def bottomup(self, rule):
         return rule(self, _pathinhibit=True, _buinhibit=True)
 
@@ -92,64 +143,9 @@ class ExprBase(object):
     def match(self, vardict, subdict, pred_rule, expr):
         return self == expr
 
-    def __eq__(self, other):
-        return (
-            self.name == other.name
-            and type(self) is type(other)
-            and self.value == other.value
-        )
 
-    def __hash__(self):
-        return hash((type(self), self.name, self.value))
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __repr__(self):
-        return " <EXPR> "
-
-    @classmethod
-    def set_unparse(cls, funct):
-        cls._uunparse = funct
-
-    def __str__(self):
-        if self._uunparse is None:
-            return self.__repr__()
-        else:
-            return self._uunparse(self)
-
-
-class Null(ExprBase):
-
-    def __repr__(self):
-        return " <NULL> "
-
-    def __bool__(self):
-        return False
-
-
-null = Null()
-
-
-class End(ExprBase):
-    name = "end"
-
-    def __repr__(self):
-        return " <END> "
-
-
-end = End()
-
-
-class Number(ExprBase):
-    def __init__(self, value):
-        object.__setattr__(self, "value", value)
-
-    def __repr__(self):
-        return repr(self.value)
-
-
-class Symbol(ExprBase):
+            
+class Symbol(Atom):
     def __init__(self, name=""):
         object.__setattr__(self, "name", name)
 
@@ -177,7 +173,10 @@ class Symbol(ExprBase):
         """
         if self in subdict:
             return subdict[self] == expr
-        elif vardict[self]:
+        elif vardict[self] == true:
+            subdict[self] = expr
+            return True
+        else:
             pred_subdict = {self: expr, any__: expr}
             sub_rule = Substitute(subdict=pred_subdict, bottomup=True)
             pred_eval = pred_rule(sub_rule(vardict[self]))
@@ -186,18 +185,42 @@ class Symbol(ExprBase):
                 return True
             else:
                 return False
-        else:
-            subdict[self] = expr
-            return True
 
+    def __eq__(self, other):
+        return(type(self) == type(other) and self.name == other.name)
+
+    def __hash__(self):
+        return hash((type(self), self.name))
 
 # truealgebra boolean expressions
 true = Symbol('true')
 false = Symbol('false')
 
+
 # special symbol used
 # when substituting into predicates during pattern matching
 any__ = Symbol('__any')
+
+
+
+class Number(Atom):
+    def __init__(self, value):
+        object.__setattr__(self, "value", value)
+
+    def __hash__(self):
+        return hash((type(self), self.value))
+
+    def __eq__(self, other):
+        return (
+            type(self) is type(other)
+            and self.value == other.value
+        )
+
+    def match(self, vardict, subdict, pred_rule, expr):
+        return self == expr
+
+    def __repr__(self):
+        return repr(self.value)
 
 
 class Container(ExprBase):
@@ -253,8 +276,8 @@ class Container(ExprBase):
 
     def __eq__(self, other):
         if (
-            self.name != other.name
-            or type(self) is not type(other)
+            type(self) is not type(other)
+            or self.name != other.name
             or len(self) != len(other)
         ):
             return False
@@ -300,7 +323,6 @@ class Container(ExprBase):
         self.rbp = 0
         object.__setattr__(self, "items", self.items + (token,))
 
-
 # this has not been completely unit tested
 class Assign(Container):
     """Assign class instance and used to modify the Assign_Rule instances
@@ -308,18 +330,14 @@ class Assign(Container):
     """
 
     def bottomup(self, rule):
-        newitems = list(self.items[:-1])
-        try:
-            newitems.append(self.items[-1].bottomup(rule))
-        except IndexError:
-            ta_logger.log("Assigned requires at least one argument")
-            return null
+        newitems = list(self.items[:1])
+        for item in self.items[1:]:
+            newitems.append(item.bottomup(rule))
         return rule(
             self.__class__(self.name, newitems),
             _pathinhibit=True,
             _buinhibit=True
         )
-# you can Yank from anywhere, the Put is restricted
 
     def apply2path(self, path, rule, _buinhibit=False):
         if not path:
@@ -327,15 +345,13 @@ class Assign(Container):
         try:
             nxt = path[0]
             path = path[1:]
-            if nxt == -1 or nxt == len(self.items) - 1:
-                result = self[nxt].apply2path(
-                    path, rule, _buinhibit=_buinhibit
-                )
-                newitems = (self[:nxt] + (result,))
-                return self.__class__(self.name, newitems)
-            else:
-                ta_logger.log("Assign argument closed to bottomup")
+            if nxt == 0 or nxt == -len(self.items):
+                ta_logger.log("Assign 0 item closed to path")
                 return null
+            else:
+                result = self[nxt].apply2path(path, rule, _buinhibit=_buinhibit)
+                newitems = (self[:nxt] + (result,) + self[nxt:][1:])
+                return self.__class__(self.name, newitems)
         except IndexError:
             ta_logger.log("index error in path")
             return null
@@ -343,25 +359,19 @@ class Assign(Container):
             ta_logger.log("type error in path")
             return null
 
-    def match(self, vardict, subdict, pred_rule, expr):
-        """ match cannot enter protected items.
-        This prevents NaturalRules from being applied inside
-        """
-        if (
-            type(expr) is not type(self)
-            or expr.name != self.name
-            or len(expr) != len(self)
-        ):
-            return False
 
-        if len(self) == 0:
-            return True
-        if not self[0].match(vardict, subdict, pred_rule, expr[0]):
-            return False
-        for ndx, item in enumerate(self[1:]):
-            if item != expr[1:][ndx]:
-                return False
-        return True
+# used with units and complete_natural/-rule
+class Restricted(Container):
+
+    def bottomup(self, rule):
+        return rule(self, _pathinhibit=True, _buinhibit=True)
+
+    def apply2path(self, path, rule, _buinhibit=False):
+        if path:
+            ta_logger.log("path cannot enter Restricted instnce")
+            return null
+        else:
+            return rule(self, _pathinhibit=True, _buinhibit=True)
 
 
 class CommAssoc(Container):
@@ -407,6 +417,14 @@ class CommAssoc(Container):
 
         cam = CommAssocMatch(self, vardict, subdict, pred_rule, expr)
         return cam.find_matches()
+
+
+class TrueThingCAM(TrueThing):
+    """Used with CommAssocMatch instances.
+    """
+    def __init__(self, subdict, target_list):
+        self.subdict = subdict
+        self.target_list = target_list
 
 
 class CommAssocMatch:
@@ -558,7 +576,10 @@ class CommAssocMatch:
     def special_match(self, symbol):
         """symbol must be a special symbol that is a key in self.vardict
         """
-        if self.vardict[symbol]:
+        if self.vardict[symbol] is null:
+            instance_items = self.target_list
+            self.target_list = list()
+        else:
             new_target_list = list()
             instance_items = list()
             for item in self.target_list:
@@ -571,9 +592,6 @@ class CommAssocMatch:
                 else:
                     new_target_list.append(item)
             self.target_list = new_target_list
-        else:
-            instance_items = self.target_list
-            self.target_list = list()
         if len(instance_items) < self.find_minimum_length(symbol):
             return False
         instance = CommAssoc(self.pattern.name, instance_items)
@@ -610,22 +628,17 @@ class CommAssocMatch:
             return False
 
 
-# used with units and complete_natural/-rule
-class Restricted(Container):
 
-    def bottomup(self, rule):
-        return rule(self, _pathinhibit=True, _buinhibit=True)
 
-    def apply2path(self, path, rule, _buinhibit=False):
-        if path:
-            ta_logger.log("path cannot enter Restricted instnce")
-            return null
-        else:
-            return rule(self, _pathinhibit=True, _buinhibit=True)
 
-    def match(self, vardict, subdict, pred_rule, expr):
-        """ match cannot enter inside the content of individual items
-        To do so would allow a NaturalRule rule to be applied inside.
-        for example when a Resricted instance represents units.
-        """
-        return self == expr
+        
+
+class End():
+    """ This class is used to create the object end.
+    end is used in the parse object as a way of signifying the end of
+    a sequence of tokens that are being made.
+    """
+    pass
+
+end = End()
+

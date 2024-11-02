@@ -8,8 +8,8 @@ from truealgebra.core.abbrv import (
     Co, CA, Sy, Nu
 )
 from truealgebra.core.parse import Parse
-from truealgebra.core.expression import (
-    ExprBase, Null, End
+from truealgebra.core.expressions import (
+    ExprBase, null
 )
 from truealgebra.core.settings import SettingsSingleton
 from truealgebra.core.unparse import unparse
@@ -53,8 +53,7 @@ parse = Parse()
 @pytest.mark.parametrize(
     ('expr, repr_'),
     [
-        (Null(), '<NULL>'),
-        (End(), '<END>'),
+        (null, '<NULL>'),
         (Nu(57.3), '57.3'),
         (Sy('abc'), 'abc'),
         (Co('f', (Nu(43), Sy('x'), Sy('y'))), 'f(43, x, y)'),
@@ -107,8 +106,7 @@ def test_unparse_symbolname(
 
 # Functional TEsting
 # data
-unp_ex01 = Null()
-unp_ex02 = End()
+unp_ex01 = null
 unp_ex03 = Nu(2.56)
 unp_ex03a = Nu(complex(2, 3))
 unp_ex04 = Sy('y')
@@ -133,7 +131,6 @@ unp_ex14 = Co('D', (Sy('x'), Co('@@', (Sy('x'), Sy('y')))))
     'expr, unp',
     [
         (unp_ex01, '<NULL>'),
-        (unp_ex02, '<END>'),
         (unp_ex03, '2.56'),
         (unp_ex03a, '(2+3j)'),
         (unp_ex04, 'y'),

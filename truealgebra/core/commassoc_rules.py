@@ -1,7 +1,8 @@
 # rules for communative/asscocative functions
 
 from . import rule as rule_m
-from . import expression as expr_m
+from . import expressions as expr_m
+
 
 def _index_filter(rmargs, expr):
     new = []
@@ -13,9 +14,11 @@ def _index_filter(rmargs, expr):
             new.append(arg)
     return new
 
+
 class CommAssocBase(rule_m.Rule):
     def predicate(self, expr):
-        return expr.etype == 'commassoc' 
+        return expr.etype == 'commassoc'
+
 
 class ToTheLeft(CommAssocBase):
     def body(self, expr):
@@ -24,12 +27,14 @@ class ToTheLeft(CommAssocBase):
         yy = [expr[ii] for ii in ndex]
         return expr_m.CommAssoc(expr.name, tuple(yy + xx))
 
+
 class ToTheRight(CommAssocBase):
     def body(self, expr):
         ndexes = _index_filter(self.args, expr)
         xx = [aa for (ii, aa) in enumerate(expr) if ii not in ndexes]
         yy = [expr[ii] for ii in ndexes]
         return expr_m.CommAssoc(expr.name, tuple(xx + yy))
+
 
 class GatherLeft(CommAssocBase):
     def body(self, expr):
@@ -44,6 +49,7 @@ class GatherLeft(CommAssocBase):
                 if (ii + point) not in ndexes]
         return expr_m.CommAssoc(expr.name, tuple(xx + yy + zz))
 
+
 class GatherRight(CommAssocBase):
     def body(self, expr):
         ndexes = _index_filter(self.args, expr)
@@ -52,19 +58,23 @@ class GatherRight(CommAssocBase):
         point = ndexes[-1]
         xx = [aa for (ii, aa) in enumerate(expr[:point])
                 if ii not in ndexes]
-        yy = [expr[ii] for ii in ndexes] 
-        zz = [aa for (ii, aa) in enumerate(expr[point:]) 
-                if (ii + point) not in ndexes]
+        yy = [expr[ii] for ii in ndexes]
+        zz = [aa for (ii, aa) in enumerate(expr[point:])
+            if (ii + point) not in ndexes
+        ]
         return expr_m.CommAssoc(expr.name, tuple(xx + yy + zz))
 
+
 class Flatten(CommAssocBase):
-    def postinit(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.args = args
+        super().__init__(*args, **kwargs)
+
     def body(self, expr):
         newitems = []
         if not self.args:
             for ex in expr:
-                if  ex.name == expr.name and ex.etype == 'commassoc':
+                if ex.name == expr.name and ex.etype == 'commassoc':
                     newitems.extend(ex.items)
                 else:
                     newitems.append(ex)
@@ -80,10 +90,12 @@ class Flatten(CommAssocBase):
                 newitems.append(ee)
         return expr_m.CommAssoc(expr.name, newitems)
 
-flatten = Flatten(bottomup = True)
+
+flatten = Flatten(bottomup=True)
+
 
 # *rmargs must be monotonically increasing integers
-# This rulewill require a lot of testing
+# This rule will require a lot of testing
 class Group(CommAssocBase):
     def body(self, expr):
         if not self.args:
@@ -96,12 +108,12 @@ class Group(CommAssocBase):
         nex = next(indexes, None)
         while nex:
             new = expr[indx:nex]
-            if len(new) >  1:
+            if len(new) > 1:
                 items.append(expr_m.CommAssoc(expr.name, new))
-                indx= nex
+                indx = nex
             nex = next(indexes, None)
         items.extend(expr[indx:leng])
         if len(items) == 1:
-            return item[0]
+            return items[0]
         else:
             return expr_m.CommAssoc(expr.name, tuple(items))

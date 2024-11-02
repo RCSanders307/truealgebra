@@ -1,7 +1,7 @@
 """ Test Parse factory methods"""
 
 from truealgebra.core.parse import Parse
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     CommAssoc, Number, Container, Symbol, Restricted, Assign
 )
 import pytest
