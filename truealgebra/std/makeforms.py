@@ -1,4 +1,4 @@
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     ExprBase, Number, Container, CommAssoc
 )
 #from truealgebra.core.rulebase import RuleBase

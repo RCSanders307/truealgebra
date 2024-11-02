@@ -1,5 +1,5 @@
 from truealgebra.core.rules import Rule
-from truealgebra.core.expression import Number, CommAssoc
+from truealgebra.core.expressions import Number, CommAssoc
 
 
 class EvalCommAssocBase(Rule):

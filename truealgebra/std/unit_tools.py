@@ -1,5 +1,5 @@
 from truealgebra.core.rulebase import RuleBase
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     Container, CommAssoc, Restricted, Number, Symbol, null
 )
 from truealgebra.core.settings import Settings

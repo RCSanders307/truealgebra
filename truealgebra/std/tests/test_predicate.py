@@ -1,5 +1,5 @@
 from truealgebra.core.abbrv import *   # import abbreviations
-from truealgebra.core.expression import true, false
+from truealgebra.core.expressions import true, false
 #from truealgebra.std.predicate import(
 #    number_type_rules, logic_rules, comparison_rules, if_rules,
 #)

@@ -1,5 +1,5 @@
 from truealgebra.core.abbrv import Sy, Co, Nu, CA
-from truealgebra.core.expression import null
+from truealgebra.core.expressions import null
 from truealgebra.core.rules import Rule, RulesBU
 #from truealgebra.std.std_settings import parse
 

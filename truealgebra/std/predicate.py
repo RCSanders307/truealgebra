@@ -1,6 +1,6 @@
 from truealgebra.core.rules import JustOne, JustOneBU
 from truealgebra.core.naturalrules import HalfNaturalRule, NaturalRule
-from truealgebra.core.expression import Number, true, false
+from truealgebra.core.expressions import Number, true, false
 from fractions import Fraction
 
 # =================

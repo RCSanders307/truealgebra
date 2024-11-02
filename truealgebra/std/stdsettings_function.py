@@ -4,7 +4,7 @@ This module is to be executed. It modifies the setting objects in truealgebra.co
 This module creates no objects to be imported elsewhere.
 """
 from truealgebra.core.settings import SettingsSingleton
-from truealgebra.core.expression import (
+from truealgebra.core.expressions import (
     Number, CommAssoc, Restricted, Assign, Container, null
 )
 from truealgebra.core.parse import Parse

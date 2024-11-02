@@ -2,7 +2,7 @@ from truealgebra.core.rules import (
     Rule, Rules, RulesBU, JustOne, JustOneBU
 )
 from truealgebra.core.naturalrules import HalfNaturalRule
-from truealgebra.core.expression import Number, Container, null, true
+from truealgebra.core.expressions import Number, Container, null, true
 from truealgebra.core.err import ta_logger
 from truealgebra.core.abbrv import isCo, isNu, isCA
 

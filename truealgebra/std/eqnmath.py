@@ -1,6 +1,6 @@
 from truealgebra.core.rules import JustOne
 from truealgebra.core.naturalrules import NaturalRule
-import truealgebra.core.expression as e 
+import truealgebra.core.expressions as e 
 
 class EqnRule(NaturalRule):
     varstring=" forall(ex0, ex1, ex2, ex3) "

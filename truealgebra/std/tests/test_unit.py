@@ -1,6 +1,6 @@
 from truealgebra.core.abbrv import *   # import abbreviations
-from truealgebra.core.expression import null
-from truealgebra.core.rule import RulesBU
+from truealgebra.core.expressions import null
+from truealgebra.core.rules import RulesBU
 from truealgebra.std.unit import (
     UnitForm, SimplifyUnits, ConvertToBasis, MultiplyUnitsByBasis, 
     AffineConvert
