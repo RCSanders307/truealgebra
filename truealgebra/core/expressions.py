@@ -628,6 +628,41 @@ class CommAssocMatch:
             return False
 
 
+def isNumber(expr):
+    return isinstance(expr, Number)
+
+
+def isContainer(expr, name=None, arity=None):
+    if not isinstance(expr, Container):
+        return False
+
+    if name is None:
+        name_ok = True
+    else:
+        name_ok = expr.name == name
+    if arity is None:
+        arity_ok = True
+    else:
+        arity_ok = (len(expr) == arity)
+
+    return name_ok and arity_ok
+
+
+def isCommAssoc(expr, name=None, arity=None):
+    if not isinstance(expr, CommAssocA):
+        return False
+
+    if name is None:
+        name_ok = True
+    else:
+        name_ok = expr.name == name
+    if arity is None:
+        arity_ok = True
+    else:
+        arity_ok = (len(expr) == arity)
+
+    return name_ok and arity_ok
+
 
 
 

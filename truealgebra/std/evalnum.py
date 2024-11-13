@@ -236,5 +236,7 @@ evalmathdouble = EvalMathDictDouble(
     }
 )
 
-evalnumeric = JustOne(multiply, add, evalmathsingle, evalmathdouble)
-evalnumeric_bu = JustOneBU(multiply, add, evalmathsingle, evalmathdouble)
+evalnum = JustOne(multiply, add, evalmathsingle, evalmathdouble)
+evalnumbu = JustOneBU(multiply, add, evalmathsingle, evalmathdouble)
+num0 = Number(0)
+num1 = Number(1)
