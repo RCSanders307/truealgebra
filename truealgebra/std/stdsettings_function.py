@@ -10,7 +10,6 @@ from truealgebra.core.expressions import (
 from truealgebra.core.parse import Parse
 from truealgebra.core.rules import Rule, JustOneBU
 from truealgebra.core.err import ta_logger
-#from truealgebra.std.evalnum import evalnum, evalnumbu
 from fractions import Fraction
 
 settings = SettingsSingleton()
@@ -121,5 +120,3 @@ def set_stdsettings():
     settings.set_categories('forall', 'forall') 
 
     settings.active_parse = parse
-    #settings.active_evalnum = evalnum
-    #settings.active_evalnumbu = evalnumbu

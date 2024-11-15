@@ -385,9 +385,11 @@ class CommAssoc(Container):
         ))
 
     def __eq__(self, other):
-        if (self.name != other.name
+        if (
+                self.name != other.name
                 or type(self) is not type(other)
-                or len(self) != len(other)):
+                or len(self) != len(other)
+            ):
             return False
         else:
             return self.inner_eq(list(self.items), list(other.items))
