@@ -1,5 +1,5 @@
 from truealgebra.core.rules import Rule
-from truealgebra.core.expressions import Number, CommAssoc
+from truealgebra.core.expressions import Number, CommAssoc, isCommAssoc
 
 
 class EvalCommAssocBase(Rule):
@@ -13,14 +13,16 @@ class EvalCommAssocBase(Rule):
 
     def gen(self, ca_expr):
         for item in ca_expr.items:
-            if self.iscommassoc(item):
+#           if self.iscommassoc(item):
+            if isCommAssoc(item, name=self.name):
                 for inner_item in self.gen(item):
                     yield inner_item
             else:
                 yield item
 
     def predicate(self, expr):
-        return self.iscommassoc(expr)
+        return isCommAssoc(expr, name=self.name)
+#       return self.iscommassoc(expr)
 
     def body(self, expr):
         return expr
@@ -32,18 +34,6 @@ class EvalCommAssocBase(Rule):
             return outlist[0]
         else:
             return CommAssoc(self.name, outlist)
-
-
-class FlattenCommAssoc(EvalCommAssocBase):
-    def body(self, expr):
-        outlist = list()
-        for item in self.gen(expr):
-            outlist.append(item)
-        return self.prep_output(outlist)
-
-
-flattenstar = FlattenCommAssoc(name='*', ident=Number(1))
-flattenplus = FlattenCommAssoc(name='+', ident=Number(0))
 
 
 class CalcCommAssoc(EvalCommAssocBase):
@@ -64,5 +54,3 @@ class CalcCommAssoc(EvalCommAssocBase):
         return self.prep_output(outlist)
 
 
-multiply = CalcCommAssoc(name='*', ident=Number(1), func=lambda x, y: x*y)
-add = CalcCommAssoc(name='+', ident=Number(0), func=lambda x, y: x+y)

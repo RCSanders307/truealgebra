@@ -1,13 +1,22 @@
-from truealgebra.core.rules import Rule, Rules, RulesBU, JustOne
-from truealgebra.core.expressions import Number, null, isNumber, isContainer
+from truealgebra.core.rules import (
+    Rule, Rules, RulesBU, JustOne, JustOneBU
+)
+from truealgebra.core.expressions import (
+    Number, Container, null, true, isNumber
+)
 from truealgebra.core.err import ta_logger
+from truealgebra.core.abbrv import isCo, isNu, isCA
 
+#from truealgebra.std.predicate import isfraction, iscomplex, isnumber
 from truealgebra.common.eval_commassoc import CalcCommAssoc
+
 
 import math
 import cmath
 from fractions import Fraction
 
+def eval_logger(msg):
+    ta_logger.log('Numerical Evaluation Error\n' + msg)
 
 # Operator Functions
 # ==================
@@ -41,6 +50,82 @@ def add_function(n0, n1):
     return n0 + n1
 
 
+def clean(n0):
+    if isinstance(n0, Fraction) and n0.denominator == 1:
+        return n0.numerator
+    elif isinstance(n0, complex) and n0.imag == 0:
+        return n0.real
+    else:
+        return n0
+
+
+# Class MathFunctions
+# ===================
+class MathFunctions:
+    def __init__(self, pwr, div, sub, neg, mul, add):
+        self._pwr = pwr
+        self._div = div
+        self._sub = sub
+        self._neg = neg
+        self._mul = mul
+        self._add = add
+
+    @property
+    def pwr(self):
+        return self._pwr
+
+    @pwr.setter
+    def set_pwr(self, func):
+        self._pwr = func
+
+    @property
+    def div(self):
+        return self._div
+
+    @div.setter
+    def set_div(self, func):
+        self._div = func
+
+    @property
+    def sub(self):
+        return self._sub
+
+    @sub.setter
+    def set_sub(self, func):
+        self._sub = func
+
+    @property
+    def neg(self):
+        return self._neg
+
+    @neg.setter
+    def set_neg(self, func):
+        self._neg = func
+
+    @property
+    def mul(self):
+        return self._mul
+
+    @mul.setter
+    def set_mul(self, func):
+        self._mul = func
+
+    @property
+    def add(self):
+        return self._add
+
+    @add.setter
+    def set_add(self, func):
+        self._add = func
+
+math = MathFunctions(
+    lambda n0, n1: clean(power_function(n0, n1)),
+    lambda n0, n1: clean(divide_function(n0, n1)),
+    lambda n0, n1: clean(subtract_function(n0, n1)),
+    lambda n0: clean(negative_function(n0)),
+    lambda n0, n1: clean(multiply_function(n0, n1)),
+    lambda n0, n1: clean(add_function(n0, n1)),
+)
 
 # Clean Rules
 # ===========
@@ -70,6 +155,7 @@ class CleanComplex(Rule):
 cleanfraction = CleanFraction()
 cleancomplex = CleanComplex()
 
+
 # ============
 # EvalMathDict
 # ============
@@ -82,7 +168,7 @@ class EvalMathDictSingle(Rule):
 
     def predicate(self, expr):
         return (
-            isContainer(expr, arity=self.arity)
+            isCo(expr, arity=self.arity)
             and expr.name in self.namedict
             and self.item_predicate(expr)
         )
@@ -102,11 +188,11 @@ class EvalMathDictSingle(Rule):
             return null
 
     def calculation(self, func, expr):
-        return func(expr[0].value)
+        return clean(func(expr[0].value))
 
     def item_predicate(self, expr):
         for item in expr:
-            if not isNumber(item):
+            if not isNu(item):
                 return False
         return True
 
@@ -115,7 +201,7 @@ class EvalMathDictDouble(EvalMathDictSingle):
     arity = 2
 
     def calculation(self, func, expr):
-        return func(expr[0].value, expr[1].value)
+        return clean(func(expr[0].value, expr[1].value))
 
 
 # Eval Math Function Single Arity
@@ -138,24 +224,28 @@ evalmathsingle = EvalMathDictSingle(
         'log': cmath.log,
         'log10': cmath.log10,
         'sqrt': cmath.sqrt,
-        '-': negative_function,
+        '-': lambda x: -x,
     }
 )
 
 
 evalmathdouble = EvalMathDictDouble(
     namedict={
-        '**': power_function,
-        '/': divide_function,
-        '-': subtract_function
+        '**': lambda n0, n1: n0 ** n1,
+        '/': lambda n0, n1: n0 / n1,
+        '-': lambda n0, n1: n0 - n1,
     }
 )
 
 num0 = Number(0)
 num1 = Number(1)
 
-multiply = CalcCommAssoc(name='*', ident=num1, func=multiply_function)
-add = CalcCommAssoc(name='+', ident=num0, func=add_function)
+multiply = CalcCommAssoc(name='*', ident=num1, func=lambda x, y: x*y)
+add = CalcCommAssoc(name='+', ident=num0, func=lambda x, y: x+y)
+
+
+#evalnum = JustOne(multiply, add, evalmathsingle, evalmathdouble)
+#evalnumbu = JustOneBU(multiply, add, evalmathsingle, evalmathdouble)
 
 evalnum = Rules(
     JustOne(multiply, add, evalmathsingle, evalmathdouble),

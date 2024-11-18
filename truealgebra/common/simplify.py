@@ -1,38 +1,81 @@
+"""Facilitate algebraic simplification of TrueAlgebra expressions.
+
+The rule Converts expressions into a SPP form, described below.
+Note that a ConvertToSPP rule is meant to be applied only with
+bottomup attribute equal to True. The ConvertToSPP rule is  written
+assuming that all subexpressions in the expression being evaluated
+are already in SPP form.
+
+The SPP (StarPwr Plus) form is described below:
+
+Numeric Evaluations
+===================
+
+    * All numeric evaluations are made
+
+StarPwr
+=======
+The following Container instances will become part of a StarPwr instance.
+
+    * Those with names '*' and '/'
+    * Those with name '-' and one item only (negative operator)
+    * Those with name '**' and numeric exponents
+
+Requirements for StarPwr Instances
+----------------------------------
+
+    * Cannot be: coef is num1, exp_dict has length of 1, value is num1
+    * There is an exception to the above requiremnet inside Plus objects.
+    * exp_dict cannot be empty
+    * exp_dict values cannot be num0
+    * exp_dict values must be a Number object
+    * coef cannot be num0
+    * coef must be a Number object
+    * keys cannot be StarPwr or Number objects
+    * keys cannot be '**' containers with Number object as exponent.
+
+Plus
+====
+
+The following Container instances will become part of a Plus instance.
+    Those with the name '+'
+    Those with name '-' and two item only (subtraction operator)
+
+Requirements for Plus Instances
+-------------------------------
+
+    * cannot have empty items attribute (becomes Number(0))
+    * If num = 0, cannot have only one item (becomes items[0])
+    * No Number objects in the items attribute
+    * There will not be Plus instances inside the items attribute.
+    * Only StarPwr objects inside the items attribute (see below).
+    * These StarPwr objects may violate first rule above for StrPwr.
+
+General Comments
+================
+The conversion process does implement mathematical factoring
+or the distributive property.
+"""
+
 from truealgebra.common.commonsettings import commonsettings
+from truealgebra.common.utility import (
+    addnums, mulnums, divnums, subnums, pwrnums,
+)
+
 from truealgebra.core.expressions import (
     ExprBase, Number, Container, CommAssoc, isNumber, isContainer,
-    null
+    isCommAssoc, null
 )
-from truealgebra.core.rules import Rule
+from truealgebra.core.rules import Rule, RulesBU, JustOneBU
 from truealgebra.core.err import ta_logger
 
 from types import MappingProxyType
 
+from IPython import embed
+
 evalnum = commonsettings.evalnum
-evalmathsingle = commonsettings.evalmathsingle
-evalmathdouble = commonsettings.evalmathdouble
 num0 = commonsettings.num0
 num1 = commonsettings.num1
-
-
-def addnums(num0, num1):
-    return evalnum(CommAssoc('+', (num0, num1)))
-
-
-def mulnums(num0, num1):
-    return evalnum(CommAssoc('*', (num0, num1)))
-
-
-def divnums(num0, num1):
-    return evalnum(Container('/', (num0, num1)))
-
-
-def subnums(num0, num1):
-    return evalnum(Container('-', (num0, num1)))
-
-
-def pwrnums(num0, num1):
-    return evalnum(Container('**', (num0, num1)))
 
 
 class StarPwr(ExprBase):
@@ -241,6 +284,14 @@ class Plus(CommAssoc):
     # only in operator names.
     name = '_+'
 
+    def bottomup(self, rule):
+        return rule(
+            self.__class__(
+                self.num,
+                tuple([item.bottomup(rule) for item in self.items])),
+            _pathinhibit=True,
+            _buinhibit=True)
+
     def __repr__(self):
         out = 'Plus(' + repr(self.num) + ', ('
         for item in self.items[0:-1]:
@@ -323,7 +374,7 @@ class PseudoP():
 
 class StarToSPP(Rule):
     def predicate(self, expr):
-        return isinstance(expr, CommAssoc) and expr.name == '*'
+        return isCommAssoc(expr, name='*')
 
     def body(self, expr):
         pseudo = PseudoSP(num1, dict())
@@ -339,7 +390,7 @@ class StarToSPP(Rule):
 
 class DivToSPP(Rule):
     def predicate(self, expr):
-        return isinstance(expr, Container) and expr.name == '/'
+        return isContainer(expr, name='/', arity=2)
 
     def body(self, expr):
         pseudo = PseudoSP()
@@ -362,126 +413,11 @@ class DivToSPP(Rule):
         return StarPwr.return_SP(pseudo)
 
 
-converttoSPP = JustOneBU(
-    evalmathsingle, evalmathdouble, StarToSPP(), DivToSPP()
-)
-
-
-class ConvertToSPP(Rule):
-    """Facilitate algebraic simplification of TrueAlgebra expressions.
-
-    The rule Converts expressions into a SPP form, described below.
-    Note that a ConvertToSPP rule is meant to be applied only with
-    bottomup attribute equal to True. The ConvertToSPP rule is  written
-    assuming that all subexpressions in the expression being evaluated
-    are already in SPP form.
-
-    The SPP (StarPwr Plus) form is described below:
-
-    Numeric Evaluations
-    ===================
-
-        * All numeric evaluations are made
-
-    StarPwr
-    =======
-    The following Container instances will become part of a StarPwr instance.
-
-        * Those with names '*' and '/'
-        * Those with name '-' and one item only (negative operator)
-        * Those with name '**' and numeric exponents
-
-    Requirements for StarPwr Instances
-    ----------------------------------
-
-        * Cannot be: coef is num1, exp_dict has length of 1, value is num1
-        * There is an exception to the above requiremnet inside Plus objects.
-        * exp_dict cannot be empty
-        * exp_dict values cannot be num0
-        * exp_dict values must be a Number object
-        * coef cannot be num0
-        * coef must be a Number object
-        * keys cannot be StarPwr or Number objects
-        * keys cannot be '**' containers with Number object as exponent.
-
-    Plus
-    ====
-
-    The following Container instances will become part of a Plus instance.
-        Those with the name '+'
-        Those with name '-' and two item only (subtraction operator)
-
-    Requirements for Plus Instances
-    -------------------------------
-
-        * cannot have empty items attribute (becomes Number(0))
-        * If num = 0, cannot have only one item (becomes items[0])
-        * No Number objects in the items attribute
-        * There will not be Plus instances inside the items attribute.
-        * Only StarPwr objects inside the items attribute (see below).
-        * These StarPwr objects may violate first rule above for StrPwr.
-
-    General Comments
-    ================
-    The conversion process does implement mathematical factoring
-    or the distributive property.
-    """
-
-    @property
-    def method_dict(self):
-        return {
-            '/': self.div,
-            '*': self.star,
-            '+': self.plus,
-            '-': self.minus,
-            '**': self.power,
-        }
-
+class PwrToSPP(Rule):
     def predicate(self, expr):
-        return True
+        return isContainer(expr, name='**', arity=2)
 
     def body(self, expr):
-        if isContainer(expr) and expr.name in self.method_dict:
-            return self.method_dict[expr.name](expr)
-        else:
-            return evalnum(expr)
-
-    def star(self, expr):
-        pseudo = PseudoSP(num1, dict())
-        for item in expr.items:
-            if type(item) is Number:
-                pseudo.coef = mulnums(pseudo.coef, item)
-            elif type(item) is StarPwr:
-                StarPwr.merge_starpwr(item, pseudo)
-            else:
-                StarPwr.mul_key(item, pseudo)
-        return StarPwr.return_SP(pseudo)
-
-    def div(self, expr):
-        if isNumber(expr[0]) and isNumber(expr[1]):
-            return evalnum(expr)
-        pseudo = PseudoSP()
-        top = expr[0]
-        bottom = expr[1]
-
-        if type(top) is Number:
-            pseudo.coef = mulnums(pseudo.coef, top)
-        elif type(top) is StarPwr:
-            StarPwr.merge_starpwr(top, pseudo)
-        else:
-            StarPwr.mul_key(top, pseudo)
-
-        if type(bottom) is Number:
-            pseudo.coef = divnums(pseudo.coef, bottom)
-        elif type(bottom) is StarPwr:
-            StarPwr.div_starpwr(bottom, pseudo)
-        else:
-            StarPwr.div_key(bottom, pseudo)
-        return StarPwr.return_SP(pseudo)
-
-    def power(self, expr):
-        if isNumber(expr[0]) and isNumber(expr[1]):
-            return evalnum(expr)
         if isNumber(expr[1]):
             if expr[1] == num1:
                 return expr[0]
@@ -496,10 +432,15 @@ class ConvertToSPP(Rule):
         else:
             return expr
 
-    def plus(self, expr):
+
+class PlusToSPP(Rule):
+    def predicate(self, expr):
+        return isCommAssoc(expr, name='+')
+
+    def body(self, expr):
         pseudo = PseudoP()
         for item in expr:
-            if type(item) is Number:
+            if isNumber(item):
                 pseudo.num = addnums(pseudo.num, item)
             elif type(item) is Plus:
                 Plus.merge_plus(item, pseudo)
@@ -513,12 +454,16 @@ class ConvertToSPP(Rule):
             return StarPwr.return_SP(pseudo.items[0])
         return pseudo.makeP()
 
-    def neg(self, expr):
-        """ Convert negative function.
-        -x is converted as though it were (-1) * x
-        """
-        if isNumber(expr[0]):
-            return evalnum(expr)
+
+class NegToSPP(Rule):
+    """ Convert negative function.
+    -x is converted as though it were (-1) * x
+    """
+    
+    def predicate(self, expr):
+        return isContainer(expr, name='-', arity=1)
+
+    def body(self, expr):
         pseudo = PseudoSP(Number(-1), dict())
         if type(expr[0]) is StarPwr:
             StarPwr.merge_starpwr(expr[0], pseudo)
@@ -526,18 +471,18 @@ class ConvertToSPP(Rule):
             StarPwr.mul_key(expr[0], pseudo)
         return StarPwr.return_SP(pseudo)
 
-    def minus(self, expr):
-        """ Convert minus and negative functions
-        x-y is converted as though it were x + (-1) * y
-        """
-        if len(expr) == 1:
-            return self.neg(expr)
+negtoSPP = NegToSPP()
 
-        if isNumber(expr[0]) and isNumber(expr[1]):
-            return evalnum(expr)
+class MinusToSPP(Rule):
+    """ Convert minus and negative functions
+    x-y is converted as though it were x + (-1) * y
+    """
+    def predicate(self, expr):
+        return isContainer(expr, name='-', arity=2)
 
+    def body(self, expr):
         pseudo = PseudoP()
-        if type(expr[0]) is Number:
+        if isNumber(expr[0]):
             pseudo.num = addnums(pseudo.num, expr[0])
         elif type(expr[0]) is Plus:
             Plus.merge_plus(expr[0], pseudo)
@@ -545,7 +490,7 @@ class ConvertToSPP(Rule):
             itemSP = Plus.make_item_SP(expr[0])
             Plus.append_itemSP(itemSP, pseudo)
 
-        ex1 = self.neg(Container('-', (expr[1],)))
+        ex1 = negtoSPP(Container('-', (expr[1],)))
         if type(ex1) is Number:
             pseudo.num = addnums(pseudo.num, ex1)
         else:
@@ -557,19 +502,28 @@ class ConvertToSPP(Rule):
         if pseudo.num == num0 and len(pseudo.items) == 1:
             return StarPwr.return_SP(pseudo.items[0])
         return pseudo.makeP()
+        
+
+converttoSPP = JustOneBU(
+    StarToSPP(), DivToSPP(), PwrToSPP(),
+    PlusToSPP(), NegToSPP(), MinusToSPP(), evalnum
+)
+
+
+
 
 
 class ConvertFromStarPwr(Rule):
     def predicate(self, expr):
-        return isinstance(expr, StarPwr):
+        return isinstance(expr, StarPwr)
 
     def body(self, expr):
         items = list()
 
         if expr.coef != num1:
-            items.append[expr.coef]
+            items.append(expr.coef)
 
-        for key in expr.exp_dict.keys:
+        for key in expr.exp_dict:
             if expr.exp_dict[key] == num1:
                 items.append(key)
             else:
@@ -584,7 +538,7 @@ class ConvertFromStarPwr(Rule):
             
 
 class ConvertFromPlus(Rule):
-    def predicatea(self, expr):
+    def predicate(self, expr):
         return isinstance(expr, Plus)
 
     def body(self, expr):
@@ -603,8 +557,56 @@ class ConvertFromPlus(Rule):
         else:
             return CommAssoc('+', items)
 
-form0 = JustOneBU(ConvertFromStar(), ConvertFromPlus())
+simplify0 = JustOneBU(ConvertFromStarPwr(), ConvertFromPlus())
 
+
+class ConvertStarPwrToDiv(Rule):
+    def predicate(self, expr):
+        return isinstance(expr, StarPwr)
+
+    def body(self, expr):
+        complex_list, positive_list, negative_list = self.sort(expr)
+        if expr.coef == 1:
+            upstairs = positive_list + complex_list
+        else:
+            upstairs = [Number(expr.coef)] + positive_list + complex_list
+        downstairs = negative_list
+
+        if len(upstairs) > 1:
+            up = CommAssoc('*', upstairs)
+        elif len(upstairs) == 1:
+            up = upstairs[0]
+        else:
+            up = num1
+
+        if len(downstairs) > 1:
+            down = CommAssoc('*', downstairs)
+            return Container('/', (up, down))
+        elif len(downstairs) == 1:
+            down = downstairs[0]
+            return Container('/', (up, down))
+        else:
+            return up
+
+    def sort(self, expr, with_div=True):
+        complex_list = list()  # complexx numerator list
+        positive_list = list()  # real numerator list
+        negative_list = list()  # real denomanator(expr?) list
+        for ex, exp in expr.exp_dict.items():
+            if isinstance(exp, complex):
+                complex_list.append(Container('**', (ex, Number(exp))))
+            elif exp == 1:
+                positive_list.append(ex)
+            elif exp > 0:
+                positive_list.append(Container('**', (ex, Number(exp))))
+            elif exp == -1 and with_div:
+                negative_list.append(ex)
+            elif exp != 0 and with_div:
+                negative_list.append(Container('**', (ex, Number(-exp))))
+            elif exp != 0 and not with_div:
+                negative_list.append(Container('**', (ex, Number(exp))))
+            # Note: if exp == 0, then ex**0 is 1, and is igmored.
+        return complex_list, positive_list, negative_list
 
 
 

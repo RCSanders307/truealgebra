@@ -95,12 +95,16 @@ class ExprBase(ABC):
         # See stackoverflow question 35321744
 
     def __str__(self):
-        str_func = self.str_func
-       # xxx = 101; embed()
-        if self.str_func is None:
-            return self.__repr__()
+        str_func = ExprBase.str_func
+        if str_func is None:
+            return self.__repr__(self)
         else:
-            return self.str_func()
+            return str_func(self)
+#       str_func = self.str_func
+#       if self.str_func is None:
+#           return self.__repr__()
+#       else:
+#           return self.str_func()
 
 class NullSingleton(ExprBase):
     _instance = None
@@ -651,7 +655,7 @@ def isContainer(expr, name=None, arity=None):
 
 
 def isCommAssoc(expr, name=None, arity=None):
-    if not isinstance(expr, CommAssocA):
+    if not isinstance(expr, CommAssoc):
         return False
 
     if name is None:

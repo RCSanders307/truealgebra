@@ -3,66 +3,16 @@
 This module is to be executed. It modifies the setting objects in truealgebra.core.env.
 This module creates no objects to be imported elsewhere.
 """
-from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core.settings import settings
 from truealgebra.core.expressions import (
     Number, CommAssoc, Restricted, Assign, Container, null
 )
-from truealgebra.core.parse import Parse
 from truealgebra.core.rules import Rule, JustOneBU
-from truealgebra.core.err import ta_logger
-from fractions import Fraction
-
-settings = SettingsSingleton()
-
-def eval_logger(msg):
-    ta_logger.log('Numerical Evaluation Error\n' + msg)
-
-class NegativeNumber(Rule):
-    def predicate(self, expr):
-        return (
-            expr.name == '-'
-            and isinstance(expr, Container) 
-            and len(expr) == 1
-            and isinstance(expr[0], Number)
-            and (
-                isinstance(expr[0].value, int)
-                or isinstance(expr[0].value, float)
-            )
-        )
-
-    def body(self, expr):
-        return Number(-expr[0].value)
-
-negativenumber = NegativeNumber()
-
-class MakeFraction(Rule):
-    def predicate(self, expr):
-        return (
-            expr.name == '/'
-            and isinstance(expr, Container) 
-            and len(expr) == 2
-            and isinstance(expr[0], Number)
-            and isinstance(expr[0].value, int)
-            and isinstance(expr[1], Number)
-            and isinstance(expr[1].value, int)
-        )
-
-    def body(self, expr):
-        try:
-            out = Number(Fraction(expr[0].value, expr[1].value))
-        except ZeroDivisionError:
-            eval_logger('Division by zero.')
-            out = null
-        return out
-
-makefraction = MakeFraction()
-        
-parse = Parse(
-    postrule=JustOneBU(negativenumber, makefraction)
-)
 
 
-def set_stdsettings():
+
+# settings,parse NOT set
+def set_settings():
     settings.reset()
     # set operator binding power dictionary
     settings.set_custom_bp("%", 0, 10)
@@ -119,4 +69,4 @@ def set_stdsettings():
     settings.set_categories('forall', '@') 
     settings.set_categories('forall', 'forall') 
 
-    settings.active_parse = parse
+
