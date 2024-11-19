@@ -97,7 +97,7 @@ class ExprBase(ABC):
     def __str__(self):
         str_func = ExprBase.str_func
         if str_func is None:
-            return self.__repr__(self)
+            return self.__repr__()
         else:
             return str_func(self)
 #       str_func = self.str_func

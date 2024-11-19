@@ -27,7 +27,7 @@ def settings(scope='module'):
     settings.set_categories('forall', '@')
     settings.set_categories('forall', 'forall')
 
-    settings.active_parse = parse
+    settings.parse = parse
 
     yield settings
     settings.reset()

@@ -13,7 +13,6 @@ class EvalCommAssocBase(Rule):
 
     def gen(self, ca_expr):
         for item in ca_expr.items:
-#           if self.iscommassoc(item):
             if isCommAssoc(item, name=self.name):
                 for inner_item in self.gen(item):
                     yield inner_item
@@ -22,7 +21,6 @@ class EvalCommAssocBase(Rule):
 
     def predicate(self, expr):
         return isCommAssoc(expr, name=self.name)
-#       return self.iscommassoc(expr)
 
     def body(self, expr):
         return expr

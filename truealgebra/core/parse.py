@@ -466,11 +466,11 @@ def meta_parser(strn):
                 indx = tmp
         if indx == -1:
             # the statement below be in a try block
-            result = settings.active_parse(strn)
+            result = settings.parse(strn)
             strn = ""
         else:
             # the statement below be in a try block
-            result = settings.active_parse(strn[:indx])
+            result = settings.parse(strn[:indx])
             strn = strn[indx+1:]
         yield result
 

@@ -64,4 +64,4 @@ parse = Parse(
 )
 
 def set_parse():
-    settings.active_parse = parse
+    settings.parse = parse
