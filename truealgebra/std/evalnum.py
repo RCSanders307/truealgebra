@@ -153,6 +153,7 @@ evalmathdouble = EvalMathDictDouble(
 
 num0 = Number(0)
 num1 = Number(1)
+neg1 = Number(-1)
 
 multiply = CalcCommAssoc(name='*', ident=num1, func=multiply_function)
 add = CalcCommAssoc(name='+', ident=num0, func=add_function)

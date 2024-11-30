@@ -133,7 +133,7 @@ def test_null():
 # =========
 # Test path
 # =========
-class Test_Apply2path_Method:
+class Test_Apply2path_Metho:d
     expr0 = Nu(3.5)
     expr0F = Co('F', (expr0,))
     expr1 = CA("comas", (Sy('a'), Sy('b')))

@@ -15,6 +15,7 @@ class CommonSettingsSingleton():
         self.evalnumbu = RulesBU(donothing_rule)
         self.num0 = Number(0)
         self.num1 = Number(1)
+        self.neg1 = Number(-1)
 
 
 commonsettings = CommonSettingsSingleton()

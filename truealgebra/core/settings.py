@@ -55,7 +55,7 @@ bp : namedtuple
 """
 from collections import namedtuple, defaultdict
 from truealgebra.core.err import ta_logger
-from truealgebra.core.expressions import Container
+from truealgebra.core.expressions import Container, null
 from truealgebra.core.constants import (
     isbindingpower, issymbolname, isoperatorname,
 )
@@ -72,6 +72,11 @@ def _msg_function(bool_tuple, msg_tuple, msg=''):
         if bool_value:
             msg += msg_tuple[ndx]
     return msg
+
+
+def noparse(anystring):
+    ta_logger.log("Change settings.parse from noparse to something useful.")
+    return null
 
 
 class SettingsSingleton():
@@ -174,7 +179,7 @@ class SettingsSingleton():
         self.categories['suchthat'].add('suchthat')
 # THIS HAS YET TO BE TESTED
         self.categories['forall'].add('forall')
-        self.parse = None
+        self.parse = noparse
 
     def set_default_bp(self, lbp, rbp):
         """Set default binding powers for operators.

@@ -307,6 +307,22 @@ def test_deal_with_left(correct, lbp, settings):
 
     assert out == correct
 
+# test middle_item_CA
+@pytest.mark.parametrize(
+    'item, correct',
+    [
+        (Co('-', (Sy('x'),Sy('y'))), '7 @ (x - y) '),
+        (Co('infix0', (Sy('x'),Sy('y'))), '7 @ (x infix0 y) '),
+        (Co('infix1', (Sy('x'),Sy('y'))), '7 @ (x infix1 y) '),
+        (Co('and', (Sy('x'),Sy('y'))), '7 @ x and y '),
+    ]
+)
+def test_middle_item_CA(item, correct, settings):
+    newoutstr = unparse.middle_item_CA(item, '@', 9, 9, '7 ')
+
+    assert newoutstr == correct
+
+
 
 # Test addhandler and last_handler Methods
 # ========================================
@@ -322,3 +338,19 @@ def test_addhandler(SpecialObject, readspecial, settings):
     out = readspecial(specialobject)
 
     assert out == 'unparsed special object'
+
+
+
+@pytest.fixture
+def alist(settings):
+    aa = parse(' x / / ')
+    bb = parse(' + + x ')
+    alist = [
+        (aa, 'x / /'),
+        (bb, '+ +   x'),
+    ]
+    return alist
+
+def test_alist(alist, settings):
+    for item in alist:
+        assert unparse(item[0]) == item[1]

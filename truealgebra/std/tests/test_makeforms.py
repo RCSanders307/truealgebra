@@ -3,7 +3,7 @@ from truealgebra.core.expressions import null
 from truealgebra.core.rules import Rule, RulesBU
 #from truealgebra.std.std_settings import parse
 
-from truealgebra.std.stdsettings_function import set_stdsettings
+from truealgebra.std.settings_functions import set_stdsettings
 from truealgebra.core.settings import settings
 
 # The statement below generates an error from std.eval

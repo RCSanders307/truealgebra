@@ -5,7 +5,7 @@ from truealgebra.core.naturalrules import (
     NaturalRule, HalfNaturalRule
 )
 from truealgebra.core.expressions import (
-    ExprBase, Symbol, Number, Container, Restricted, Assign, CommAssoc
+    ExprBase, Symbol, Number, Container, Restricted, Assign, CommAssoc, null
 )
 
 EB = ExprBase

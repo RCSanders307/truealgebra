@@ -66,7 +66,7 @@ from truealgebra.core.expressions import (
     ExprBase, Number, Container, CommAssoc, isNumber, isContainer,
     isCommAssoc, null
 )
-from truealgebra.core.rules import Rule, RulesBU, JustOneBU
+from truealgebra.core.rules import Rule, Rules, RulesBU, JustOneBU
 from truealgebra.core.err import ta_logger
 
 from types import MappingProxyType
@@ -76,6 +76,7 @@ from IPython import embed
 evalnum = commonsettings.evalnum
 num0 = commonsettings.num0
 num1 = commonsettings.num1
+neg1 = commonsettings.neg1
 
 
 class StarPwr(ExprBase):
@@ -220,7 +221,7 @@ class StarPwr(ExprBase):
             else:
                 pseudo.exp_dict[key] = newvalue
         else:
-            pseudo.exp_dict[key] = Container('-', (num1,))
+            pseudo.exp_dict[key] = neg1
 
     @staticmethod
     def appy_exponent(starpwr, exp, pseudo):
@@ -247,7 +248,7 @@ class StarPwr(ExprBase):
 
 
 class PseudoSP():
-    """ Mutable bjects of this class are shared between ConvertToSPP methods
+    """ Mutable bjects of this class are shared between conversion rules
     and StarPwr static methods to exchange data. The data structure is similar
     to that of StarPwr, but is mutable.
     """
@@ -357,9 +358,9 @@ class Plus(CommAssoc):
 
 
 class PseudoP():
-    """ Mutable bjects of this class are shared between ConvertToSPP methods
+    """ Mutable objects of this class are shared between conversion rules
     and Plus static methods to exchange data. The data structure is similar
-    to that of StarPwr, but is mutable.
+    to that of Plus, but is mutable.
     """
     def __init__(self, num=num0, items=tuple()):
         self.num = num
@@ -557,7 +558,10 @@ class ConvertFromPlus(Rule):
         else:
             return CommAssoc('+', items)
 
-simplify0 = JustOneBU(ConvertFromStarPwr(), ConvertFromPlus())
+simplify0 = Rules(
+    converttoSPP,
+    JustOneBU(ConvertFromStarPwr(), ConvertFromPlus())
+)
 
 
 class ConvertStarPwrToDiv(Rule):
@@ -566,10 +570,10 @@ class ConvertStarPwrToDiv(Rule):
 
     def body(self, expr):
         complex_list, positive_list, negative_list = self.sort(expr)
-        if expr.coef == 1:
+        if expr.coef == num1 or expr.coef == neg1:
             upstairs = positive_list + complex_list
         else:
-            upstairs = [Number(expr.coef)] + positive_list + complex_list
+            upstairs = [expr.coef] + positive_list + complex_list
         downstairs = negative_list
 
         if len(upstairs) > 1:
@@ -581,32 +585,41 @@ class ConvertStarPwrToDiv(Rule):
 
         if len(downstairs) > 1:
             down = CommAssoc('*', downstairs)
-            return Container('/', (up, down))
+            out = Container('/', (up, down))
         elif len(downstairs) == 1:
             down = downstairs[0]
-            return Container('/', (up, down))
+            out = Container('/', (up, down))
         else:
-            return up
+            out = up
+
+        if expr.coef == neg1:
+            return Container('-', (out,))
+        else:
+            return out
 
     def sort(self, expr, with_div=True):
         complex_list = list()  # complexx numerator list
         positive_list = list()  # real numerator list
         negative_list = list()  # real denomanator(expr?) list
         for ex, exp in expr.exp_dict.items():
-            if isinstance(exp, complex):
-                complex_list.append(Container('**', (ex, Number(exp))))
-            elif exp == 1:
+            if isinstance(exp.value, complex):
+                complex_list.append(Container('**', (ex, exp)))
+            elif exp == num1:
                 positive_list.append(ex)
-            elif exp > 0:
-                positive_list.append(Container('**', (ex, Number(exp))))
-            elif exp == -1 and with_div:
+            elif exp.value > 0:
+                positive_list.append(Container('**', (ex, exp)))
+            elif exp.value == -1 and with_div:
                 negative_list.append(ex)
-            elif exp != 0 and with_div:
-                negative_list.append(Container('**', (ex, Number(-exp))))
-            elif exp != 0 and not with_div:
-                negative_list.append(Container('**', (ex, Number(exp))))
+            elif exp.value != 0 and with_div:
+                negative_list.append(Container('**', (ex, Number(-exp.value))))
+            elif exp.value != 0 and not with_div:
+                negative_list.append(Container('**', (ex, exp)))
             # Note: if exp == 0, then ex**0 is 1, and is igmored.
         return complex_list, positive_list, negative_list
 
 
 
+simplify = Rules(
+    converttoSPP,
+    JustOneBU(ConvertStarPwrToDiv(), ConvertFromPlus())
+)
