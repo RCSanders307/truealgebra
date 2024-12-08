@@ -1,9 +1,10 @@
 from truealgebra.core.rules import Rule, RulesBU, donothing_rule
 from truealgebra.core.naturalrules import NaturalRule
-from truealgebra.core.parse import Parse, meta_parser
+from truealgebra.core.parse import meta_parser
 from truealgebra.core.expressions import Assign, Container
 from truealgebra.core.err import ta_logger
 from truealgebra.core.abbrv import isNu
+from truealgebra.core.settings import settings
 
 from IPython import embed
 
@@ -70,7 +71,7 @@ class AssignRule(Rule):
 
 class FrontEnd():
     def __init__(
-        self, history_name='Ex', parse=None, default_rule=donothing_rule,
+        self, history_name='Ex', default_rule=donothing_rule,
         hold_default=False, hold_assign=False, hold_session=False,
         hold_all=False, mute=False
     ):
@@ -79,10 +80,12 @@ class FrontEnd():
         self.history = list()
         self.history_rule = HistoryRule(frontend=self)
 
-        if parse is None:
-            self.parse = Parse()
-        else:
-            self.parse = parse
+        self.parse = settings.parse
+
+#       if parse is None:
+#           self.parse = Parse()
+#       else:
+#           self.parse = parse
 
         self.assign_rules = [AssignRule(frontend=self),]
         self.assign_rules[0].active = True

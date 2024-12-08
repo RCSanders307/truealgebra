@@ -7,8 +7,9 @@ from truealgebra.core.expressions import (
 from truealgebra.core.rules import (
     donothing_rule, Rule, RulesBU
 )
-from truealgebra.core.parse import parse
+from truealgebra.core.parse import Parse
 from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core import setsettings
 from truealgebra.core.naturalrules import(
     TrueThingNR, TrueThingHNR, NaturalRuleBase, NaturalRule, HalfNaturalRule
 )
@@ -24,15 +25,15 @@ def settings(scope='module'):
     settings = SettingsSingleton()
     settings.reset()
 
-    settings.set_custom_bp("=", 50, 50)
-    settings.set_custom_bp("*", 1000, 1000)
+    setsettings.set_custom_bp("=", 50, 50)
+    setsettings.set_custom_bp("*", 1000, 1000)
 
-    settings.set_container_subclass("*", CA)
-    settings.set_complement('star', '*')
+    setsettings.set_container_subclass("*", CA)
+    setsettings.set_complement('star', '*')
 
-    settings.set_categories('suchthat', '|')
-    settings.set_categories('forall', '@')
-    settings.parse = parse
+    setsettings.set_categories('suchthat', '|')
+    setsettings.set_categories('forall', '@')
+    settings.parse = Parse()
 
     yield settings
     settings.reset()
@@ -143,6 +144,7 @@ def test_truethinghnr(settings):
     ],
 )
 def test_create_vardict(varstring, vardict, settings):
+#   xxx = 100; embed()
     out = NaturalRuleBase.create_vardict(varstring)
 
     assert out == vardict
@@ -187,7 +189,7 @@ def test_naturalrulebase_init_pattern_error(badsettings, capsys):
     NaturalRule(pattern='x + y')
     output = capsys.readouterr()
 
-    assert 'settings.parse must point to a Parse instance' in output.out
+    assert 'Change settings.parse from noparse to something useful.' in output.out
 
 
 def test_naturalrulebase_init_vardict(settings):
@@ -412,7 +414,7 @@ def HNR0(settings):
             ' suchthat(forall(y), isreal(y)); '
             ' forall(_) '
         )
-        pattern = parse(' _ ++ (y ** x) ')
+        pattern = settings.parse(' _ ++ (y ** x) ')
         predicate_rule = predrule
 
         def body(self, expr, var):

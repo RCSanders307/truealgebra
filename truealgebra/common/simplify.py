@@ -59,7 +59,7 @@ or the distributive property.
 
 from truealgebra.common.commonsettings import commonsettings
 from truealgebra.common.utility import (
-    addnums, mulnums, divnums, subnums, pwrnums,
+    addnums, mulnums, divnums, subnums, pwrnums, negnum
 )
 
 from truealgebra.core.expressions import (
@@ -202,7 +202,7 @@ class StarPwr(ExprBase):
             StarPwr.div_keyvalue(key, value, pseudo)
 
     @staticmethod
-    def div_keyvalue(cls, key, value, pseudo):
+    def div_keyvalue(key, value, pseudo):
         if key in pseudo.exp_dict:
             newvalue = subnums(pseudo.exp_dict[key], value)
             if newvalue == num0:
@@ -210,7 +210,8 @@ class StarPwr(ExprBase):
             else:
                 pseudo.exp_dict[key] = newvalue
         else:
-            pseudo.exp_dict[key] = value
+            newvalue = mulnums(neg1, value)
+            pseudo.exp_dict[key] = newvalue
 
     @staticmethod
     def div_key(key, pseudo):
@@ -351,10 +352,12 @@ class Plus(CommAssoc):
 
     @staticmethod
     def clean_items(pseudo):
-        pseudo_copy = pseudo.copy()
-        for ndx, item in enumerate(reversed(pseudo_copy.items)):
+        del_ndx_list = list()
+        for ndx, item in enumerate(pseudo.items):
             if item.coef == num0:
-                del pseudo.items[ndx]
+                del_ndx_list.append(ndx)
+        for ndx in reversed(del_ndx_list):
+            del pseudo.items[ndx]
 
 
 class PseudoP():
@@ -420,7 +423,9 @@ class PwrToSPP(Rule):
 
     def body(self, expr):
         if isNumber(expr[1]):
-            if expr[1] == num1:
+            if isNumber(expr[0]):
+                return pwrnums(expr[0], expr[1])
+            elif expr[1] == num1:
                 return expr[0]
             elif expr[1] == num0:
                 return num1
@@ -465,6 +470,8 @@ class NegToSPP(Rule):
         return isContainer(expr, name='-', arity=1)
 
     def body(self, expr):
+        if isNumber(expr[0]):
+            return negnum(expr[0])
         pseudo = PseudoSP(Number(-1), dict())
         if type(expr[0]) is StarPwr:
             StarPwr.merge_starpwr(expr[0], pseudo)
@@ -472,7 +479,7 @@ class NegToSPP(Rule):
             StarPwr.mul_key(expr[0], pseudo)
         return StarPwr.return_SP(pseudo)
 
-negtoSPP = NegToSPP()
+negtoSP = NegToSPP()
 
 class MinusToSPP(Rule):
     """ Convert minus and negative functions
@@ -482,16 +489,19 @@ class MinusToSPP(Rule):
         return isContainer(expr, name='-', arity=2)
 
     def body(self, expr):
+        if isNumber(expr[0]) and isNumber(expr[1]):
+            return subnums(expr[0], expr[1])
+
         pseudo = PseudoP()
         if isNumber(expr[0]):
-            pseudo.num = addnums(pseudo.num, expr[0])
+            pseudo.num = expr[0]
         elif type(expr[0]) is Plus:
             Plus.merge_plus(expr[0], pseudo)
         else:
             itemSP = Plus.make_item_SP(expr[0])
             Plus.append_itemSP(itemSP, pseudo)
 
-        ex1 = negtoSPP(Container('-', (expr[1],)))
+        ex1 = negtoSP(Container('-', (expr[1],)))
         if type(ex1) is Number:
             pseudo.num = addnums(pseudo.num, ex1)
         else:
@@ -503,15 +513,12 @@ class MinusToSPP(Rule):
         if pseudo.num == num0 and len(pseudo.items) == 1:
             return StarPwr.return_SP(pseudo.items[0])
         return pseudo.makeP()
-        
+
 
 converttoSPP = JustOneBU(
     StarToSPP(), DivToSPP(), PwrToSPP(),
     PlusToSPP(), NegToSPP(), MinusToSPP(), evalnum
 )
-
-
-
 
 
 class ConvertFromStarPwr(Rule):

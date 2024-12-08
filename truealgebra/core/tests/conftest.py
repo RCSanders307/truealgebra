@@ -3,6 +3,7 @@ from truealgebra.core.expressions import (
     null, true, false, any__
 )
 from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core import setsettings
 import pytest
 
 
@@ -70,29 +71,29 @@ def conftest_settings():
     settings = SettingsSingleton()
     settings.reset()
 
-    settings.set_default_bp(251, 252)
-    settings.set_custom_bp('!', 2000, 0)
-    settings.set_custom_bp('!!!', 3000, 0)
-    settings.set_custom_bp('/', 1100, 1100)
-    settings.set_custom_bp('**', 1251, 1250)
-    settings.set_custom_bp('*', 1000, 999)
-    settings.set_custom_bp('+', 500, 500)
-    settings.set_custom_bp("@", 0, 3000)
-    settings.set_custom_bp("%", 0, 10)
+    setsettings.set_default_bp(251, 252)
+    setsettings.set_custom_bp('!', 2000, 0)
+    setsettings.set_custom_bp('!!!', 3000, 0)
+    setsettings.set_custom_bp('/', 1100, 1100)
+    setsettings.set_custom_bp('**', 1251, 1250)
+    setsettings.set_custom_bp('*', 1000, 999)
+    setsettings.set_custom_bp('+', 500, 500)
+    setsettings.set_custom_bp("@", 0, 3000)
+    setsettings.set_custom_bp("%", 0, 10)
 
-    settings.set_bodied_functions('D', 481)
-    settings.set_symbol_operators("and", 75, 76)
-    settings.set_symbol_operators("E")
-    settings.set_symbol_operators("jj")
-    settings.set_infixprefix("-", 999)
-    settings.set_container_subclass('+', CommAssoc)
-    settings.set_container_subclass('*', CommAssoc)
-    settings.set_container_subclass(':=', Assign)
-    settings.set_container_subclass('Rule', Restricted)
+    setsettings.set_bodied_functions('D', 481)
+    setsettings.set_symbol_operators("and", 75, 76)
+    setsettings.set_symbol_operators("E")
+    setsettings.set_symbol_operators("jj")
+    setsettings.set_infixprefix("-", 999)
+    setsettings.set_container_subclass('+', CommAssoc)
+    setsettings.set_container_subclass('*', CommAssoc)
+    setsettings.set_container_subclass(':=', Assign)
+    setsettings.set_container_subclass('Rule', Restricted)
 
-    settings.set_sqrtneg1('j')
-    settings.set_complement('star', '*')
-    settings.set_complement('!!', '+')
+    setsettings.set_sqrtneg1('j')
+    setsettings.set_complement('star', '*')
+    setsettings.set_complement('!!', '+')
 
     yield settings
     settings.reset()

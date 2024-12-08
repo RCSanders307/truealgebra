@@ -3,7 +3,15 @@ from truealgebra.core.expressions import Container, null
 from truealgebra.core.constants import (
     isbindingpower, issymbolname, isoperatorname,
 )
-from truealgebra.core.settings import settings
+from truealgebra.core.settings import settings, bp
+
+
+def _msg_function(bool_tuple, msg_tuple, msg=''):
+    for ndx, bool_value in enumerate(bool_tuple):
+        if bool_value:
+            msg += msg_tuple[ndx]
+    return msg
+
 
 def set_default_bp(lbp, rbp):
     """Set default binding powers for operators.
@@ -276,3 +284,11 @@ def set_categories(category, name=None):
     set_ = settings.categories[category]
     if name is not None:
         set_.add(name)
+
+
+def set_parse(func):
+    settings.parse = func
+
+
+def set_unparse(func):
+    settings.unparse = func

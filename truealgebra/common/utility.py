@@ -11,27 +11,27 @@ num1 = commonsettings.num1
 
 
 def addnums(num0, num1):
-    return evalnum(CommAssoc('+', (num0, num1)))
+    return commonsettings.evalnum(CommAssoc('+', (num0, num1)))
 
 
 def mulnums(num0, num1):
-    return evalnum(CommAssoc('*', (num0, num1)))
+    return commonsettings.evalnum(CommAssoc('*', (num0, num1)))
 
 
 def divnums(num0, num1):
-    return evalnum(Container('/', (num0, num1)))
+    return commonsettings.evalnum(Container('/', (num0, num1)))
 
 
 def subnums(num0, num1):
-    return evalnum(Container('-', (num0, num1)))
+    return commonsettings.evalnum(Container('-', (num0, num1)))
 
 
 def pwrnums(num0, num1):
-    return evalnum(Container('**', (num0, num1)))
+    return commonsettings.evalnum(Container('**', (num0, num1)))
 
 
 def negnum(num0):
-    return evalnum(Container('-', (num0, num1)))
+    return commonsettings.evalnum(Container('-', (num0)))
 
 
 class FlattenCommAssoc(EvalCommAssocBase):

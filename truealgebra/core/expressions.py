@@ -37,6 +37,7 @@ will modify the subdict dictionary.
 
 from abc import ABC, abstractmethod
 from truealgebra.core.rules import Substitute, TrueThing
+from truealgebra.core.settings import settings
 from truealgebra.core.err import ta_logger
 
 
@@ -84,26 +85,14 @@ class ExprBase(ABC):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    # Note: If this class attribute is inherited by an instance
-    # it becomes an instance method ==> 
-    # the first function argument becomes the instance (i.e. self)
-    # See stackoverflow question 35321744
-    # DO NOT USE as an instance method/attribute
-    setting_str_func = None
-
-    # func must be a function with one argument that converts an expression
-    # to a mathematically readable string.
+    # settings.unparse must be a function with one argument that converts
+    # an expression to a mathematically readable string.
     # As per stackoverflow question 1436703, users Martelli and moshez
-    @classmethod
-    def set_setting_str_func(cls, func):
-        cls.setting_str_func = func
-
     def __str__(self):
-        str_func = ExprBase.setting_str_func
-        if str_func is None:
+        if settings.unparse is None:
             return self.__repr__()
         else:
-            return str_func(self)
+            return settings.unparse(self)
 
 
 class NullSingleton(ExprBase):

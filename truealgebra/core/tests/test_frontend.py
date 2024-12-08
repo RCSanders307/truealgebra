@@ -3,8 +3,10 @@ from truealgebra.core.expressions import CommAssoc, Assign, true, false
 from truealgebra.core.frontend import FrontEnd, AssignRule, HistoryRule
 from truealgebra.core.rules import Rule, RulesBU, donothing_rule
 from truealgebra.core.naturalrules import NaturalRule
-from truealgebra.core.parse import parse, Parse
+from truealgebra.core.parse import Parse
+#from truealgebra.core.parse import parse, Parse
 from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core import setsettings
 import pytest
 
 from IPython import embed
@@ -14,26 +16,26 @@ def settings(scope='module'):
     settings = SettingsSingleton()
     settings.reset()
 
-    settings.set_custom_bp("=", 50, 50)
-    settings.set_custom_bp("*", 1000, 1000)
-    settings.set_infixprefix('-', 200)
+    setsettings.set_custom_bp("=", 50, 50)
+    setsettings.set_custom_bp("*", 1000, 1000)
+    setsettings.set_infixprefix('-', 200)
 
-    settings.set_container_subclass("*", CommAssoc)
-    settings.set_container_subclass(":=", Assign)
-    settings.set_complement('star', '*')
+    setsettings.set_container_subclass("*", CommAssoc)
+    setsettings.set_container_subclass(":=", Assign)
+    setsettings.set_complement('star', '*')
 
-    settings.set_categories('suchthat', '|')
-    settings.set_categories('suchthat', 'suchthat')
-    settings.set_categories('forall', '@')
-    settings.set_categories('forall', 'forall')
+    setsettings.set_categories('suchthat', '|')
+    setsettings.set_categories('suchthat', 'suchthat')
+    setsettings.set_categories('forall', '@')
+    setsettings.set_categories('forall', 'forall')
 
-    settings.parse = parse
+    settings.parse = Parse()
 
     yield settings
     settings.reset()
 
 
-parse = Parse()
+#parse = Parse()
 
 
 rule0 = NaturalRule()
@@ -58,8 +60,8 @@ def test_HistoeyRule_postinit():
         (Co('Expr', ()), False),
     ]
 )
-def test_HistoryRule_predicate(expr, correct):
-    fe = FrontEnd(parse=parse)
+def test_HistoryRule_predicate(expr, correct, settings):
+    fe = FrontEnd()
     syms = [Sy('w'), Sy('x'), Sy('y'), Sy('z')]
     fe.history.extend(syms)
     hr = HistoryRule(frontend=fe)
@@ -69,8 +71,8 @@ def test_HistoryRule_predicate(expr, correct):
     assert out == correct
 
 
-def test_HistoryRule_body():
-    fe = FrontEnd(parse=parse)
+def test_HistoryRule_body(settings):
+    fe = FrontEnd()
     hr = HistoryRule(frontend=fe)
     hr.frontend.history.append(Sy('x'))
     hr.frontend.history.append(Sy('y'))
@@ -82,8 +84,8 @@ def test_HistoryRule_body():
     assert out1 == Sy('y')
 
 
-def test_HistoryRule_body_error(capsys):
-    fe = FrontEnd(parse=parse)
+def test_HistoryRule_body_error(capsys, settings):
+    fe = FrontEnd()
     hr = HistoryRule(frontend=fe)
     hr.frontend.history.append(Sy('x'))
 
@@ -96,7 +98,7 @@ def test_HistoryRule_body_error(capsys):
 
 # Test AssignRule
 # ===============
-def test_AssignRule_postinit():
+def test_AssignRule_postinit(settings):
     fe = FrontEnd()
 
     ar = AssignRule(frontend=fe)
@@ -114,8 +116,8 @@ def test_AssignRule_postinit():
         (Sy('y'), False),
     ]
 )
-def test_AssignRule_predicate(expr, correct):
-    fe = FrontEnd(parse=parse)
+def test_AssignRule_predicate(expr, correct, settings):
+    fe = FrontEnd()
     ar = AssignRule(frontend=fe)
     ar.assign_dict[Sy('x')] = Nu(4)
 
@@ -124,8 +126,8 @@ def test_AssignRule_predicate(expr, correct):
     assert out == correct
 
 
-def test_AssignRule_body():
-    fe = FrontEnd(parse=parse)
+def test_AssignRule_body(settings):
+    fe = FrontEnd()
     ar = AssignRule(frontend=fe)
     ar.assign_dict[Sy('x')] = Nu(4)
 
@@ -141,8 +143,8 @@ def test_AssignRule_body():
         (Co('==', (Sy('x'), Nu(4))), dict()),
     ]
 )
-def test_AssignRule_assign(expr, a_dict):
-    fe = FrontEnd(parse=parse)
+def test_AssignRule_assign(expr, a_dict, settings):
+    fe = FrontEnd()
     ar = AssignRule(frontend=fe)
 
     ar.assign(expr)
@@ -150,8 +152,8 @@ def test_AssignRule_assign(expr, a_dict):
     assert ar.assign_dict == a_dict
 
 
-def test_AssignRule_assign_error(capsys):
-    fe = FrontEnd(parse=parse)
+def test_AssignRule_assign_error(capsys, settings):
+    fe = FrontEnd()
     ar = AssignRule(frontend=fe)
     expr = Asn(':=', (Sy('x'),))
 
@@ -162,8 +164,8 @@ def test_AssignRule_assign_error(capsys):
     assert 'exception with AssignRule assign method' in err.out
 
 
-def test_AssignRule_activate():
-    fe = FrontEnd(parse=parse)
+def test_AssignRule_activate(settings):
+    fe = FrontEnd()
     ar = AssignRule(frontend=fe)
     fe.assign_rules.append(ar)
 
@@ -176,7 +178,7 @@ def test_AssignRule_activate():
 
 # Test FrontEnd init
 # ==================
-def test_frontend_init_default():
+def test_frontend_init_default(settings):
     fe = FrontEnd()
 
     assert fe.history_name == 'Ex'
@@ -206,7 +208,6 @@ def test_frontend_init_default():
     'attribute, argument,',
     [
         ('history_name', '"Expr"'),
-        ('parse', 'parse'),
         ('default_rule', 'rule0'),
         ('hold_default', 'True'),
         ('hold_assign', 'True'),
@@ -215,7 +216,7 @@ def test_frontend_init_default():
         ('mute', 'True'),
     ]
 )
-def test_frontend_init(argument, attribute):
+def test_frontend_init(argument, attribute, settings):
     exec('fe = FrontEnd(' + attribute + '=' + argument + ')')
 
     exec('assert fe.' + attribute + ' == ' + argument)
@@ -223,8 +224,8 @@ def test_frontend_init(argument, attribute):
 
 # Test FrontEnd make_assign_rule
 # ==============================
-def test_frontend_make_assign_rule():
-    fe = FrontEnd(parse=parse)
+def test_frontend_make_assign_rule(settings):
+    fe = FrontEnd()
 
     fe.make_assign_rule()
 
@@ -233,8 +234,8 @@ def test_frontend_make_assign_rule():
 
 # Test FrontEnd print_expr
 # ========================
-def test_frontend_print_expr(capsys):
-    fe = FrontEnd(parse=parse)
+def test_frontend_print_expr(capsys, settings):
+    fe = FrontEnd()
     expr = Co('=', (Co('+', (Nu(1), Nu(1))), Nu(2)))
 
     fe.print_expr(expr)
@@ -276,70 +277,70 @@ def test_frontend_init_no_hold(settings):
     """ All hold attributes set False;
     the assign_rule, session_rule, and default_rule are all used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0,)
+    fe = FrontEnd(default_rule=default0,)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string)
 
-    assert fe.history[1] == parse('f(aa, ss, dd)')
+    assert fe.history[1] == settings.parse('f(aa, ss, dd)')
 
 
 def test_frontend_init_hold_assign(settings):
     """instance attribute hold_assign set to True;
     the assign_rule is not used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0, hold_assign=True)
+    fe = FrontEnd(default_rule=default0, hold_assign=True)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string)
 
-    assert fe.history[1] == parse('f(a, ss, dd)')
+    assert fe.history[1] == settings.parse('f(a, ss, dd)')
 
 
 def test_frontend_init_hold_session(settings):
     """instance attribute hold_session set to True;
     the session_rule is not used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0, hold_session=True)
+    fe = FrontEnd(default_rule=default0, hold_session=True)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string)
 
-    assert fe.history[1] == parse('f(aa, s, dd)')
+    assert fe.history[1] == settings.parse('f(aa, s, dd)')
 
 
 def test_frontend_init_hold_default(settings):
     """instance attribute hold_default set to True;
     the default_rule is not used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0, hold_default=True)
+    fe = FrontEnd(default_rule=default0, hold_default=True)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string)
 
-    assert fe.history[1] == parse('f(aa, ss, d)')
+    assert fe.history[1] == settings.parse('f(aa, ss, d)')
 
 
 def test_frontend_init_hold_all(settings):
     """instance attribute hold_all set to True
     none of the rules are used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0, hold_all=True)
+    fe = FrontEnd(default_rule=default0, hold_all=True)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string)
 
-    assert fe.history[1] == parse('f(a, s, d)')
+    assert fe.history[1] == settings.parse('f(a, s, d)')
 
 
 # Test FrontEnd call hold Parameters
@@ -350,56 +351,56 @@ def test_frontend_call_hold_assign(settings):
     """instance attribute hold_assign set to True;
     the assign_rule is not used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0)
+    fe = FrontEnd(default_rule=default0)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string, hold_assign=True)
 
-    assert fe.history[1] == parse('f(a, ss, dd)')
+    assert fe.history[1] == settings.parse('f(a, ss, dd)')
 
 
 def test_frontend_call_hold_session(settings):
     """instance attribute hold_session set to True;
     the session_rule is not used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0)
+    fe = FrontEnd(default_rule=default0)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string, hold_session=True)
 
-    assert fe.history[1] == parse('f(aa, s, dd)')
+    assert fe.history[1] == settings.parse('f(aa, s, dd)')
 
 
 def test_frontend_call_hold_default(settings):
     """instance attribute hold_default set to True;
     the default_rule is not used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0)
+    fe = FrontEnd(default_rule=default0)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string, hold_default=True)
 
-    assert fe.history[1] == parse('f(aa, ss, d)')
+    assert fe.history[1] == settings.parse('f(aa, ss, d)')
 
 
 def test_frontend_call_hold_all(settings):
     """instance attribute hold_all set to True
     none of the rules are used.
     """
-    fe = FrontEnd(parse=parse, default_rule=default0)
+    fe = FrontEnd(default_rule=default0)
     fe.create_session_rule(pattern='s', outcome='ss')
     fe(' a := aa ')
     string = ' f(a, s, d) '
 
     fe(string, hold_all=True)
 
-    assert fe.history[1] == parse('f(a, s, d)')
+    assert fe.history[1] == settings.parse('f(a, s, d)')
 
 
 # Test FrontEnd post_parser method Sequence of Statements.
@@ -418,7 +419,7 @@ def test_frontend_post_parser_sequence(capsys, settings):
     Then the assign rule is assigned, the history list appended and
     the final expression printed out.
     """
-    fe = FrontEnd(parse=parse, default_rule=default1)
+    fe = FrontEnd(default_rule=default1)
     fe.create_session_rule(pattern='c', outcome='d')
 
     fe(' a := b ')

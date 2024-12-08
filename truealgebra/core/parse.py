@@ -287,9 +287,10 @@ class Parse:
         while self.char in LETTERS or self.char in DIGITS:
             self.buf += self.char
             self.next_char()
-        if self.buf == settings.sqrtneg1:
-            return self.complex_factory()
-        elif self.buf in settings.symbol_operators:
+#       if self.buf == settings.sqrtneg1:
+#           return self.complex_factory()
+#       elif self.buf in settings.symbol_operators:
+        if self.buf in settings.symbol_operators:
             return self.symbol_operator_factory()
         elif self.char == '(':
             return self.function_form_tokenizer()
@@ -352,9 +353,9 @@ class Parse:
             return null
         elif self.char in ('e', 'E'):
             return self.sform_tokenizer()
-        elif self.char == settings.sqrtneg1:
-            self.next_char()
-            return self.complex_real_factory()
+#       elif self.char == settings.sqrtneg1:
+#           self.next_char()
+#           return self.complex_real_factory()
         else:
             return self.real_factory()
 
@@ -370,9 +371,9 @@ class Parse:
             self.next_char()
         if self.char == '.':
             return self.real_tokenizer()
-        elif self.char == settings.sqrtneg1:
-            self.next_char()
-            return self.complex_int_factory()
+#       elif self.char == settings.sqrtneg1:
+#           self.next_char()
+#           return self.complex_int_factory()
         elif self.char in ('e', 'E'):
             return self.sform_tokenizer()
         else:
@@ -396,15 +397,15 @@ class Parse:
     def integer_factory(self):
         return Number(int(self.buf))
 
-    def complex_real_factory(self):
-        return Number(complex(0, float(self.buf)))
+#   def complex_real_factory(self):
+#       return Number(complex(0, float(self.buf)))
 
-    def complex_int_factory(self):
-        return Number(complex(0, int(self.buf)))
+#   def complex_int_factory(self):
+#       return Number(complex(0, int(self.buf)))
 
-    def complex_factory(self):
-        """ symbol_tokenizer has sqrtneg1 in self.buf"""
-        return Number(complex(0, 1))
+#   def complex_factory(self):
+#       """ symbol_tokenizer has sqrtneg1 in self.buf"""
+#       return Number(complex(0, 1))
 
     def real_factory(self):
         return Number(float(self.buf))

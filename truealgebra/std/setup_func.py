@@ -6,15 +6,9 @@ from truealgebra.core.expressions import Number, Container
 from truealgebra.common.commonsettings import commonsettings
 from truealgebra.std.evalnum import evalnum, evalnumbu, num0, num1, neg1
 from truealgebra.core.err import ta_logger
+from truealgebra.std.unparse import alg_unparse
 from fractions import Fraction
 
-def set_commonsettings():
-    commonsettings.evalnum = evalnum
-    commonsettings.evalnumbu = evalnumbu
-    commonsettings.num0 = num0
-    commonsettings.num1 = num1
-    commonsettings.neg1 = neg1
-    
 
 
 def eval_logger(msg):
@@ -60,9 +54,15 @@ class MakeFraction(Rule):
 
 makefraction = MakeFraction()
         
-parse = Parse(
-    postrule=JustOneBU(negativenumber, makefraction)
-)
 
-def set_parse():
-    settings.parse = parse
+
+
+def std_setup_func():
+    commonsettings.evalnum = evalnum
+    commonsettings.evalnumbu = evalnumbu
+    commonsettings.num0 = num0
+    commonsettings.num1 = num1
+    commonsettings.neg1 = neg1
+    
+    settings.parse = Parse(postrule=JustOneBU(negativenumber, makefraction))
+    settings.unparse = alg_unparse
