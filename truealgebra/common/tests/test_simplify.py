@@ -1,9 +1,15 @@
 from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core.abbrv import Nu, Sy
+from truealgebra.core.rules import Rule, JustOneBU, Substitute
 from truealgebra.common.commonsettings import commonsettings
-from truealgebra.std.setup_func import std_setup_func
 from truealgebra.common.setup_func import common_setup_func
+from truealgebra.common.simplify import (
+    simplify, SP, isSP, Pl, isPl
+)
+from truealgebra.common.utility import mulnums
+from truealgebra.std.setup_func import std_setup_func
 
-from truealgebra.common.simplify import simplify
+from types import MappingProxyType
 import pytest
 from IPython import embed
 
@@ -22,7 +28,79 @@ def settings(scope='module'):
     commonsettings.reset()
 
 
-#These is are integration tests 
+# ============
+# Test StarPwr
+# ============
+@pytest.fixture
+def input_dict():
+    return {Sy('x'): Nu(2), Sy('y'): Nu(6)}
+
+@pytest.fixture
+def starpwr(input_dict):
+    return SP(coef=Nu(4), exp_dict=input_dict)
+
+def test_starpwr_init(settings, input_dict, starpwr):
+    assert starpwr.coef == Nu(4)
+    assert starpwr.exp_dict == input_dict
+    assert isinstance(starpwr.exp_dict, MappingProxyType)
+
+def test_starpwr_repr(starpwr):
+    repr_out = repr(starpwr)
+
+    assert repr_out == 'SP(4, {x: 2, y: 6})'
+
+def test_starpwr_hash(starpwr, input_dict):
+    assert hash(starpwr) == hash((
+        Nu(4),
+        SP,
+        frozenset(MappingProxyType(input_dict).items())
+    ))
+
+
+def test_starpwr_eq(input_dict, starpwr):
+    class SPSubClass(SP):
+        pass
+
+    spsubclass = SPSubClass(coef=Nu(4), exp_dict=input_dict)
+
+    assert not (starpwr == spsubclass)
+    assert not (starpwr == SP(coef=Nu(3), exp_dict=input_dict))
+    assert not (starpwr == SP(coef=Nu(4), exp_dict={
+        Sy('x'): Nu(3), Sy('y'): Nu(6)
+    }))
+    assert starpwr == SP(coef=Nu(4), exp_dict={
+        Sy('x'): Nu(2), Sy('y'): Nu(6)
+    })
+
+
+@pytest.fixture
+def sp_bottomup_rule(settings):
+    subber = Substitute(subdict={Sy('x'): Sy('w'), Sy('y'): Sy('z')},)
+
+    class SPRule(Rule):
+        def predicate(self, expr):
+            return isSP(expr)
+
+        def body(self, expr):
+            return SP(mulnums(expr.coef, Nu(2)), expr.exp_dict)
+
+    return JustOneBU(subber, SPRule())
+
+
+def test_starpwr_bottomup(starpwr, sp_bottomup_rule):
+    out = sp_bottomup_rule(starpwr)
+    other = SP(Nu(8), {Sy('w'): Nu(2), Sy('z'): Nu(6)})
+#   xxx = 100; embed()
+
+#   assert out == SP(Nu(8), {Sy('w'): Nu(2), Sy('z'): Nu(6)})
+    assert out == other
+
+
+
+
+# ==============================
+# These is are integration tests 
+# ==============================
 @pytest.mark.parametrize(
     "expr, correct",
     [

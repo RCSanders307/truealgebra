@@ -86,7 +86,7 @@ def test_starpwr_copy():
 
 
 @pytest.fixture
-def tmprulebu():
+def tmprulebu(settings):
     class TmpRuleBU(Rule):
         def predicate(self, expr):
             return isinstance(expr, Sy) or isSP(expr) or isPl(expr)
@@ -110,7 +110,7 @@ def tmprulebu():
     return TmpRuleBU()
 
 
-def test_starpwr_bottomup(tmprulebu):
+def test_starpwr_bottomup(settings, tmprulebu):
     sp = SP(3, {Sy('w'): 3, Sy('x'): 4, Sy('y'): 2, Sy('z'): 2, })
 
     out = tmprulebu(sp)

@@ -1,37 +1,35 @@
-from truealgebra.common.commonsettings import commonsettings
+from truealgebra.common.commonsettings import commonsettings as comset
 from truealgebra.common.eval_commassoc import EvalCommAssocBase
 
 from truealgebra.core.expressions import (
     Container, CommAssoc, 
 )
-
-evalnum = commonsettings.evalnum
-num0 = commonsettings.num0
-num1 = commonsettings.num1
+from IPython import embed
 
 
 def addnums(num0, num1):
-    return commonsettings.evalnum(CommAssoc('+', (num0, num1)))
+    return comset.evalnum(CommAssoc('+', (num0, num1)))
 
 
 def mulnums(num0, num1):
-    return commonsettings.evalnum(CommAssoc('*', (num0, num1)))
+    return comset.evalnum(CommAssoc('*', (num0, num1)))
 
 
 def divnums(num0, num1):
-    return commonsettings.evalnum(Container('/', (num0, num1)))
+    return comset.evalnum(Container('/', (num0, num1)))
 
 
 def subnums(num0, num1):
-    return commonsettings.evalnum(Container('-', (num0, num1)))
+    return comset.evalnum(Container('-', (num0, num1)))
 
 
 def pwrnums(num0, num1):
-    return commonsettings.evalnum(Container('**', (num0, num1)))
+    return comset.evalnum(Container('**', (num0, num1)))
 
 
 def negnum(num0):
-    return commonsettings.evalnum(Container('-', (num0)))
+#   xxx = 101; embed()
+    return comset.evalnum(Container('-', (num0,)))
 
 
 class FlattenCommAssoc(EvalCommAssocBase):
@@ -42,7 +40,25 @@ class FlattenCommAssoc(EvalCommAssocBase):
         return self.prep_output(outlist)
 
 
-flattenstar = FlattenCommAssoc(name='*', ident=num1, bottomup=True)
-flattenplus = FlattenCommAssoc(name='+', ident=num0, bottomup=True)
+flattenstar = FlattenCommAssoc(name='*', ident=comset.num1, bottomup=True)
+flattenplus = FlattenCommAssoc(name='+', ident=comset.num0, bottomup=True)
 
 
+def create_starCA(alist):
+    length = len(alist)
+    if length == 0:
+        return comset.num1
+    elif length == 1:
+        return alist[0]
+    else:
+        return CommAssoc('*', alist)
+
+
+def create_plusCA(alist):
+    length = len(alist)
+    if length == 0:
+        return comset.num0
+    elif length == 1:
+        return alist[0]
+    else:
+        return CommAssoc('+', alist)

@@ -643,6 +643,22 @@ def isContainer(expr, name=None, arity=None):
     return name_ok and arity_ok
 
 
+def isRestricted(expr, name=None, arity=None):
+    if not isinstance(expr, Restricted):
+        return False
+
+    if name is None:
+        name_ok = True
+    else:
+        name_ok = expr.name == name
+    if arity is None:
+        arity_ok = True
+    else:
+        arity_ok = (len(expr) == arity)
+
+    return name_ok and arity_ok
+
+
 def isCommAssoc(expr, name=None, arity=None):
     if not isinstance(expr, CommAssoc):
         return False

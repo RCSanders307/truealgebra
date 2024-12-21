@@ -79,6 +79,34 @@ num1 = commonsettings.num1
 neg1 = commonsettings.neg1
 
 
+class PseudoSP():
+    """ Mutable objects of this class are shared between conversion rules
+    and StarPwr static methods to exchange data. The data structure is similar
+    to that of StarPwr, but is mutable.
+    """
+
+    def __init__(self, coef=num1, exp_dict=None):
+        self.coef = coef
+        if exp_dict is None:
+            self.exp_dict = dict()
+        else:
+            self.exp_dict = exp_dict
+
+    def mul_keyvalue(self, key, value, pseudo):
+        if key in self.exp_dict:
+            newvalue = addnums(value, self.exp_dict[key])
+            if newvalue == num0:
+                del self.exp_dict[key]
+            else:
+                self.exp_dict[key] = newvalue
+        else:
+            self.exp_dict[key] = value
+
+
+    def makeSP(self):
+        return StarPwr(self.coef, self.exp_dict)
+
+
 class StarPwr(ExprBase):
     """Represents multiplication, division and power functions.
 
@@ -246,23 +274,6 @@ class StarPwr(ExprBase):
         if type(pseudoSP_or_SP) is StarPwr:
             return pseudoSP_or_SP
         return pseudoSP_or_SP.makeSP()
-
-
-class PseudoSP():
-    """ Mutable bjects of this class are shared between conversion rules
-    and StarPwr static methods to exchange data. The data structure is similar
-    to that of StarPwr, but is mutable.
-    """
-
-    def __init__(self, coef=num1, exp_dict=None):
-        self.coef = coef
-        if exp_dict is None:
-            self.exp_dict = dict()
-        else:
-            self.exp_dict = exp_dict
-
-    def makeSP(self):
-        return StarPwr(self.coef, self.exp_dict)
 
 
 class Plus(CommAssoc):
@@ -625,8 +636,20 @@ class ConvertStarPwrToDiv(Rule):
         return complex_list, positive_list, negative_list
 
 
-
 simplify = Rules(
     converttoSPP,
     JustOneBU(ConvertStarPwrToDiv(), ConvertFromPlus())
 )
+
+
+# shortcuts
+# ---------
+def isSP(expr):
+    return isinstance(expr, StarPwr)
+
+
+def isPl(expr):
+    return isinstance(expr, Plus)
+
+SP = StarPwr
+Pl = Plus
