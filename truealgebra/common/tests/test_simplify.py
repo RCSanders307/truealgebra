@@ -1,10 +1,12 @@
 from truealgebra.core.settings import SettingsSingleton
-from truealgebra.core.abbrv import Nu, Sy
+from truealgebra.core.abbrv import Nu, Sy, CA, Co
 from truealgebra.core.rules import Rule, JustOneBU, Substitute
 from truealgebra.common.commonsettings import commonsettings
+from truealgebra.common.commonsettings import commonsettings as comset
 from truealgebra.common.setup_func import common_setup_func
 from truealgebra.common.simplify import (
-    simplify, SP, isSP, Pl, isPl
+    simplify, SP, isSP, Pl, isPl, PseudoSP, PseudoP,
+    StarToSPP, DivToSPP, PwrToSPP, NegToSPP, PlusToSPP, MinusToSPP
 )
 from truealgebra.common.utility import mulnums
 from truealgebra.std.setup_func import std_setup_func
@@ -26,6 +28,113 @@ def settings(scope='module'):
         
     settings.reset()
     commonsettings.reset()
+
+
+# =============
+# Test PseudoSP
+# =============
+@pytest.fixture
+def pseudoSP(settings):
+    return PseudoSP(coef=Nu(3), exp_dict={Sy('x'): Nu(2), Sy('y'): Nu(3)})
+
+
+@pytest.mark.parametrize(
+    "key, value, correct",
+    [
+        (
+            Sy('x'),
+            Nu(-2),
+            PseudoSP(coef=Nu(3), exp_dict={Sy('y'): Nu(3)})
+        ),
+        (
+            Sy('x'),
+            Nu(2),
+            PseudoSP(Nu(3), {Sy('x'): Nu(4), Sy('y'): Nu(3)})
+        ),
+        (
+            Sy('z'),
+            Nu(2),
+            PseudoSP(Nu(3), {Sy('x'): Nu(2), Sy('y'): Nu(3), Sy('z'): Nu(2)})
+        ),
+    ],
+)
+def test_mul_keyvalue(settings, pseudoSP, key, value, correct):
+    pseudoSP.mul_keyvalue(key, value)
+
+    assert pseudoSP.coef == correct.coef
+    assert pseudoSP.exp_dict == correct.exp_dict
+
+
+def test_merge_starpwr(settings, pseudoSP):
+    starpwr = SP(Nu(2), {Sy('z'): Nu(2), Sy('x'): Nu(1)})
+
+    pseudoSP.merge_starpwr(starpwr)
+
+    assert pseudoSP.coef == Nu(6)
+    assert pseudoSP.exp_dict == {
+        Sy('z'): Nu(2), Sy('x'): Nu(3), Sy('y'): Nu(3)
+    }
+
+
+@pytest.mark.parametrize(
+    "pseudo, correct",
+    [
+        (PseudoSP(Nu(0), {Sy('x'): Nu(2)}), Nu(0)),
+        (PseudoSP(Nu(3), dict()) , Nu(3)),
+        (PseudoSP(Nu(1), {Sy('x'): Nu(1)}), Sy('x')),
+        (
+            PseudoSP(Nu(3), {Sy('x'): Nu(2), Sy('y'): Nu(4)}),
+            SP(Nu(3), {Sy('x'): Nu(2), Sy('y'): Nu(4)}),
+        ),
+    ],
+)
+def test_return_sp(settings, pseudo, correct):
+    out = pseudo.return_SP()
+
+    assert out == correct
+
+
+@pytest.mark.parametrize(
+    "key, value, correct",
+    [
+        (Sy('x'), Nu(2), PseudoSP(Nu(3), {Sy('y'): Nu(3),})),
+        (
+            Sy('x'),
+            Nu(-2),
+            PseudoSP(Nu(3), {Sy('x'): Nu(4), Sy('y'): Nu(3)})
+        ),
+        (
+            Sy('z'),
+            Nu(2),
+            PseudoSP(Nu(3), {Sy('x'): Nu(2), Sy('y'): Nu(3), Sy('z'): Nu(-2)})
+        ),
+    ],
+)
+def test_div_keyvalue(settings, pseudoSP, key, value, correct):
+    pseudoSP.div_keyvalue(key, value)
+
+    assert pseudoSP.coef == correct.coef
+    assert pseudoSP.exp_dict == correct.exp_dict
+
+
+def test_div_starpwr(settings, pseudoSP):
+    starpwr = SP(Nu(3), {Sy('z'): Nu(2), Sy('x'): Nu(1)})
+
+    pseudoSP.div_starpwr(starpwr)
+
+    assert pseudoSP.coef == Nu(1)
+    assert pseudoSP.exp_dict == {
+        Sy('z'): Nu(-2), Sy('x'): Nu(1), Sy('y'): Nu(3)
+    }
+
+
+def test_apply_exponent(settings, pseudoSP):
+    pseudo = PseudoSP(Nu(3), {Sy('x'): Nu(2), Sy('y'): Nu(3)})
+
+    pseudo.apply_exponent(Nu(3))
+
+    assert pseudo.coef == Nu(27)
+    assert pseudo.exp_dict == {Sy('x'): Nu(6), Sy('y'): Nu(9)}
 
 
 # ============
@@ -90,17 +199,428 @@ def sp_bottomup_rule(settings):
 def test_starpwr_bottomup(starpwr, sp_bottomup_rule):
     out = sp_bottomup_rule(starpwr)
     other = SP(Nu(8), {Sy('w'): Nu(2), Sy('z'): Nu(6)})
-#   xxx = 100; embed()
 
-#   assert out == SP(Nu(8), {Sy('w'): Nu(2), Sy('z'): Nu(6)})
     assert out == other
 
 
+@pytest.fixture
+def sp_bottomup_rule2(settings):
+    subber = Substitute(subdict={Sy('x'): Sy('y')},)
+
+    class SPRule(Rule):
+        def predicate(self, expr):
+            return isSP(expr)
+
+        def body(self, expr):
+            return SP(mulnums(expr.coef, Nu(2)), expr.exp_dict)
+
+    return JustOneBU(subber, SPRule())
 
 
-# ==============================
-# These is are integration tests 
-# ==============================
+def test_starpwr_bottomup2(starpwr, sp_bottomup_rule2):
+    out = sp_bottomup_rule2(starpwr)
+    other = SP(Nu(8), {Sy('y'): Nu(8),})
+
+    assert out == other
+
+
+# =============
+# Test PseudoP
+# =============
+@pytest.fixture
+def pseudoP(settings):
+    return PseudoP(num=Nu(3), items=[
+        SP(Nu(1), {Sy('x'): Nu(2)}),
+        SP(Nu(2), {Sy('y'): Nu(3)})
+    ])
+
+@pytest.mark.parametrize(
+    "item, correct",
+    [
+        (SP(Nu(3), {Sy('x'): Nu(2)}), SP(Nu(3), {Sy('x'): Nu(2)})),
+    (Sy('y'), SP(Nu(1), {Sy('y'): Nu(1)})),
+    ],
+)
+def test_make_item_sp(settings, pseudoP, item, correct):
+    out = pseudoP.make_item_SP(item)
+
+    assert out == correct
+
+
+@pytest.mark.parametrize(
+    "itemsp, correctitems",
+    [
+        (
+            SP(Nu(4), {Sy('x'): Nu(2)}),
+            [
+                SP(Nu(5), {Sy('x'): Nu(2)}),
+                SP(Nu(2), {Sy('y'): Nu(3)})
+
+            ]
+        ),
+        (
+            SP(Nu(4), {Sy('z'): Nu(2)}),
+            [
+                SP(Nu(1), {Sy('x'): Nu(2)}),
+                SP(Nu(2), {Sy('y'): Nu(3)}),
+                SP(Nu(4), {Sy('z'): Nu(2)}),
+
+            ]
+        ),
+    ],
+)
+def test_append_itemSP(settings, pseudoP, itemsp, correctitems):
+    pseudoP.append_itemSP(itemsp)
+
+    assert pseudoP.num == Nu(3)
+    assert pseudoP.items == correctitems
+
+
+def test_merge_plus(settings, pseudoP):
+    plus = PseudoP(Nu(2), [
+        SP(Nu(4), {Sy('x'): Nu(2)}),
+        SP(Nu(4), {Sy('z'): Nu(2)}),
+    ])
+
+    pseudoP.merge_plus(plus)
+
+    assert pseudoP.num == Nu(5)
+    assert pseudoP.items == [
+        SP(Nu(5), {Sy('x'): Nu(2)}),
+        SP(Nu(2), {Sy('y'): Nu(3)}),
+        SP(Nu(4), {Sy('z'): Nu(2)}),
+    ]
+
+
+def test_clean_items(settings):
+    pseudo = PseudoP(Nu(2), [
+        SP(Nu(0), {Sy('x'): Nu(3)}),
+        SP(Nu(1), {Sy('x'): Nu(2)}),
+        SP(Nu(0), {Sy('y'): Nu(2)}),
+        SP(Nu(1), {Sy('y'): Nu(3)}),
+        SP(Nu(0), {Sy('z'): Nu(3)}),
+    ])
+
+    pseudo.clean_items()
+
+    assert pseudo.num == Nu(2)
+    assert pseudo.items == [
+        SP(Nu(1), {Sy('x'): Nu(2)}),
+        SP(Nu(1), {Sy('y'): Nu(3)}),
+    ]
+
+
+@pytest.mark.parametrize(
+    "pseudo, correct",
+    [
+        (PseudoP(Nu(7), {}), Nu(7)),
+        (
+            PseudoP(Nu(0), [SP(Nu(1), {Sy('x'): Nu(1)})]),
+            Sy('x')
+        ),
+        (
+            PseudoP(Nu(0), [SP(Nu(3), {Sy('x'): Nu(2)})]),
+            SP(Nu(3), {Sy('x'): Nu(2)})
+        ),
+        (
+            PseudoP(Nu(5), [SP(Nu(2), {Sy('x'): Nu(2)})]),
+            Pl(Nu(5), [SP(Nu(2), {Sy('x'): Nu(2)})]),
+        ),
+    ],
+)
+def test_return_P(settings, pseudo, correct):
+    out = pseudo.return_P()
+
+    assert out == correct
+
+
+# ===================
+# Test StarToSPP Rule
+# ===================
+@pytest.fixture
+def startospp(scope='module'):
+    return StarToSPP()
+
+
+@pytest.mark.parametrize(
+    "expr, correct",
+    [
+        (CA('*', (Sy('x'), Sy('y'))), True),
+        (CA('+', (Sy('x'), Sy('y'))), False),
+        (Co('*', (Sy('x'), Sy('y'))), False),
+    ],
+)
+def test_startospp_predicate(settings, startospp, expr, correct):
+    assert  startospp.predicate(expr) == correct
+
+
+@pytest.mark.parametrize(
+    "expr, correct",
+    [
+        (
+            CA('*', (
+                Nu(3), Sy('x'),
+                SP(Nu(2), {Sy('y'): Nu(2), Sy('z'): Nu(1)}),
+                Nu(5),
+            )),
+            SP(Nu(30), {Sy('x'): Nu(1), Sy('y'): Nu(2), Sy('z'): Nu(1)})
+        ),
+        (
+            CA('*', (
+                Sy('x'),
+                SP(comset.num1, {Sy('y'): Nu(2)}),
+                SP(comset.num1, {Sy('y'): Nu(-2)})
+            )),
+            Sy('x')
+        ),
+        (CA('*', (Nu(2), Nu(3))), Nu(6)),
+        (CA('*', (Nu(0), Sy('x'), Sy('y'))), Nu(0)),
+    ],
+    ids=[
+        'inputs: symbol, StarPlus object, numbers',
+        "Sy('y') terms cancel, coef is 1, sy('x') exponent is 1.",
+        'numbers multiplied, no Starplus',
+        'output is 0',
+    ]
+)
+def test_startospp_body(settings, startospp, expr, correct):
+    newexpr = startospp.body(expr)
+
+    assert newexpr == correct
+
+
+# ===================
+# Test DivToSPP Rule
+# ===================
+@pytest.fixture
+def divtospp(scope='module'):
+    return DivToSPP()
+
+
+@pytest.mark.parametrize(
+    "expr, correct",
+    [
+        (Co('/', (Sy('x'), Sy('y'))), True),
+        (Co('+', (Sy('x'), Sy('y'))), False),
+        (Co('/', (Sy('x'), Sy('y'), Sy('z'))), False),
+    ],
+)
+def test_divtospp_predicate(settings, divtospp, expr, correct):
+    assert  divtospp.predicate(expr) == correct
+
+
+@pytest.mark.parametrize(
+    'expr, correct',
+    [
+        (
+            Co('/', (Sy('y'), Sy('x'))), 
+            SP(exp_dict={Sy('y'): Nu(1), Sy('x'): Nu(-1)})
+        ),
+        (
+            Co('/', (SP(coef=Nu(3), exp_dict={Sy('y'): Nu(2)}), Sy('y'))),
+            SP(coef=Nu(3), exp_dict={Sy('y'): Nu(1)})
+        ),
+        (
+            Co('/', (Sy('y'), SP(coef=Nu(2), exp_dict={Sy('y'): Nu(2)}))),
+            SP(coef=Nu(0.5), exp_dict={Sy('y'): Nu(-1)})
+        ),
+        (
+            Co('/', (
+                SP(coef=Nu(4), exp_dict={Sy('y'): Nu(2)}),
+                SP(coef=Nu(2), exp_dict={Sy('y'): Nu(2)})
+            )),
+            Nu(2)
+        ),
+    ],
+    ids=[
+        'non starpwr arguments',
+        'upstairs strpwr argument',
+        'downstairs strpwr argument',
+        'both starpwr arguments',
+    ]
+)
+def test_divtospp_body(settings, divtospp, expr, correct):
+    out = divtospp(expr)
+
+    assert out == correct
+
+
+#==============
+# Test pwrtospp
+#==============
+@pytest.fixture
+def pwrtospp(scope='module'):
+    return PwrToSPP()
+
+
+@pytest.mark.parametrize(
+    "expr, correct",
+    [
+        (Co('**', (Sy('x'), Sy('y'))), True),
+        (Co('+', (Sy('x'), Sy('y'))), False),
+        (Co('**', (Sy('x'), Sy('y'), Sy('z'))), False),
+    ],
+)
+def test_pwrtospp_predicate(settings, pwrtospp, expr, correct):
+    assert  pwrtospp.predicate(expr) == correct
+
+
+@pytest.mark.parametrize(
+    'expr, correct',
+    [
+        (
+            Co('**', (SP(Nu(3), {Sy('x'): Nu(3)}), Nu(2))),
+            SP(Nu(9), {Sy('x'): Nu(6)}),
+        ),
+        (
+            Co('**', (Sy('x'),Sy('n'))),
+            Co('**', (Sy('x'),Sy('n'))),
+        ),
+    ],
+    ids=[
+        'numeric exponent',
+        'no numeric exponent',
+    ]
+)
+def test_pwrtospp_body(settings, expr, correct, pwrtospp):
+    out = pwrtospp.body(expr)
+
+    assert out == correct
+
+# ==============
+# Test negtospp
+#==============
+@pytest.fixture
+def negtospp(scope='module'):
+    return NegToSPP()
+
+
+@pytest.mark.parametrize(
+    "expr, correct",
+    [
+        (Co('-', (Sy('x'),)), True),
+        (Co('+', (Sy('x'),)), False),
+        (Co('-', (Sy('x'), Sy('y'), Sy('z'))), False),
+    ],
+)
+def test_negtospp_predicate(settings, negtospp, expr, correct):
+    assert  negtospp.predicate(expr) == correct
+
+
+@pytest.mark.parametrize(
+    "expr0, correct",
+    [
+        (Nu(7), Nu(-7)),
+        (SP(Nu(3), {Sy('x'): Nu(2)}), SP(Nu(-3), {Sy('x'): Nu(2)})),
+        (Sy('x'), SP(Nu(-1), {Sy('x'): Nu(1)})),
+        (SP(Nu(-1), {Sy('x'): Nu(1)}), Sy('x')),
+    ],
+)
+def test_negtospp_body(settings, negtospp, expr0, correct):
+    out = negtospp.body(Co('-', (expr0,)))
+
+    assert out == correct
+
+# ==============
+# Test plustospp
+#===============
+@pytest.fixture
+def plustospp(scope='module'):
+    return PlusToSPP()
+
+
+@pytest.mark.parametrize(
+    "expr, correct",
+    [
+        (CA('+', (Sy('x'), Sy('y'))), True),
+        (CA('*', (Sy('x'), Sy('y'))), False),
+        (Co('+', (Sy('x'), Sy('y'))), False),
+    ],
+)
+def test_plustospp_predicate(settings, plustospp, expr, correct):
+    assert  plustospp.predicate(expr) == correct
+
+
+def test_plustospp_body(settings, plustospp):
+    plusin = Co('+', (
+        Nu(3), Nu(4),
+        Pl(Nu(4), [SP(Nu(3), {Sy('x'): Nu(2)}), SP(Nu(-2), {Sy('x'): Nu(1)})]),
+        Pl(Nu(0), [SP(Nu(2), {Sy('x'): Nu(1)})]),
+        Co('f', (Sy('z'),)),
+    ))
+    correct = Pl(Nu(11), [
+        SP(Nu(3), {Sy('x'): Nu(2)}),
+        SP(Nu(1), {Co('f', (Sy('z'),)): Nu(1)})
+    ])
+
+    out = plustospp.body(plusin)
+
+    assert out.num == correct.num
+    assert out.items == correct.items
+
+
+# ==============
+# Test minustospp
+#===============
+@pytest.fixture
+def minustospp(scope='module'):
+    return MinusToSPP()
+
+
+@pytest.mark.parametrize(
+    "expr0, expr1, correct",
+    [
+        (Nu(4), Nu(3), Nu(1)),
+        (
+            Sy('x'), Nu(3),
+            Pl(Nu(-3), [SP(Nu(1), {Sy('x'): Nu(1)})])
+        ),
+        (
+            Nu(3), Sy('x'),
+            Pl(Nu(3), [SP(Nu(-1), {Sy('x'): Nu(1)})])
+        ),
+        (
+            Sy('x'), Sy('y'),
+            Pl(Nu(0), [
+                SP(Nu(1), {Sy('x'): Nu(1)}),
+                SP(Nu(-1), {Sy('y'): Nu(1)}),
+            ])
+        ),
+        (
+            Sy('x'), Sy('x'),
+            Nu(0)
+        ),
+        (
+            Sy('x'), SP(Nu(-1), {Sy('x'): Nu(1)}),
+            SP(Nu(2), {Sy('x'): Nu(1)})
+        ),
+        (
+            SP(Nu(2), {Sy('x'): Nu(1)}), SP(Nu(-1), {Sy('x'): Nu(1)}),
+            SP(Nu(3), {Sy('x'): Nu(1)})
+        ),
+        (
+            Pl(Nu(3), [SP(Nu(2),{Sy('x'): Nu(2)}), SP(Nu(2),{Sy('y'): Nu(2)})]),
+            SP(Nu(-1), {Pl(Nu(3), [SP(Nu(2),{Sy('x'): Nu(2)}), SP(Nu(2),{Sy('y'): Nu(2)})]): Nu(1)}),
+            Pl(Nu(6), [SP(Nu(4),{Sy('x'): Nu(2)}), SP(Nu(4),{Sy('y'): Nu(2)})]),
+
+        ),
+    ],
+)
+def test_minustospp(settings, minustospp, expr0, expr1, correct):
+    expr = Co('-', (expr0, expr1))
+
+    out = minustospp.body(expr)
+
+    if isPl(correct):
+        assert out.num == correct.num
+        assert out.items == correct.items
+    else:
+        assert out == correct
+
+
+# ===========================
+# These are integration tests 
+# ===========================
 @pytest.mark.parametrize(
     "expr, correct",
     [

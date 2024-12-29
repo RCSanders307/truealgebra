@@ -58,6 +58,7 @@ or the distributive property.
 """
 
 from truealgebra.common.commonsettings import commonsettings
+from truealgebra.common.commonsettings import commonsettings as comset
 from truealgebra.common.utility import (
     addnums, mulnums, divnums, subnums, pwrnums, negnum
 )
@@ -80,19 +81,24 @@ neg1 = commonsettings.neg1
 
 
 class PseudoSP():
-    """ Mutable objects of this class are shared between conversion rules
-    and StarPwr static methods to exchange data. The data structure is similar
-    to that of StarPwr, but is mutable.
+    """ Objects of this class are used by the rules that covert expressions
+    to StarPwr. The data structure of this class is similar to that of
+    StarPwr, but is mutable.
+    The objects store data and its methods process data.
     """
 
-    def __init__(self, coef=num1, exp_dict=None):
+    def __init__(self, coef=comset.num1, exp_dict=None):
         self.coef = coef
         if exp_dict is None:
             self.exp_dict = dict()
         else:
             self.exp_dict = exp_dict
 
-    def mul_keyvalue(self, key, value, pseudo):
+    def mul_keyvalue(self, key, value):
+        """ self is multiplied by a key, value pair
+            key : ExprBase object
+            value : Number object
+        """
         if key in self.exp_dict:
             newvalue = addnums(value, self.exp_dict[key])
             if newvalue == num0:
@@ -102,9 +108,54 @@ class PseudoSP():
         else:
             self.exp_dict[key] = value
 
+    def merge_starpwr(self, starpwr):
+        """ self is multiplied by a StarPwr object
+            starpwr : StarPwr object
+        """
+        self.coef = mulnums(self.coef, starpwr.coef)
 
+        for key, value in starpwr.exp_dict.items():
+            self.mul_keyvalue(key, value)
+
+    def div_starpwr(self, starpwr):
+        self.coef = divnums(self.coef, starpwr.coef)
+        for key, value in starpwr.exp_dict.items():
+            self.div_keyvalue(key, value)
+
+    def div_keyvalue(self, key, value):
+        if key in self.exp_dict:
+            newvalue = subnums(self.exp_dict[key], value)
+            if newvalue == num0:
+                del self.exp_dict[key]
+            else:
+                self.exp_dict[key] = newvalue
+        else:
+            newvalue = mulnums(neg1, value)
+            self.exp_dict[key] = newvalue
+
+    def apply_exponent(self, exp):
+        # It is assumed that exp is a number and not num0 or num1
+        self.coef = pwrnums(self.coef, exp)
+        for key, value in self.exp_dict.items():
+            self.exp_dict[key] = mulnums(value, exp)
+
+    # IS THIS NEEDED?
     def makeSP(self):
         return StarPwr(self.coef, self.exp_dict)
+
+    def return_SP(self):
+        if self.coef == comset.num0:
+            return comset.num0
+        elif len(self.exp_dict) == 0:
+            return self.coef
+        elif (
+            len(self.exp_dict) == 1
+            and list(self.exp_dict.values())[0] == comset.num1
+            and self.coef == comset.num1
+        ):
+            return list(self.exp_dict.keys())[0]
+        else:
+            return StarPwr(self.coef, self.exp_dict)
 
 
 class StarPwr(ExprBase):
@@ -150,6 +201,19 @@ class StarPwr(ExprBase):
         return out
 
     def bottomup(self, rule):
+        pseudo = PseudoSP(coef=self.coef)
+        for key in self.exp_dict:
+            newkey = rule(key)
+            value = self.exp_dict[key]
+            pseudo.mul_keyvalue(newkey, value)
+        return rule(
+            pseudo.makeSP(),
+#           self.__class__(coef=self.coef, exp_dict=newdict),
+            _pathinhibit=True,
+            _buinhibit=True
+        )
+
+
         newdict = dict()
         for key in self.exp_dict:
             newkey = rule(key)
@@ -162,7 +226,7 @@ class StarPwr(ExprBase):
 
     def apply2path(self, path, rule, _buinhibit=False):
         if path:
-            ta_logger.log("path cannot enter StarPwr instnce")
+            ta_logger.log("path cannot enter StarPwr instance")
             return null
         else:
             return rule(self, _pathinhibit=True, _buinhibit=True)
@@ -336,6 +400,7 @@ class Plus(CommAssoc):
     def match(self, vardict, subdict, pred_rule, expr):
         return self == expr
 
+# ########
     @staticmethod
     def merge_plus(plus, pseudo):
         pseudo.num = addnums(pseudo.num, plus.num)
@@ -371,6 +436,7 @@ class Plus(CommAssoc):
             del pseudo.items[ndx]
 
 
+
 class PseudoP():
     """ Mutable objects of this class are shared between conversion rules
     and Plus static methods to exchange data. The data structure is similar
@@ -385,6 +451,50 @@ class PseudoP():
 
     def copy(self):
         return PseudoP(self.num, list(self.items))
+        
+    def make_item_SP(self, item):
+        if isSP(item):
+            return item
+        else:
+            return StarPwr(comset.num1, {item: comset.num1})
+
+    def append_itemSP(self, itemSP):
+        for ndx, pseudoitem in enumerate(self.items):
+            if itemSP.exp_dict == pseudoitem.exp_dict:
+                new_coef = (addnums(pseudoitem.coef, itemSP.coef))
+                self.items[ndx] = StarPwr(new_coef, pseudoitem.exp_dict)
+                return
+        self.items.append(itemSP)
+
+    def merge_plus(self, plus):
+        self.num = addnums(self.num, plus.num)
+        for plusitem in plus.items:
+            self.append_itemSP(plusitem)
+
+    def clean_items(self):
+        """ remove item with attribute coef == 0
+            items contains only StarPwr objects
+        """
+        del_ndx_list = list()
+        for ndx, item in enumerate(self.items):
+            if item.coef == num0:
+                del_ndx_list.append(ndx)
+        for ndx in reversed(del_ndx_list):
+            del self.items[ndx]
+
+    def return_P(self):
+        if len(self.items) == 0:
+            return self.num
+        elif self.num == num0 and len(self.items) == 1:
+            sp = self.items[0]
+            if (
+                sp.coef == comset.num1
+                and list(sp.exp_dict.values())[0] == comset.num1
+            ):
+                return list(sp.exp_dict.keys())[0]
+            else:
+                return sp
+        return Plus(self.num, self.items)
 
 
 class StarToSPP(Rule):
@@ -392,15 +502,15 @@ class StarToSPP(Rule):
         return isCommAssoc(expr, name='*')
 
     def body(self, expr):
-        pseudo = PseudoSP(num1, dict())
+        pseudo = PseudoSP()
         for item in expr.items:
-            if type(item) is Number:
+            if isNumber(item):
                 pseudo.coef = mulnums(pseudo.coef, item)
-            elif type(item) is StarPwr:
-                StarPwr.merge_starpwr(item, pseudo)
+            elif isSP(item):
+                pseudo.merge_starpwr(item)
             else:
-                StarPwr.mul_key(item, pseudo)
-        return StarPwr.return_SP(pseudo)
+                pseudo.mul_keyvalue(item, comset.num1)
+        return pseudo.return_SP()
 
 
 class DivToSPP(Rule):
@@ -412,20 +522,20 @@ class DivToSPP(Rule):
         top = expr[0]
         bottom = expr[1]
 
-        if type(top) is Number:
+        if isNumber(top):
             pseudo.coef = mulnums(pseudo.coef, top)
-        elif type(top) is StarPwr:
-            StarPwr.merge_starpwr(top, pseudo)
+        elif isSP(top):
+            pseudo.merge_starpwr(top)
         else:
-            StarPwr.mul_key(top, pseudo)
+            pseudo.mul_keyvalue(top, comset.num1)
 
-        if type(bottom) is Number:
+        if isNumber(bottom):
             pseudo.coef = divnums(pseudo.coef, bottom)
-        elif type(bottom) is StarPwr:
-            StarPwr.div_starpwr(bottom, pseudo)
+        elif isSP(bottom):
+            pseudo.div_starpwr(bottom)
         else:
-            StarPwr.div_key(bottom, pseudo)
-        return StarPwr.return_SP(pseudo)
+            pseudo.div_keyvalue(bottom, comset.num1)
+        return pseudo.return_SP()
 
 
 class PwrToSPP(Rule):
@@ -440,36 +550,14 @@ class PwrToSPP(Rule):
                 return expr[0]
             elif expr[1] == num0:
                 return num1
-            elif type(expr[0]) is StarPwr:
-                pseudo = PseudoSP()
-                StarPwr.apply_exponent(expr[0], expr[1], pseudo)
-                return pseudo.makeSP()
+            elif isSP(expr[0]):
+                pseudo = PseudoSP(expr[0].coef, dict(expr[0].exp_dict))
+                pseudo.apply_exponent(expr[1])
+                return pseudo.return_SP()
             else:
                 return StarPwr(num1, {expr[0]: expr[1]})
         else:
             return expr
-
-
-class PlusToSPP(Rule):
-    def predicate(self, expr):
-        return isCommAssoc(expr, name='+')
-
-    def body(self, expr):
-        pseudo = PseudoP()
-        for item in expr:
-            if isNumber(item):
-                pseudo.num = addnums(pseudo.num, item)
-            elif type(item) is Plus:
-                Plus.merge_plus(item, pseudo)
-            else:
-                itemSP = Plus.make_item_SP(item)
-                Plus.append_itemSP(itemSP, pseudo)
-        Plus.clean_items(pseudo)
-        if len(pseudo.items) == 0:
-            return pseudo.num
-        if pseudo.num == num0 and len(pseudo.items) == 1:
-            return StarPwr.return_SP(pseudo.items[0])
-        return pseudo.makeP()
 
 
 class NegToSPP(Rule):
@@ -484,13 +572,32 @@ class NegToSPP(Rule):
         if isNumber(expr[0]):
             return negnum(expr[0])
         pseudo = PseudoSP(Number(-1), dict())
-        if type(expr[0]) is StarPwr:
-            StarPwr.merge_starpwr(expr[0], pseudo)
+        if isSP(expr[0]):
+            pseudo.merge_starpwr(expr[0])
         else:
-            StarPwr.mul_key(expr[0], pseudo)
-        return StarPwr.return_SP(pseudo)
+            pseudo.mul_keyvalue(expr[0], comset.num1)
+        return pseudo.return_SP()
 
 negtoSP = NegToSPP()
+
+
+class PlusToSPP(Rule):
+    def predicate(self, expr):
+        return isCommAssoc(expr, name='+')
+
+    def body(self, expr):
+        pseudo = PseudoP()
+        for item in expr:
+            if isNumber(item):
+                pseudo.num = addnums(pseudo.num, item)
+            elif isPl(item):
+                pseudo.merge_plus(item)
+            else:
+                itemSP = Plus.make_item_SP(item)
+                pseudo.append_itemSP(itemSP)
+        pseudo.clean_items()
+        return pseudo.return_P()
+
 
 class MinusToSPP(Rule):
     """ Convert minus and negative functions
@@ -506,24 +613,23 @@ class MinusToSPP(Rule):
         pseudo = PseudoP()
         if isNumber(expr[0]):
             pseudo.num = expr[0]
-        elif type(expr[0]) is Plus:
-            Plus.merge_plus(expr[0], pseudo)
+        elif isPl(expr[0]):
+            pseudo.merge_plus(expr[0])
         else:
-            itemSP = Plus.make_item_SP(expr[0])
-            Plus.append_itemSP(itemSP, pseudo)
+            itemSP = pseudo.make_item_SP(expr[0])
+            pseudo.append_itemSP(itemSP)
 
         ex1 = negtoSP(Container('-', (expr[1],)))
-        if type(ex1) is Number:
+        if isNumber(ex1):
             pseudo.num = addnums(pseudo.num, ex1)
+        elif isPl(ex1):
+            pseudo.merge_plus(ex1)
         else:
-            Plus.append_itemSP(ex1, pseudo)
+            ex2 = pseudo.make_item_SP(ex1)
+            pseudo.append_itemSP(ex2)
 
-        Plus.clean_items(pseudo)
-        if len(pseudo.items) == 0:
-            return pseudo.num
-        if pseudo.num == num0 and len(pseudo.items) == 1:
-            return StarPwr.return_SP(pseudo.items[0])
-        return pseudo.makeP()
+        pseudo.clean_items()
+        return pseudo.return_P()
 
 
 converttoSPP = JustOneBU(
