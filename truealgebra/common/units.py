@@ -19,7 +19,7 @@ def isunitexpr(expr):
 
 def create_unitexpr(num, units):
     """ assumption is that num is a Number object
-    and that units has been simplifyed with simplify.
+    and that units has been simplified with simplify.
     """
     if isNumber(units):
         return mulnums(num, units)

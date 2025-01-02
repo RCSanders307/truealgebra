@@ -6,9 +6,10 @@ from truealgebra.common.commonsettings import commonsettings as comset
 from truealgebra.common.setup_func import common_setup_func
 from truealgebra.common.simplify import (
     simplify, SP, isSP, Pl, isPl, PseudoSP, PseudoP,
-    StarToSPP, DivToSPP, PwrToSPP, NegToSPP, PlusToSPP, MinusToSPP
+    StarToSPP, DivToSPP, PwrToSPP, NegToSPP, AddToSPP, MinusToSPP,
+    convertfromstarpwr
 )
-from truealgebra.common.utility import mulnums
+from truealgebra.common.utility import mulnums, addnums
 from truealgebra.std.setup_func import std_setup_func
 
 from types import MappingProxyType
@@ -30,12 +31,96 @@ def settings(scope='module'):
     commonsettings.reset()
 
 
+# ============
+# Test StarPwr
+# ============
+@pytest.fixture
+def input_dict():
+    return {Sy('x'): Nu(2), Sy('y'): Nu(6)}
+
+
+@pytest.fixture
+def starpwr(input_dict):
+    return SP(coef=Nu(4), expdict=input_dict)
+
+
+def test_starpwr_init(settings, input_dict, starpwr):
+    assert starpwr.coef == Nu(4)
+    assert starpwr.expdict == input_dict
+    assert isinstance(starpwr.expdict, MappingProxyType)
+
+
+def test_starpwr_repr(starpwr):
+    repr_out = repr(starpwr)
+
+    assert repr_out == 'StarPwr(4, {x: 2, y: 6})'
+
+
+def test_starpwr_eq(settings, input_dict, starpwr):
+    class SPSubClass(SP):
+        pass
+
+    spsubclass = SPSubClass(coef=Nu(4), expdict=input_dict)
+
+    assert not (starpwr == spsubclass)
+    assert not (starpwr == SP(coef=Nu(3), expdict=input_dict))
+    assert not (starpwr == SP(coef=Nu(4), expdict={
+        Sy('x'): Nu(3), Sy('y'): Nu(6)
+    }))
+    assert starpwr == SP(coef=Nu(4), expdict={
+        Sy('x'): Nu(2), Sy('y'): Nu(6)
+    })
+
+
+@pytest.fixture
+def sp_bottomup_rule(settings):
+    subber = Substitute(subdict={Sy('x'): Sy('w'), Sy('y'): Sy('z')},)
+
+    class SPRule(Rule):
+        def predicate(self, expr):
+            return isSP(expr)
+
+        def body(self, expr):
+            return SP(mulnums(expr.coef, Nu(2)), expr.expdict)
+
+    return JustOneBU(subber, SPRule())
+
+
+def test_starpwr_bottomup(settings, starpwr, sp_bottomup_rule):
+    out = sp_bottomup_rule(starpwr)
+    other = SP(Nu(8), {Sy('w'): Nu(2), Sy('z'): Nu(6)})
+
+    assert out == other
+
+
+@pytest.fixture
+def sp_bottomup_rule2(settings):
+    subber = Substitute(subdict={Sy('x'): Sy('y')},)
+
+    class SPRule(Rule):
+        def predicate(self, expr):
+            return isSP(expr)
+
+        def body(self, expr):
+            return SP(mulnums(expr.coef, Nu(2)), expr.expdict)
+
+    return JustOneBU(subber, SPRule())
+
+
+# Test use of pseudoSP in bottomup method 
+def test_starpwr_bottomup2(starpwr, sp_bottomup_rule2):
+    out = sp_bottomup_rule2(starpwr)
+    other = SP(Nu(8), {Sy('y'): Nu(8),})
+
+    assert out == other
+
+
 # =============
 # Test PseudoSP
 # =============
 @pytest.fixture
 def pseudoSP(settings):
-    return PseudoSP(coef=Nu(3), exp_dict={Sy('x'): Nu(2), Sy('y'): Nu(3)})
+    return PseudoSP(coef=Nu(3), expdict={Sy('x'): Nu(2), Sy('y'): Nu(3)})
 
 
 @pytest.mark.parametrize(
@@ -44,7 +129,7 @@ def pseudoSP(settings):
         (
             Sy('x'),
             Nu(-2),
-            PseudoSP(coef=Nu(3), exp_dict={Sy('y'): Nu(3)})
+            PseudoSP(coef=Nu(3), expdict={Sy('y'): Nu(3)})
         ),
         (
             Sy('x'),
@@ -62,7 +147,7 @@ def test_mul_keyvalue(settings, pseudoSP, key, value, correct):
     pseudoSP.mul_keyvalue(key, value)
 
     assert pseudoSP.coef == correct.coef
-    assert pseudoSP.exp_dict == correct.exp_dict
+    assert pseudoSP.expdict == correct.expdict
 
 
 def test_merge_starpwr(settings, pseudoSP):
@@ -71,7 +156,7 @@ def test_merge_starpwr(settings, pseudoSP):
     pseudoSP.merge_starpwr(starpwr)
 
     assert pseudoSP.coef == Nu(6)
-    assert pseudoSP.exp_dict == {
+    assert pseudoSP.expdict == {
         Sy('z'): Nu(2), Sy('x'): Nu(3), Sy('y'): Nu(3)
     }
 
@@ -114,7 +199,7 @@ def test_div_keyvalue(settings, pseudoSP, key, value, correct):
     pseudoSP.div_keyvalue(key, value)
 
     assert pseudoSP.coef == correct.coef
-    assert pseudoSP.exp_dict == correct.exp_dict
+    assert pseudoSP.expdict == correct.expdict
 
 
 def test_div_starpwr(settings, pseudoSP):
@@ -123,7 +208,7 @@ def test_div_starpwr(settings, pseudoSP):
     pseudoSP.div_starpwr(starpwr)
 
     assert pseudoSP.coef == Nu(1)
-    assert pseudoSP.exp_dict == {
+    assert pseudoSP.expdict == {
         Sy('z'): Nu(-2), Sy('x'): Nu(1), Sy('y'): Nu(3)
     }
 
@@ -134,95 +219,75 @@ def test_apply_exponent(settings, pseudoSP):
     pseudo.apply_exponent(Nu(3))
 
     assert pseudo.coef == Nu(27)
-    assert pseudo.exp_dict == {Sy('x'): Nu(6), Sy('y'): Nu(9)}
+    assert pseudo.expdict == {Sy('x'): Nu(6), Sy('y'): Nu(9)}
 
 
-# ============
-# Test StarPwr
-# ============
+# =========
+# Test Plus
+# =========
 @pytest.fixture
-def input_dict():
-    return {Sy('x'): Nu(2), Sy('y'): Nu(6)}
-
-@pytest.fixture
-def starpwr(input_dict):
-    return SP(coef=Nu(4), exp_dict=input_dict)
-
-def test_starpwr_init(settings, input_dict, starpwr):
-    assert starpwr.coef == Nu(4)
-    assert starpwr.exp_dict == input_dict
-    assert isinstance(starpwr.exp_dict, MappingProxyType)
-
-def test_starpwr_repr(starpwr):
-    repr_out = repr(starpwr)
-
-    assert repr_out == 'SP(4, {x: 2, y: 6})'
-
-def test_starpwr_hash(starpwr, input_dict):
-    assert hash(starpwr) == hash((
-        Nu(4),
-        SP,
-        frozenset(MappingProxyType(input_dict).items())
-    ))
+def plus(settings):
+    return Pl(num=Nu(3), items=[
+        SP(coef=Nu(2), expdict={Sy('x'): Nu(3)}),
+    ])
 
 
-def test_starpwr_eq(input_dict, starpwr):
-    class SPSubClass(SP):
+def test_plus_init(settings, plus):
+    assert plus.num == Nu(3)
+    assert plus.items == (SP(Nu(2), {Sy('x'): Nu(3)}),)
+
+
+def test_plus_init_default():
+    plus = Pl()
+
+    assert plus.num == comset.num0
+    assert plus.items == tuple()
+
+
+def test_plus_repr(settings, plus):
+    assert repr(plus) == 'Plus(3, (StarPwr(2, {x: 3})))'
+
+
+def test_plus_eq(settings, plus):
+    class PlSubClass(Pl):
         pass
 
-    spsubclass = SPSubClass(coef=Nu(4), exp_dict=input_dict)
+    plsubclass = PlSubClass(plus.num, plus.items)
+    plus0 = Pl(Nu(2), plus.items)
+    plus1 = Pl(plus.num, (SP(Nu(2), {Sy('y'): Nu(3)}),))
+    plus2 = Pl(plus.num, plus.items)
 
-    assert not (starpwr == spsubclass)
-    assert not (starpwr == SP(coef=Nu(3), exp_dict=input_dict))
-    assert not (starpwr == SP(coef=Nu(4), exp_dict={
-        Sy('x'): Nu(3), Sy('y'): Nu(6)
-    }))
-    assert starpwr == SP(coef=Nu(4), exp_dict={
-        Sy('x'): Nu(2), Sy('y'): Nu(6)
-    })
+    assert not (plus == plsubclass)
+    assert not (plus == plus0)
+    assert not (plus == plus1)
+    assert plus == plus2
 
 
 @pytest.fixture
-def sp_bottomup_rule(settings):
-    subber = Substitute(subdict={Sy('x'): Sy('w'), Sy('y'): Sy('z')},)
+def pl_bottomup_rule(settings):
+    class PlRule(Rule):
+        def predicate(self, expr):
+            return isPl(expr)
+
+        def body(self, expr):
+            return Pl(addnums(expr.num, Nu(2)), expr.items)
 
     class SPRule(Rule):
         def predicate(self, expr):
             return isSP(expr)
 
         def body(self, expr):
-            return SP(mulnums(expr.coef, Nu(2)), expr.exp_dict)
+            return SP(addnums(expr.coef, Nu(2)), expr.expdict)
 
-    return JustOneBU(subber, SPRule())
+    return JustOneBU(PlRule(), SPRule())
+        
+        
+def test_plus_bottomup(settings, plus, pl_bottomup_rule):
+    correct = Pl(Nu(5), (SP(Nu(4), {Sy('x'): Nu(3)}),))
 
-
-def test_starpwr_bottomup(starpwr, sp_bottomup_rule):
-    out = sp_bottomup_rule(starpwr)
-    other = SP(Nu(8), {Sy('w'): Nu(2), Sy('z'): Nu(6)})
-
-    assert out == other
-
-
-@pytest.fixture
-def sp_bottomup_rule2(settings):
-    subber = Substitute(subdict={Sy('x'): Sy('y')},)
-
-    class SPRule(Rule):
-        def predicate(self, expr):
-            return isSP(expr)
-
-        def body(self, expr):
-            return SP(mulnums(expr.coef, Nu(2)), expr.exp_dict)
-
-    return JustOneBU(subber, SPRule())
-
-
-def test_starpwr_bottomup2(starpwr, sp_bottomup_rule2):
-    out = sp_bottomup_rule2(starpwr)
-    other = SP(Nu(8), {Sy('y'): Nu(8),})
-
-    assert out == other
-
+    out = pl_bottomup_rule(plus)
+    
+    assert out == correct
 
 # =============
 # Test PseudoP
@@ -233,6 +298,7 @@ def pseudoP(settings):
         SP(Nu(1), {Sy('x'): Nu(2)}),
         SP(Nu(2), {Sy('y'): Nu(3)})
     ])
+
 
 @pytest.mark.parametrize(
     "item, correct",
@@ -414,20 +480,20 @@ def test_divtospp_predicate(settings, divtospp, expr, correct):
     [
         (
             Co('/', (Sy('y'), Sy('x'))), 
-            SP(exp_dict={Sy('y'): Nu(1), Sy('x'): Nu(-1)})
+            SP(expdict={Sy('y'): Nu(1), Sy('x'): Nu(-1)})
         ),
         (
-            Co('/', (SP(coef=Nu(3), exp_dict={Sy('y'): Nu(2)}), Sy('y'))),
-            SP(coef=Nu(3), exp_dict={Sy('y'): Nu(1)})
+            Co('/', (SP(coef=Nu(3), expdict={Sy('y'): Nu(2)}), Sy('y'))),
+            SP(coef=Nu(3), expdict={Sy('y'): Nu(1)})
         ),
         (
-            Co('/', (Sy('y'), SP(coef=Nu(2), exp_dict={Sy('y'): Nu(2)}))),
-            SP(coef=Nu(0.5), exp_dict={Sy('y'): Nu(-1)})
+            Co('/', (Sy('y'), SP(coef=Nu(2), expdict={Sy('y'): Nu(2)}))),
+            SP(coef=Nu(0.5), expdict={Sy('y'): Nu(-1)})
         ),
         (
             Co('/', (
-                SP(coef=Nu(4), exp_dict={Sy('y'): Nu(2)}),
-                SP(coef=Nu(2), exp_dict={Sy('y'): Nu(2)})
+                SP(coef=Nu(4), expdict={Sy('y'): Nu(2)}),
+                SP(coef=Nu(2), expdict={Sy('y'): Nu(2)})
             )),
             Nu(2)
         ),
@@ -522,11 +588,11 @@ def test_negtospp_body(settings, negtospp, expr0, correct):
     assert out == correct
 
 # ==============
-# Test plustospp
+# Test addtospp
 #===============
 @pytest.fixture
-def plustospp(scope='module'):
-    return PlusToSPP()
+def addtospp(scope='module'):
+    return AddToSPP()
 
 
 @pytest.mark.parametrize(
@@ -537,11 +603,11 @@ def plustospp(scope='module'):
         (Co('+', (Sy('x'), Sy('y'))), False),
     ],
 )
-def test_plustospp_predicate(settings, plustospp, expr, correct):
-    assert  plustospp.predicate(expr) == correct
+def test_addtospp_predicate(settings, addtospp, expr, correct):
+    assert  addtospp.predicate(expr) == correct
 
 
-def test_plustospp_body(settings, plustospp):
+def test_addtospp_body(settings, addtospp):
     plusin = Co('+', (
         Nu(3), Nu(4),
         Pl(Nu(4), [SP(Nu(3), {Sy('x'): Nu(2)}), SP(Nu(-2), {Sy('x'): Nu(1)})]),
@@ -553,7 +619,7 @@ def test_plustospp_body(settings, plustospp):
         SP(Nu(1), {Co('f', (Sy('z'),)): Nu(1)})
     ])
 
-    out = plustospp.body(plusin)
+    out = addtospp.body(plusin)
 
     assert out.num == correct.num
     assert out.items == correct.items
@@ -616,6 +682,37 @@ def test_minustospp(settings, minustospp, expr0, expr1, correct):
         assert out.items == correct.items
     else:
         assert out == correct
+
+
+# =======================
+# Test ConvertFromStarPwr
+# =======================
+def test_convertfromstarpwr_predicate(settings):
+    sp = SP(Nu(3), {Sy('x'):Nu(2)})
+
+    assert convertfromstarpwr.predicate(sp) == True
+
+
+@pytest.mark.parametrize(
+    "expr, correct",
+    [
+        (
+            SP(Nu(3), {Sy('x'):Nu(2), Sy('y'): Nu(1)}),
+            CA('*', (Nu(3), Co('**', (Sy('x'), Nu(2))), Sy('y')))
+        ),
+        (
+            SP(Nu(1), {Sy('x'):Nu(2), Sy('y'): Nu(1)}),
+            CA('*', (Co('**', (Sy('x'), Nu(2))), Sy('y')))
+        ),
+    ],
+)
+def test_convertfromstarpwr_body(settings, expr, correct):
+    out = convertfromstarpwr.body(expr)
+
+    assert out == correct
+
+
+
 
 
 # ===========================

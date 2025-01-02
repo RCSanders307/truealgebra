@@ -28,7 +28,6 @@ def pwrnums(num0, num1):
 
 
 def negnum(num0):
-#   xxx = 101; embed()
     return comset.evalnum(Container('-', (num0,)))
 
 
