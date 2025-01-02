@@ -264,8 +264,23 @@ evalunitexpr = Rules(
 
 
 class UnitDimension:
+    """ 
+    Store data for unit affine conversions
+
+    basis (Symbol):
+        is the basis of the conversion data
+        BUT is for information to user only
+        It is used for nothing
+
+    unitdict: dict
+        unit conversion data
+        init_dict key: should be a Symbol instance
+        init_dict value: should be a Number instance
+        the key can be replaced with Container('*', (value, self.unit_base))
+        
+    """
     def __init__(self):
-        self.convdict = dict
+        self.unitdict = dict
         self.basis = ''
 
 length_dimension = UnitDimension()
@@ -280,6 +295,9 @@ length_dimension.convdict = {
 
 
 class ConvertDimension(Rule):
+    """
+    Create rule for affine unit conversion.
+    """
     def __init__(self, *rules, **kwargs):
         try:
             self.target = kwargs['target']
