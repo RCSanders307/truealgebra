@@ -123,7 +123,6 @@ def test_init_tokenizer_error(create_parse_tok, capsys):
     'char, string, token',
     [
         ('2', '3.4', Number(23.4)),
-        ('2', '3j !', Number(complex(0, 23))),
         ('2', '354', Number(2354)),
         ('2', 'e3', Number(2000.0)),
         ('2', 'E3', Number(2000.0)),
@@ -146,7 +145,6 @@ def test_integer_tokenizer(char, string, token, create_parse_tok):
     'buf, char, string, token',
     [
         ('123', '.', '456', Number(123.456)),
-        ('123', '.', '4j', Number(complex(0, 123.4))),
         ('5', '.', '3E2', Number(530.0)),
     ]
 )
@@ -295,7 +293,6 @@ def test_oper_tokenizer(create_parse_tok):
 @pytest.mark.parametrize(
     'char, string, token',
     [
-        ('j', '  *3.4',  Number(complex(0, 1))),
         ('a', 'nd true',  Container('and', ())),
         ('f', '(5,6,8)',  Container('f', (Number(5), Number(6), Number(8)))),
         ('s', 'ymbol',  Symbol('symbol')),

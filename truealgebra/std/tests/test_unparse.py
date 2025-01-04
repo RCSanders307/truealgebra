@@ -1,32 +1,52 @@
+from truealgebra.core.settings import SettingsSingleton
+from truealgebra.common.commonsettings import commonsettings
+
+from truealgebra.std.setup_func import std_setup_func
+from truealgebra.common.setup_func import common_setup_func
+
 from truealgebra.core.abbrv import *
 
-from truealgebra.std.settings_functions import set_commonsettings, set_parse
-from truealgebra.common.settings_function import set_settings
 from truealgebra.core.expressions import ExprBase
 from truealgebra.std.unparse import alg_unparse
 
-from truealgebra.core.settings import settings
-from truealgebra.common.commonsettings import commonsettings
+
+#from truealgebra.std.settings_functions import set_commonsettings, set_parse
+#from truealgebra.common.settings_function import set_settings
 
 import pytest
 from fractions import Fraction
 
 
+
 @pytest.fixture
-def stdsettings(scope='module'):
-    set_settings()
-    set_parse()
-    set_commonsettings()
-    ExprBase.set_setting_str_func(alg_unparse)
-    yield settings
+def settings(scope='module'):
+    settings = SettingsSingleton()
     settings.reset()
     commonsettings.reset()
-    ExprBase.set_setting_str_func(None)
+    std_setup_func()
+    common_setup_func()
+
+    yield settings
+        
+    settings.reset()
+    commonsettings.reset()
+
+
+#@pytest.fixture
+#def stdsettings(scope='module'):
+#    set_settings()
+#    set_parse()
+#    set_commonsettings()
+#    ExprBase.set_setting_str_func(alg_unparse)
+#    yield settings
+#    settings.reset()
+#    commonsettings.reset()
+#    ExprBase.set_setting_str_func(None)
 
 
 
 @pytest.fixture
-def unparse_list(stdsettings):
+def unparse_list(settings):
     temp0 = Co('!', (Sy('x'),))
     temp1 = Co('!', (temp0,))
     temp2 = Co('-', (Sy('x'),))
@@ -70,7 +90,7 @@ def unparse_list(stdsettings):
     ]
     return unparse_list
 
-def test_alg_unparse_integration(stdsettings, unparse_list):
+def test_alg_unparse_integration(settings, unparse_list):
     for item in unparse_list:
         string = alg_unparse(item[0])
 

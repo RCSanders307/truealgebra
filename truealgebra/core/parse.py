@@ -314,6 +314,8 @@ class Parse:
             self.next_char()
         if self.char == settings.sqrtneg1:
             self.next_char()
+# The following line is an old artifact that should be reoved.
+# It ia a bug.
             return self.complex_real_factory()
         else:
             return self.real_factory()

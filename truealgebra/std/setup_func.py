@@ -76,8 +76,6 @@ class MakeFraction(Rule):
 makefraction = MakeFraction()
         
 
-
-
 def std_setup_func():
     commonsettings.evalnum = evalnum
     commonsettings.evalnumbu = evalnumbu

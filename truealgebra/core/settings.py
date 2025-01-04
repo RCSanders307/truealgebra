@@ -167,6 +167,8 @@ class SettingsSingleton():
         self.categories['forall'].add('forall')
         self.parse = noparse
         self.unparse = None
+        self.float_class = None
+        self.integer_class = None
 
 
 settings = SettingsSingleton()

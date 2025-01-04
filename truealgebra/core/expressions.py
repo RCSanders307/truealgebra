@@ -195,7 +195,6 @@ false = Symbol('false')
 any__ = Symbol('__any')
 
 
-
 class Number(Atom):
     def __init__(self, value):
         object.__setattr__(self, "value", value)
