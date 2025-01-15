@@ -173,22 +173,6 @@ def set_bodied_functions(name, rbp=None):
 
     settings.bodied_functions[name] = rbp
 
-def set_sqrtneg1(a_string):
-    """Character representing square root of negative one.
-
-    a_string : str
-        'j' or 'k' will represent negative one
-        '' implies there is no square root of neagtive one.
-    """
-    if a_string not in ('i', 'j', ''):
-        msg = (
-            'a_string {} cannot be used for '
-            'square root of -1'.format(a_string)
-        )
-        ta_logger.log(msg)
-        return
-
-    settings.sqrtneg1 = a_string
 
 def set_container_subclass(name, cls):
     """Assign name attributes for Container Subclasses

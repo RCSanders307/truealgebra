@@ -1,9 +1,12 @@
 from truealgebra.core.rules import (
     RuleBase, TrueThing, Rule, donothing_rule, Substitute, Rules, RulesBU,
-    JustOne, JustOneBU, TrueThingJO
+    JustOne, JustOneBU, RecursiveParent, RecursiveChild, TrueThingJO
 )
 from truealgebra.core.expressions import ExprBase
+from truealgebra.core.abbrv import Co, Sy, Nu, isSy
 import pytest
+
+from IPython import embed
 
 # =============
 # Test RuleBase
@@ -328,3 +331,100 @@ def test_justonebu():
 
     assert isinstance(justonebu, JustOne)
     assert justonebu.bottomup is True
+
+# ===================
+# Test RecursiveChild
+# ===================
+@pytest.fixture
+def parentobject():
+    class Parent(Rule):
+        whoareyou = 'I am the parent'
+    return Parent()
+
+def test_recursivechild_init(parentobject):
+    child = RecursiveChild(parent=parentobject, bottomup=True, path=(1,))
+
+    assert child.parent.whoareyou == 'I am the parent'
+    assert child.bottomup == True
+    assert child.path == (1,)
+
+def test_recursivechild_init_error():
+    with pytest.raises(KeyError) as ta_error:
+        child = RecursiveChild()
+
+    assert str(ta_error.value) == "'parent'"
+
+# ===================
+# Test RecursivParent
+# ===================
+@pytest.fixture
+def Child0():
+    class Child0(RecursiveChild):
+        def predicate(self, expr):
+            return isSy(expr, 'x0')
+
+        def body(self, expr):
+            return Sy('y0')
+    return Child0
+
+@pytest.fixture
+def Child1():
+    class Child1(RecursiveChild):
+        def predicate(self, expr):
+            return isSy(expr, 'x1')
+
+        def body(self, expr):
+            return Sy('y1')
+    return Child1
+
+@pytest.fixture
+def Child2():
+    class Child2(RecursiveChild):
+        def predicate(self, expr):
+            return isSy(expr, 'x2')
+
+        def body(self, expr):
+            return Sy('y2')
+    return Child2
+
+@pytest.fixture
+def parent(Child0, Child1, Child2):
+    return RecursiveParent(Child0, Child1, Child2, Rule)
+
+def test_recursiveparent_init(parent):
+    out0 = parent.childrules[0](Sy('x0'))
+    out1 = parent.childrules[1](Sy('x1'))
+    out2 = parent.childrules[2](Sy('x2'))
+
+    assert len(parent.childrules) == 3
+    assert out0 == Sy('y0')
+    assert out1 == Sy('y1')
+    assert out2 == Sy('y2')
+    
+
+def test_recursiveparent_apply(parent):
+    out0 = parent.apply_childrules(Sy('x0'))
+    out1 = parent.apply_childrules(Sy('x1'))
+    out2 = parent.apply_childrules(Sy('x2'))
+    outz = parent.apply_childrules(Sy('z'))
+
+    assert out0 == Sy('y0')
+    assert out1 == Sy('y1')
+    assert out2 == Sy('y2')
+    assert outz is None
+    
+
+def test_recursiveparent_body(parent):
+    out0 = parent.body(Sy('x0'))
+    out1 = parent.body(Sy('x1'))
+    out2 = parent.body(Sy('x2'))
+    outz = parent.body(Sy('z'))
+
+    assert out0 == Sy('y0')
+    assert out1 == Sy('y1')
+    assert out2 == Sy('y2')
+    assert outz == Sy('z')
+
+
+def test_recursiveparent_predicate(parent):
+    assert parent.predicate(Sy('whatever')) == True

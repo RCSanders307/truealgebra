@@ -50,9 +50,6 @@ def common_setup_func():
     setsettings.set_container_subclass("==>", Restricted)
     setsettings.set_container_subclass("Rule", Restricted)
 
-    setsettings.set_complement('star', '*')
-    setsettings.set_complement('plus', '+')
-
     setsettings.set_categories('rule_names', ':=') 
     setsettings.set_categories('rule_names', '==>') 
     setsettings.set_categories('eqn_names', '=') 

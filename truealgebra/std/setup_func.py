@@ -1,8 +1,12 @@
-from truealgebra.core.parse import Parse
+from truealgebra.core.parse import Parse, RestrictedChild, AssignChild
 from truealgebra.core.settings import settings
-from truealgebra.core.rules import Rule, JustOneBU
+from truealgebra.core.rules import (
+    Rule, JustOneBU,
+    RecursiveChild, RecursiveParentBU,
+)
 from truealgebra.core.expressions import (
-    Number, Container, isRestricted, Restricted
+    Number, Container, isRestricted, isSymbol, isContainer, isNumber,
+    Restricted, CommAssoc,
 )
 
 from truealgebra.common.commonsettings import commonsettings
@@ -11,49 +15,42 @@ from truealgebra.core.err import ta_logger
 from truealgebra.std.unparse import alg_unparse
 from fractions import Fraction
 
+from IPython import embed
+
 
 def eval_logger(msg):
     ta_logger.log('Numerical Evaluation Error\n' + msg)
 
-class NegativeNumber(Rule):
+
+class PlusComplement(RecursiveChild):
     def predicate(self, expr):
-        return (
-            expr.name == '-'
-            and isinstance(expr, Container) 
-            and len(expr) == 1
-            and isinstance(expr[0], Number)
-            and (
-                isinstance(expr[0].value, int)
-                or isinstance(expr[0].value, float)
-            )
-        )
+        return isContainer(expr, 'plus')
 
     def body(self, expr):
-        return Number(-expr[0].value)
+        return CommAssoc('+', expr.items)
 
 
-negativenumber = NegativeNumber()
-negative_number_bu = NegativeNumber(bottomup=True)
-
-
-class NegativeNumberRestricted(Rule):
-    """ This is a stop gap measure to fix a bug.
-        '-7' should be parsed as the number negative 7
-    """
+class StarComplement(RecursiveChild):
     def predicate(self, expr):
-        return isRestricted(expr) 
+        return isContainer(expr, 'star')
 
     def body(self, expr):
-        newitems = list()
-        for item in expr.items:
-            newitems.append(negative_number_bu(item))
-        return Restricted(expr.name, newitems)
+        return CommAssoc('*', expr.items)
 
 
-negative_number_restricted = NegativeNumberRestricted()
+class SpecialSymbols(RecursiveChild):
+    specialsymbols = {
+        'j': complex(0, 1),
+    }
+
+    def predicate(self, expr):
+        return isSymbol(expr) and expr.name in self.specialsymbols
+
+    def body(self, expr):
+        return Number(self.specialsymbols[expr.name])
 
 
-class MakeFraction(Rule):
+class MakeFraction(RecursiveChild):
     def predicate(self, expr):
         return (
             expr.name == '/'
@@ -72,9 +69,8 @@ class MakeFraction(Rule):
             eval_logger('Division by zero.')
             out = null
         return out
-
-makefraction = MakeFraction()
         
+
 
 def std_setup_func():
     commonsettings.evalnum = evalnum
@@ -83,7 +79,8 @@ def std_setup_func():
     commonsettings.num1 = num1
     commonsettings.neg1 = neg1
     
-    settings.parse = Parse(postrule=JustOneBU(
-        negativenumber, makefraction, negative_number_restricted,
+    settings.parse = Parse(postrule=RecursiveParentBU(
+        RestrictedChild, AssignChild,  PlusComplement, StarComplement,
+        SpecialSymbols, MakeFraction,
     ))
     settings.unparse = alg_unparse

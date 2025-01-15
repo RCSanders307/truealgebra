@@ -260,20 +260,6 @@ def test_set_bodied_functionss_errors(
     assert settings.bodied_functions == dict()
 
 
-@pytest.mark.parametrize("a_string", ['i', 'j', ''])
-def test_set_sqrtneg1(a_string, settings):
-    setsettings.set_sqrtneg1(a_string)
-    assert settings.sqrtneg1 == a_string
-
-
-def test_set_sqrtneg1_error(capsys, settings):
-    setsettings.set_sqrtneg1('m')
-    output = capsys.readouterr()
-
-    assert 'a_string m cannot be used for square root of -1' in output.out
-    assert settings.sqrtneg1 == ''
-
-
 @pytest.mark.parametrize(
     "name, cls",
     [

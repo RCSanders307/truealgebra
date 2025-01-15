@@ -6,6 +6,6 @@ from truealgebra.common.setup_func import common_setup_func
 
 settings.reset()
 commonsettings.reset()
-tasympy_setup_func()
 common_setup_func()
+tasympy_setup_func()
 

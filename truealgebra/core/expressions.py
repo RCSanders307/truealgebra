@@ -674,6 +674,14 @@ def isCommAssoc(expr, name=None, arity=None):
     return name_ok and arity_ok
 
 
+def isSymbol(expr, name=None):
+    if name is None:
+        return isinstance(expr, Symbol)
+    else:
+        return isinstance(expr, Symbol) and expr.name == name
+# What about multiple names
+        
+
 
 
         

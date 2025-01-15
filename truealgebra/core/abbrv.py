@@ -5,7 +5,8 @@ from truealgebra.core.naturalrules import (
     NaturalRule, HalfNaturalRule
 )
 from truealgebra.core.expressions import (
-    ExprBase, Symbol, Number, Container, Restricted, Assign, CommAssoc, null
+    ExprBase, Symbol, Number, Container, Restricted, Assign, CommAssoc, null,
+    isSymbol
 )
 
 EB = ExprBase
@@ -60,6 +61,8 @@ def isCA(expr, name=None, arity=None):
         arity_ok = (len(expr) == arity)
 
     return name_ok and arity_ok
+
+isSy = isSymbol
 
 
 num0 = Nu(0)

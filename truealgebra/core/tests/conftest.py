@@ -91,7 +91,6 @@ def conftest_settings():
     setsettings.set_container_subclass(':=', Assign)
     setsettings.set_container_subclass('Rule', Restricted)
 
-    setsettings.set_sqrtneg1('j')
     setsettings.set_complement('star', '*')
     setsettings.set_complement('!!', '+')
 

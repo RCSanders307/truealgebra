@@ -11,11 +11,11 @@ class SympyNumbers:
     def integer(self, string):
         return Number(sympy.core.numbers.Integer(string))
 
-    def float(self, string, accuracy=None)):
+    def float(self, string, accuracy=None):
         if accuracy is None:
             return Number(sympy.core.numbers.Float(string, self.accuracy))
         else:
             return Number(sympy.core.numbers.Float(string, accuracy))
             
 
-snum = SympyNumber()
+snum = SympyNumbers()

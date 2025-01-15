@@ -1,67 +1,13 @@
 from truealgebra.core.err import ta_logger
-from truealgebra.core.expressions import (
-    Container, Number, Symbol, Restricted, Assign, null, end
-)
+from truealgebra.core.expressions import Container, Number, Symbol, null, end
 from truealgebra.core.settings import settings
 from truealgebra.core.constants import (
     OPERATORS, DIGITS, WHITE_SPACE, LETTERS, META_DELIMITERS
 )
-from truealgebra.core.rules import RecursiveChild
 
 
 def parse_logger(msg):
     ta_logger.log('Parse Error\n' + msg)
-
-
-class AssignChild(RecursiveChild):
-    def predicate(self, expr):
-        return isinstance(expr, Assign)
-        
-    def body(self, expr):
-        newitems = list(expr[1:])
-        
-        for item in expr.items[:1]:
-            newitems.insert(0, self.parent(item))
-        return Assign(expr.name, newitems)
-
-
-class RestrictedChild(RecursiveChild):
-    def predicate(self, expr):
-        return isinstance(expr, Restricted)
-        
-    def body(self, expr):
-        newitems = list()
-        for item in expr.items:
-            newitems.append(self.parent(item))
-        return Restricted(expr.name, newitems)
-
-
-#class Bypass(Rule):
-#    """
-#    This rule bypasses restrictions of Restricred and Assign expressions.
-#    """
-#    def __init__(self, *rules, **kwargs):
-#        self.rulelist = rules
-#
-#        super().__init__(*rules, **kwargs)
-#
-#    def predicate(self, expr):
-#        return True
-#
-#    def body(self, expr):
-#        if isinstance(expr, Restricted):
-#            newitems = list()
-#            for item in expr.items:
-#                newitems.append(self(item))
-#            newexpr = Restricted(expr.name, newitems)
-#        else:
-#            newexpr = expr
-
-        for rule in self.rulelist:
-            newexpr = rule(newexpr)
-        return newexpr
-
-    bottomup = True
 
 
 class Parse:
@@ -110,6 +56,8 @@ class Parse:
 
     def __call__(self, strn):
         self.string = strn
+#       if not isinstance(self.string, str):
+#           raise ParsingError('parse input must be string')
         self.string_iterator = iter(self.string)
         self.next_char()
         out = self.init_parse()
@@ -325,8 +273,6 @@ class Parse:
             return self.integer_tokenizer()
         elif self.char in LETTERS:
             return self.symbol_tokenizer()
-        elif self.char == '-':
-            return self.neg_tokenizer()
         elif self.char == '.':
             return self.real_tokenizer()
         elif self.char in OPERATORS:
@@ -341,6 +287,9 @@ class Parse:
         while self.char in LETTERS or self.char in DIGITS:
             self.buf += self.char
             self.next_char()
+#       if self.buf == settings.sqrtneg1:
+#           return self.complex_factory()
+#       elif self.buf in settings.symbol_operators:
         if self.buf in settings.symbol_operators:
             return self.symbol_operator_factory()
         elif self.char == '(':
@@ -363,7 +312,13 @@ class Parse:
         while self.char in DIGITS:
             self.buf += self.char
             self.next_char()
-        return self.real_factory()
+        if self.char == settings.sqrtneg1:
+            self.next_char()
+# The following line is an old artifact that should be reoved.
+# It ia a bug.
+            return self.complex_real_factory()
+        else:
+            return self.real_factory()
 
     def function_form_tokenizer(self):
         token = self.function_form_factory()
@@ -400,6 +355,9 @@ class Parse:
             return null
         elif self.char in ('e', 'E'):
             return self.sform_tokenizer()
+#       elif self.char == settings.sqrtneg1:
+#           self.next_char()
+#           return self.complex_real_factory()
         else:
             return self.real_factory()
 
@@ -415,6 +373,9 @@ class Parse:
             self.next_char()
         if self.char == '.':
             return self.real_tokenizer()
+#       elif self.char == settings.sqrtneg1:
+#           self.next_char()
+#           return self.complex_int_factory()
         elif self.char in ('e', 'E'):
             return self.sform_tokenizer()
         else:
@@ -434,33 +395,22 @@ class Parse:
             parse_logger('Missing right parenthesis: )')
             return null
 
-    def neg_tokenizer(self):
-        """ Token starting with '-'. """
-        self.buf += self.char
-        self.next_char()
-        if self.char in DIGITS:
-            return self.integer_tokenizer()
-        elif self.char == '.':
-            return self.real_tokenizer()
-        elif self.char in OPERATORS:
-            return self.oper_tokenizer()
-        else:
-            return self.operator_factory()
-
-
-
 # factory methods
     def integer_factory(self):
-        if settings.integer_class is None:
-            return Number(int(self.buf))
-        else:
-            return Number(settings.integer_class(self.buf))
+        return Number(int(self.buf))
+
+#   def complex_real_factory(self):
+#       return Number(complex(0, float(self.buf)))
+
+#   def complex_int_factory(self):
+#       return Number(complex(0, int(self.buf)))
+
+#   def complex_factory(self):
+#       """ symbol_tokenizer has sqrtneg1 in self.buf"""
+#       return Number(complex(0, 1))
 
     def real_factory(self):
-        if settings.float_class is None:
-            return Number(float(self.buf))
-        else:
-            return Number(settings.float_class(self.buf))
+        return Number(float(self.buf))
 
     def make_container_instance(self):
         name = settings.complement.get(self.buf, self.buf)

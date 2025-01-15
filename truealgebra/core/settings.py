@@ -113,11 +113,6 @@ class SettingsSingleton():
         A key to bodied_functions must be a symbol name.
         The key cannot be a key in the symbol_operator dictionary.
         The value to bodied_functions must be a positive binding power.
-    sqrtneg1 : str
-        indicates the square root of negative one.
-
-        sqrtneg1 can only be '', 'i', or 'j'.
-        If "",  there is no square root of negative one.
     container_subclass : dict
         Identifies Container subclass, based on name attribute.
         If a name is not in the dictionary, the name

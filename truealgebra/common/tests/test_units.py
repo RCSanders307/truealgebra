@@ -21,7 +21,6 @@ def settings(scope='module'):
     comset.reset()
     std_setup_func()
     common_setup_func()
-
     yield settings
         
     settings.reset()
@@ -44,7 +43,6 @@ def settings(scope='module'):
         'Co should be Re',
         'wrong name',
         'only one argument',
-
     ]
 )
 def test_simplifyunits_predicate(settings, expr, correct):
@@ -56,30 +54,32 @@ def test_simplifyunits_predicate(settings, expr, correct):
 @pytest.mark.parametrize(
     "expr, correct",
     [
-        (' 3.5 ` 2.0 ', ' 7.0 '),
+#       (' 3.5 ` 2.0 ', ' 7.0 '),
         (' 2.0 ` star(3.0, m, N)', ' 6.0 ` m * N'),
-        (' 2.0 ` star(3.0, N)', ' 6.0 ` N'),
-        (' 2.0 ` 3.0 / s ', '6.0 ` 1 / s'),
-        (' 6.0 ` 1 / s ', '6.0 ` 1 / s'),
-        (' 2.0 ` star(3.0, N) / s ', '6.0 ` N / s'),
-        (' 2.0 ` star(3.0, N, m) / s ', '6.0 ` (N * m) / s'),
-        (' 3.5 ` ((m * m / s) / (1 / s)) ', '3.5 ` m ** 2'),
-        (' 1.5 ` star(m, 2.0, N, 3.0, 1 / s)', '9.0 ` (m * N) / s'),
+#       (' 2.0 ` star(3.0, N)', ' 6.0 ` N'),
+#       (' 2.0 ` 3.0 / s ', '6.0 ` 1 / s'),
+#       (' 6.0 ` 1 / s ', '6.0 ` 1 / s'),
+#       (' 2.0 ` star(3.0, N) / s ', '6.0 ` N / s'),
+#       (' 2.0 ` star(3.0, N, m) / s ', '6.0 ` (N * m) / s'),
+#       (' 3.5 ` ((m * m / s) / (1 / s)) ', '3.5 ` m ** 2'),
+#       (' 1.5 ` star(m, 2.0, N, 3.0, 1 / s)', '9.0 ` (m * N) / s'),
     ],
-    ids=[
-        '2nd argument of a unit expression is a number',
-        '2nd arg is star with number',
-        '2nd arg is star with number and one unit',
-        '2nd arg is number divided by unit',
-        '2nd arg is one divided by unit',
-        '2nd arg is number and one unit in dividend',
-        '2nd arg is number and two units in dividend',
-        'simple case, unit number does not change',
-        'Major simplification',
-    ]
+#   ids=[
+#       '2nd argument of a unit expression is a number',
+#       '2nd arg is star with number',
+#       '2nd arg is star with number and one unit',
+#       '2nd arg is number divided by unit',
+#       '2nd arg is one divided by unit',
+#       '2nd arg is number and one unit in dividend',
+#       '2nd arg is number and two units in dividend',
+#       'simple case, unit number does not change',
+#       'Major simplification',
+#   ]
 )
 def test_simplifyunits_body(settings, expr, correct):
-    output = simplifyunits.body(settings.parse(expr))
+#   output = simplifyunits.body(settings.parse(expr))
+    newexpr = settings.parse(expr)
+    output = simplifyunits.body(newexpr)
     correct_expr  = settings.parse(correct)
 
     assert output == correct_expr

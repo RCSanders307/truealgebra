@@ -2,43 +2,17 @@ from truealgebra.core.rules import Rule, Rules, RulesBU, JustOne
 from truealgebra.core.expressions import Number, null, isNumber, isContainer
 from truealgebra.core.err import ta_logger
 
-from truealgebra.common.eval_commassoc import CalcCommAssoc
+from truealgebra.common.eval_basics import (
+    CalcCommAssoc, power_function, divide_function, subtract_function,
+    negative_function, multiply_function, add_function,
+    EvalMathDictSingle, EvalMathDictDouble,
+)
 
 import math
 import cmath
 from fractions import Fraction
 
 
-# Operator Functions
-# ==================
-def power_function(n0, n1):
-    if isinstance(n0, int) and isinstance(n1, int) and n1 < 0:
-        return Fraction(1, n0 ** - n1)
-    else:
-        return n0 ** n1
-
-
-def divide_function(n0, n1):
-    if isinstance(n0, int) and isinstance(n1, int):
-       return Fraction(n0, n1)
-    else:
-        return n0 / n1
-
-
-def subtract_function(n0, n1):
-    return n0 - n1
-
-
-def negative_function(n0):
-    return - n0
-
-
-def multiply_function(n0, n1):
-    return n0 * n1
-
-
-def add_function(n0, n1):
-    return n0 + n1
 
 
 
@@ -69,53 +43,6 @@ class CleanComplex(Rule):
 
 cleanfraction = CleanFraction()
 cleancomplex = CleanComplex()
-
-# ============
-# EvalMathDict
-# ============
-class EvalMathDictSingle(Rule):
-    arity = 1
-
-    def __init__(self, *args, **kwargs):
-        self.namedict = kwargs['namedict']
-        super().__init__(*args, **kwargs)
-
-    def predicate(self, expr):
-        return (
-            isContainer(expr, arity=self.arity)
-            and expr.name in self.namedict
-            and self.item_predicate(expr)
-        )
-
-    def body(self, expr):
-        func = self.namedict[expr.name]
-        try:
-            return Number(self.calculation(func, expr))
-        except ZeroDivisionError:
-            eval_logger('Division by zero.')
-            return null
-        except TypeError:  # complex number
-            eval_logger('Complex number cannot be handled.')
-            return null
-        except AttributeError:  # value eroror
-            eval_logger('Number instance must have value attribute.')
-            return null
-
-    def calculation(self, func, expr):
-        return func(expr[0].value)
-
-    def item_predicate(self, expr):
-        for item in expr:
-            if not isNumber(item):
-                return False
-        return True
-
-
-class EvalMathDictDouble(EvalMathDictSingle):
-    arity = 2
-
-    def calculation(self, func, expr):
-        return func(expr[0].value, expr[1].value)
 
 
 # Eval Math Function Single Arity
