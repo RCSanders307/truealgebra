@@ -734,7 +734,7 @@ def test_convertfromstarpwr_body(settings, expr, correct):
         ('plus(x, y-x, y, z, -z)', '2*y'),
         ('plus(x, y-x, y, z, - - -z)', '2*y'),
         ('- 5', '-5'),
-        ('7-3', '4'),
+        ('7 - 3', '4'),
     ],
     ids=[
         "star function",

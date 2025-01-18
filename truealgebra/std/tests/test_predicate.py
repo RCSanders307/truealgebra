@@ -81,7 +81,6 @@ def parse(settings, scope='module'):
         'isreal, complex',
     ]
 )
-@pytest.mark.xfail(reason='need to refactor parse')
 def test_number_type_rules(string, correct, predicate, parse):
     expr = parse(string)
 

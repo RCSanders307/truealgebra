@@ -1,40 +1,14 @@
-from truealgebra.tasympy.evalnum import definedfunction_dict
-
+from truealgebra.tasympy.utility import definedfunction_dict
 from truealgebra.core.expressions import (
     Symbol, isSymbol, isCommAssoc, isNumber, isContainer,
 )
-from truealgebra.core.translate import TranslateParent, TranslateChild
-
+from truealgebra.core.translate import ParentTranslate, ChildTranslate
 import sympy
 
 from IPython import embed
 
-# This class will probaly be deleted
-class OneToOneSymbolMap:
-    def __init__(self):
-        self.tomap = dict()
-        self.frommap = dict()
-        self.num = 0
 
-    def add_tasy(self, sy):
-        if isSymbol(sy) and sy not in self.tomap:
-            self.num += 1
-            sympy_sy = sympy.symbols('sy' + str(self.num))
-            self.tomap[sy] = sympy_sy
-            self.frommap[sympy_sy] = sy
-            
-
-# =============================
-
-class TAToSympy(TranslateParent):
-    def __init__(self, *child_classes, **kwargs):
-#       self.symbolmap = kwargs['symbolmap']
-#       self.symbolmap = OneToOneSymbolMap()
-
-        super().__init__(*child_classes, **kwargs)
-
-
-class StarTranslate(TranslateChild):
+class StarTranslate(ChildTranslate):
     def predicate(self, expr):
         return isCommAssoc(expr, '*')
 
@@ -45,7 +19,7 @@ class StarTranslate(TranslateChild):
         return sympy.Mul(*newunits)
 
 
-class PlusTranslate(TranslateChild):
+class PlusTranslate(ChildTranslate):
     def predicate(self, expr):
         return isCommAssoc(expr, '+')
 
@@ -56,7 +30,17 @@ class PlusTranslate(TranslateChild):
         return sympy.Add(*newunits)
 
 
-class DivTranslate(TranslateChild):
+class PwrTranslate(ChildTranslate):
+    def predicate(self, expr):
+        return isContainer(expr, '**', 2)
+
+    def body(self, expr):
+        newbase = self.parent(expr[0])
+        newexp = self.parent(expr[1])
+        return sympy.Pow(newbase, newexp)
+
+
+class DivTranslate(ChildTranslate):
     def predicate(self, expr):
         return isContainer(expr, '/', 2)
 
@@ -67,7 +51,7 @@ class DivTranslate(TranslateChild):
         )
 
 
-class NegTranslate(TranslateChild):
+class NegTranslate(ChildTranslate):
     def predicate(self, expr):
         return isContainer(expr, '-', 1)
 
@@ -78,7 +62,7 @@ class NegTranslate(TranslateChild):
         )
 
 
-class SubTranslate(TranslateChild):
+class SubTranslate(ChildTranslate):
     def predicate(self, expr):
         return isContainer(expr, '-', 2)
 
@@ -92,7 +76,7 @@ class SubTranslate(TranslateChild):
         )
 
 
-class SymbolTranslate(TranslateChild):
+class SymbolTranslate(ChildTranslate):
     def predicate(self, expr):
         return isSymbol(expr)
 
@@ -100,7 +84,7 @@ class SymbolTranslate(TranslateChild):
         return sympy.symbols(expr.name)
 
 
-class NumberTranslate(TranslateChild):
+class NumberTranslate(ChildTranslate):
     def predicate(self, expr):
         return isNumber(expr)
 
@@ -108,7 +92,7 @@ class NumberTranslate(TranslateChild):
         return expr.value
 
 
-class DefinedFunctionTranslate(TranslateChild):
+class DefinedFunctionTranslate(ChildTranslate):
     def predicate(self, expr):
         return isContainer(expr) and expr.name in definedfunction_dict
 
@@ -119,7 +103,7 @@ class DefinedFunctionTranslate(TranslateChild):
         return definedfunction_dict[expr.name](*newunits)
 
 
-class UndefinedFunctionTranslate(TranslateChild):
+class UndefinedFunctionTranslate(ChildTranslate):
     def predicate(self, expr):
         return isContainer(expr)
 
@@ -130,9 +114,10 @@ class UndefinedFunctionTranslate(TranslateChild):
         return sympy.Function(expr.name)(*newunits)
 
 
-tatosympy = TAToSympy(
+tatosympy = ParentTranslate(
     StarTranslate,
     PlusTranslate,
+    PwrTranslate,
     NegTranslate,
     SubTranslate,
     DivTranslate,

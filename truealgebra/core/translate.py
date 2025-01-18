@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class TranslateChild(ABC):
+class ChildTranslate(ABC):
     def __init__(self, parent): 
 # If parent isn't there Make an error
         self.parent = parent
@@ -15,11 +15,11 @@ class TranslateChild(ABC):
         pass
 
 
-class TranslateParent:
+class ParentTranslate:
     def __init__(self, *child_classes, **kwargs):
         self.children = list()
         for child_class in child_classes:
-            if issubclass(child_class, TranslateChild):
+            if issubclass(child_class, ChildTranslate):
                 self.children.append(child_class(parent=self))
             # else: raise error??
 

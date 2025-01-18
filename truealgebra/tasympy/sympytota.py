@@ -1,8 +1,11 @@
-from truealgebra.core.translate import TranslateParent, TranslateChild
-from truealgebra.common.utility import create_starCA
-from truealgebra.tasympy.evalnum import reverse_dict
+from truealgebra.core.expressions import (
+    Number, Container, Symbol
+)
+from truealgebra.core.translate import ParentTranslate, ChildTranslate
+from truealgebra.common.utility import create_starCA, create_plusCA
+from truealgebra.tasympy.utility import reversed_definedfunction_dict
 
-#class SympyToTA(TranslateParent):
+#class SympyToTA(ParentTranslate):
 #   def __init__(self, *child_classes, **kwargs):
 #       self.symbolmap = kwargs['symbolmap']
 
@@ -10,7 +13,7 @@ from truealgebra.tasympy.evalnum import reverse_dict
 
 
 
-class MulTranslate(TranslateChild):
+class MulTranslate(ChildTranslate):
     def predicate(self, expr):
         return expr.is_Mul
 
@@ -22,7 +25,7 @@ class MulTranslate(TranslateChild):
         return create_starCA(items)
 
 
-class AddTranslate(TranslateChild):
+class AddTranslate(ChildTranslate):
     def predicate(self, expr):
         return expr.is_Add
 
@@ -31,18 +34,29 @@ class AddTranslate(TranslateChild):
         for arg in expr.args:
             items.append(self.parent(arg))
 
-        return create_plus(items)
+        return create_plusCA(items)
 
 
-class SymbolTranslate(TranslateChild):
+class PowTranslate(ChildTranslate):
+    def predicate(self, expr):
+        return expr.is_Pow
+
+    def body(self, expr):
+        base = self.parent(expr.args[0])
+        exp = self.parent(expr.args[1])
+
+        return Container('**', (base, exp))
+
+
+class SymbolTranslate(ChildTranslate):
     def predicate(self, expr):
         return expr.is_Symbol
 
     def body(self, expr):
-        return self.Symbol(expr.name)
+        return Symbol(expr.name)
 
 
-class NumberTranslate(TranslateChild):
+class NumberTranslate(ChildTranslate):
     def predicate(self, expr):
         return expr.is_number
 
@@ -50,18 +64,18 @@ class NumberTranslate(TranslateChild):
         return Number(expr)
 
 
-class DefinedFunctionTranslate(TranslateChild):
+class DefinedFunctionTranslate(ChildTranslate):
     def predicate(self, expr):
-        return expr.is_DefinedFunction
+        return type(expr) in reversed_definedfunction_dict
 
     def body(self, expr):
         items = list()
         for arg in expr.args:
             items.append(self.parent(arg))
-        return Container(reverse_dict[type(expr)],  items)
+        return Container(reversed_definedfunction_dict[type(expr)],  items)
 
 
-class FunctionTranslate(TranslateChild):
+class FunctionTranslate(ChildTranslate):
     def predicate(self, expr):
         return expr.is_Function
 
@@ -72,9 +86,10 @@ class FunctionTranslate(TranslateChild):
         return Container(expr.name,  items)
 
 
-sympytota = TranslateParent(
+sympytota = ParentTranslate(
     MulTranslate,
     AddTranslate,
+    PowTranslate,
     SymbolTranslate,
     NumberTranslate,
     DefinedFunctionTranslate,

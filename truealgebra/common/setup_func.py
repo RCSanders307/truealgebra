@@ -34,6 +34,7 @@ def common_setup_func():
 
     setsettings.set_bodied_functions("D", 70)
     setsettings.set_bodied_functions("Intergrate", 70)
+    setsettings.set_bodied_functions("I", 70)
     setsettings.set_bodied_functions("Rule", 70)
 
     setsettings.set_infixprefix("-", 999)

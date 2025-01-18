@@ -54,38 +54,6 @@ class CalcCommAssoc(EvalCommAssocBase):
         return self.prep_output(outlist)
 
 
-# Python Operator Functions
-# ==================
-def power_function(n0, n1):
-    if isinstance(n0, int) and isinstance(n1, int) and n1 < 0:
-        return Fraction(1, n0 ** - n1)
-    else:
-        return n0 ** n1
-
-
-def divide_function(n0, n1):
-    if isinstance(n0, int) and isinstance(n1, int):
-       return Fraction(n0, n1)
-    else:
-        return n0 / n1
-
-
-def subtract_function(n0, n1):
-    return n0 - n1
-
-
-def negative_function(n0):
-    return - n0
-
-
-def multiply_function(n0, n1):
-    return n0 * n1
-
-
-def add_function(n0, n1):
-    return n0 + n1
-
-
 # ============
 # EvalMathDict
 # ============

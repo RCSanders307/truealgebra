@@ -1,5 +1,5 @@
 from truealgebra.common.commonsettings import commonsettings as comset
-from truealgebra.common.eval_commassoc import EvalCommAssocBase
+from truealgebra.common.eval_basics import EvalCommAssocBase
 
 from truealgebra.core.expressions import (
     Container, CommAssoc, 
