@@ -526,6 +526,3 @@ def meta_parser(strn):
             result = settings.parse(strn[:indx])
             strn = strn[indx+1:]
         yield result
-
-
-parse = Parse()

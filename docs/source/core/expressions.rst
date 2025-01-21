@@ -12,22 +12,25 @@ Import the necessary packages, modules, and objects.
        ...: from truealgebra.core.naturalrules import (
        ...:     NaturalRuleBase, NaturalRule, HalfNaturalRule
        ...: )
-       ...: from truealgebra.core.expression import (
+       ...: from truealgebra.core.expressions import (
        ...:     ExprBase, Symbol, Number, true, false,
-       ...:     Container,Restricted, Assign, Null, End, CommAssoc,
+       ...:     Container,Restricted, Assign, End, CommAssoc,
        ...: ) 
+       ...: from truealgebra.core.expressions import NullSingleton as Null
        ...: from truealgebra.core.settings import settings
-       ...: from truealgebra.core.parse import parse
+       ...: from truealgebra.core import setsettings
+       ...: from truealgebra.core.parse import Parse
        ...: from truealgebra.core.unparse import unparse 
-       ...:
-       ...: settings.active_parse = parse 
-       ...: settings.set_symbol_operators("and", 75, 75)
-       ...: settings.set_custom_bp("=", 50, 50) 
-       ...: settings.set_container_subclass("*", CommAssoc) 
-       ...: ExprBase.set_unparse(unparse) 
        ...: from fractions import Fraction
-
-
+       ...:
+       ...:
+       ...: settings.parse = Parse()
+       ...: settings.unparse = unparse
+       ...: setsettings.set_symbol_operators("and", 75, 75)
+       ...: setsettings.set_custom_bp("=", 50, 50) 
+       ...: setsettings.set_container_subclass("*", CommAssoc) 
+       ...:
+       ...: parse = settings.parse
 
 
 Expressions are instances of the ExprBase class..
@@ -42,7 +45,7 @@ In the future, additional classes may be created, for example to represent a mat
 
 Creation of Expressions
 -----------------------
-There are two methods ithat can be used to create expressions. The preferred method is to use a Parser or Frontend class instance to take python strings that represent mathematical expressions and convert them into truealgebra expressions. This parsing method is much easier to use especially for complicated expressions. Syntax mistakes in the string will be automatically caught by the Parser instance. Below is a simple example of creating a truealgeba expression representing a parabolic equation.
+There are two methods that can be used to create expressions. The preferred method is to use a Parser or Frontend class instance to take python strings that represent mathematical expressions and convert them into truealgebra expressions. This parsing method is much easier to use especially for complicated expressions. Syntax mistakes in the string will be automatically caught by the Parser instance. Below is a simple example of creating a truealgeba expression representing a parabolic equation.
 
 .. ipython::
 

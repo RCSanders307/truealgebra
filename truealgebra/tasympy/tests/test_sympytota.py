@@ -1,4 +1,3 @@
-
 from truealgebra.core.settings import SettingsSingleton
 from truealgebra.common.commonsettings import commonsettings
 from truealgebra.common.setup_func import common_setup_func

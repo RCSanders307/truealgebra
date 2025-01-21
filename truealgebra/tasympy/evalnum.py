@@ -1,5 +1,5 @@
 from truealgebra.core.rules import Rule, Rules, JustOneBU, JustOne
-from truealgebra.common.eval_basics import (
+from truealgebra.common.utility import (
     CalcCommAssoc, EvalMathDictSingle, EvalMathDictDouble,
 )
 from truealgebra.tasympy.utility import snum, definedfunction_dict

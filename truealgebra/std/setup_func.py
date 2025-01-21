@@ -6,7 +6,7 @@ from truealgebra.core.rules import (
 )
 from truealgebra.core.expressions import (
     Number, Container, isRestricted, isSymbol, isContainer, isNumber,
-    Restricted, CommAssoc,
+    Restricted, CommAssoc, null
 )
 
 from truealgebra.common.commonsettings import commonsettings

@@ -2,7 +2,7 @@ from truealgebra.core.rules import Rule, Rules, RulesBU, JustOne
 from truealgebra.core.expressions import Number, null, isNumber, isContainer
 from truealgebra.core.err import ta_logger
 
-from truealgebra.common.eval_basics import (
+from truealgebra.common.utility import (
     CalcCommAssoc, 
     EvalMathDictSingle, EvalMathDictDouble,
 )
@@ -43,7 +43,6 @@ def multiply_function(n0, n1):
 
 def add_function(n0, n1):
     return n0 + n1
-
 
 
 

@@ -9,10 +9,11 @@ Perform the necessary Imports.
        ...: from truealgebra.core.settings import(
        ...:     settings, bp 
        ...: ) 
+       ...: from truealgebra.core import setsettings
        ...: from truealgebra.core.constants import (
-       ...:     DIGITS, LETTERS, WHITE_SPACE, OPERATORS, META_DELIMITERS 
+       ...:     DIGITS, LETTERS, WHITE_SPACE, OPERATORS, META_DELIMITERS
        ...: ) 
-       ...: from truealgebra.core import expression as expr
+       ...: from truealgebra.core import expressions as expr
 
 From The module truealgebra.core.settings is imported the settings object which
 is a singleton. 
@@ -178,19 +179,6 @@ The ``bodied_functions`` setting is a dictionary which is by default empty. A di
        ...: print(settings.bodied_functions)
 
 
-.. _sqrtneg1-label:
-
-sqrtneg1
---------
-The ``sqrtneg1`` is a variable that references a string, either ``'i'``. ``'j'``, or the empty string ``''``. This setting determines which symbol is used by the parser to represent the square root of negative one.  The empty string indicates that there is no square root of negative one.
-
-.. ipython::
-
-    In [1]: print(settings.sqrtneg1)
-       ...: settings.sqrtneg1 = 'i'
-       ...: print(settings.sqrtneg1)
-
-
 .. _container_subclass-label:
 
 container_subclass
@@ -297,10 +285,6 @@ set_symbol_operators (name, lbp, rbp)
 
 set_bodied_functions(name, rbp)
     Add or reassign key to :ref:`settings.bodied_function<bodied_functions-label>` dictionary. The key is the parameter ``name`` which must be a symbol name. The parameter ``name`` cannot be a key in the setting ``settings.symbol_operators`` dictionary. The parameters ``rbp`` must be a positive binding power.
-
-
-set_sqrtneg1(a_string)
-   Assigns the parameter ``a_string`` to :ref:`settings.sqrtneg1<sqrtneg1-label>`. ``a_string`` can only be one of the strings ``''``, ``'i'``, or ``'j'``.
     
 
 set_container_subclass(name, cls)
@@ -323,7 +307,7 @@ All three parameters of ``settingst.set_custom_bp`` have flaws. Error messages a
 .. ipython::
 
     In [1]: print('custom_bp=  ' + str(settings.custom_bp))
-       ...: settings.set_custom_bp('q@d$', -300, 'four')
+       ...: setsettings.set_custom_bp('q@d$', -300, 'four')
        ...: print('custom_bp=  ' + str(settings.custom_bp))
 
 
