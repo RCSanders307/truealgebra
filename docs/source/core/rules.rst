@@ -33,19 +33,23 @@ Import the necessary packages, modules, and objects.
        ...: from truealgebra.core.naturalrules import (
        ...:     NaturalRuleBase, NaturalRule, HalfNaturalRule
        ...: )
-       ...: from truealgebra.core.expression import (
+       ...: from truealgebra.core.expressions import (
        ...:     ExprBase, Symbol, Number, true, false,
-       ...:     Container,Restricted, Assign, Null, End, CommAssoc,
+       ...:     Container,Restricted, Assign, null, CommAssoc,
        ...: ) 
        ...: from truealgebra.core.settings import settings
-       ...: from truealgebra.core.parse import parse
+       ...: from truealgebra.core import setsettings
+       ...: from truealgebra.core.parse import Parse
        ...: from truealgebra.core.unparse import unparse 
        ...:
-       ...: settings.active_parse = parse 
-       ...: settings.set_symbol_operators("and", 75, 75)
-       ...: settings.set_custom_bp("=", 50, 50) 
-       ...: settings.set_container_subclass("*", CommAssoc) 
-       ...: ExprBase.set_unparse(unparse) 
+       ...:
+       ...: settings.parse = Parse() 
+       ...: settings.unparse = unparse
+       ...: setsettings.set_symbol_operators("and", 75, 75)
+       ...: setsettings.set_custom_bp("=", 50, 50) 
+       ...: setsettings.set_container_subclass("*", CommAssoc) 
+       ...:
+       ...: parse = settings.parse
 
 
 RuleBase Class

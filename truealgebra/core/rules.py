@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from IPython import embed
+
 
 class TrueThing:
     """Boolean evaluation to True and carries information.
@@ -212,3 +214,45 @@ class JustOne(RuleBase):
 
 class JustOneBU(JustOne):
     bottomup = True
+
+
+class RecursiveChild(Rule):
+    def __init__(self, *args, **kwargs):
+# If parent isn't there Make an error
+        self.parent = kwargs['parent']
+
+        super().__init__(*args, **kwargs)
+
+
+class RecursiveParent(Rule):
+#   required_class = RecursiveChild
+
+    def __init__(self, *rule_classes, **kwargs):
+        self.childrules = list()
+        for rule_class in rule_classes:
+            if issubclass(rule_class, RecursiveChild):
+                self.childrules.append(rule_class(parent=self))
+            # else: raise error??
+
+        super().__init__(*rule_classes, **kwargs)
+
+    def apply_childrules(self, expr):
+        for child in self.childrules:
+            if child.predicate(expr):
+                return child.body(expr)
+        return None
+
+    def predicate(self, expr):
+        return True
+
+    def body(self, expr):
+        childout = self.apply_childrules(expr)
+        if childout is None:
+            return expr
+        else:
+            return childout
+
+class RecursiveParentBU(RecursiveParent):
+    bottomup = True
+
+

@@ -9,6 +9,7 @@ from truealgebra.core.rules import Rule, donothing_rule
 from truealgebra.core.abbrv import (
     Co, Nu, Sy, CA, Re, Asn, CA
 )
+from truealgebra.core.settings import settings
 
 from IPython import embed
 
@@ -75,29 +76,36 @@ def test_exprbase_abstract():
     )
 
 
-@pytest.fixture()  # The scope has to be function
-def str_func():
-    str_func = ExprBase.str_func
-    # Set up ends
-    yield str_func
-    # tear down begins
-    ExprBase.str_func = None
+@pytest.fixture()
+def new_unparse_func():
+    def new_unparse_func(expr):
+        return 'The new unparse'
+    return new_unparse_func
 
-def unparse_func(sym):
-    return 'The new unparse'
+@pytest.fixture()
+def new_settings(new_unparse_func):
+    settings.reset()
+    settings.unparse = new_unparse_func
+    yield settings
+    settings.reset()
+        
+@pytest.fixture()
+def old_settings():
+    settings.reset()
 
-# if fixture _uunparse is used in another test
-# That new test mus duplicate lines 1 and 8 of the test below
-def test_exprbasestr_func(str_func):
-    original_str_func = str_func
-    syma = Symbol('a')
-    out1 = syma.__str__()
-    ExprBase.set_str_func(unparse_func)
-    out2 = syma.__str__()
+def test_exprbase__str__(new_settings):
+    expr = Co('**', (Sy('a'), Sy('b')))
 
-    assert original_str_func is None
-    assert out1 == 'a'
-    assert out2 == 'The new unparse'
+    out = expr.__str__()
+
+    assert out == 'The new unparse'
+
+def test_exprbase_old__str__(old_settings):
+    expr = Co('**', (Sy('a'), Sy('b')))
+
+    out = expr.__str__()
+
+    assert out == '**(a, b)'
 
 
 # =========
@@ -133,7 +141,7 @@ def test_null():
 # =========
 # Test path
 # =========
-class Test_Apply2path_Method:
+class Test_Apply2path_Method():
     expr0 = Nu(3.5)
     expr0F = Co('F', (expr0,))
     expr1 = CA("comas", (Sy('a'), Sy('b')))

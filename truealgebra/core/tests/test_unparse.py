@@ -2,35 +2,37 @@ from truealgebra.core.unparse import (
     unparse, ReadableString, UnparseSymbol, UnparseNumber, ReadableHandlerBase
 )
 from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core import setsettings
 from truealgebra.core.expressions import CommAssoc, Symbol, NullSingleton
 from truealgebra.core.abbrv import Sy, Co, Nu
 from truealgebra.core.rules import Rule
 from truealgebra.core.parse import Parse
 import pytest
 
-parse = Parse()
+#parse = Parse()
 
 
 @pytest.fixture
 def settings(scope='module'):
     settings = SettingsSingleton()
     settings.reset()
-    settings.set_custom_bp('+', 0, 10)
-    settings.set_custom_bp('-', 6, 100)
-    settings.set_custom_bp('*', 10, 0)
-    settings.set_custom_bp('@', 9, 9)
-    settings.set_custom_bp('/', 8, 0)
+    setsettings.set_custom_bp('+', 0, 10)
+    setsettings.set_custom_bp('-', 6, 100)
+    setsettings.set_custom_bp('*', 10, 0)
+    setsettings.set_custom_bp('@', 9, 9)
+    setsettings.set_custom_bp('/', 8, 0)
 
-    settings.set_symbol_operators('prefix0', 0, 6)
-    settings.set_symbol_operators('postfix0', 10, 0)
-    settings.set_symbol_operators('postfix1', 100, 0)
-    settings.set_symbol_operators('and', 12, 12)
-    settings.set_symbol_operators('infix0', 12, 6)
-    settings.set_symbol_operators('infix1', 6, 6)
-    settings.set_bodied_functions('D', 15)
-    settings.set_container_subclass('@', CommAssoc)
+    setsettings.set_symbol_operators('prefix0', 0, 6)
+    setsettings.set_symbol_operators('postfix0', 10, 0)
+    setsettings.set_symbol_operators('postfix1', 100, 0)
+    setsettings.set_symbol_operators('and', 12, 12)
+    setsettings.set_symbol_operators('infix0', 12, 6)
+    setsettings.set_symbol_operators('infix1', 6, 6)
+    setsettings.set_bodied_functions('D', 15)
+    setsettings.set_container_subclass('@', CommAssoc)
 
-    settings.set_default_bp(300, 301)
+    setsettings.set_default_bp(300, 301)
+    settings.parse = Parse()
 
     yield settings
     settings.reset()
@@ -92,7 +94,7 @@ def readspecial(SpecialObject, settings):
     ]
 )
 def test_operators(string, settings):
-    expr = parse(string)
+    expr = settings.parse(string)
     str_out = unparse(expr)
 
     assert string == str_out
@@ -113,7 +115,7 @@ def test_operators(string, settings):
     ]
 )
 def test_commassoc(flatten, string, settings):
-    expr = flatten(parse(string))
+    expr = flatten(settings.parse(string))
     outstr = unparse(expr)
 
     assert outstr == string
@@ -151,7 +153,7 @@ def test_commassoc_special(expr, string, settings):
     ],
 )
 def test_assorted_expressions(string, settings):
-    expr = parse(string)
+    expr = settings.parse(string)
     str_out = unparse(expr)
 
     assert string == str_out
@@ -230,7 +232,7 @@ def test_funct_form(items, correct, settings):
     ]
 )
 def test_least_left_binding_power(string, correct, settings):
-    expr = parse(string)
+    expr = settings.parse(string)
     llbp = unparse.llbp(expr)
 
     assert llbp == correct
@@ -248,7 +250,7 @@ def test_least_left_binding_power(string, correct, settings):
     ]
 )
 def test_least_right_binding_power(string, correct, settings):
-    expr = parse(string)
+    expr = settings.parse(string)
     lrbp = unparse.lrbp(expr)
 
     assert lrbp == correct
@@ -258,7 +260,7 @@ def test_least_right_binding_power(string, correct, settings):
 @pytest.mark.parametrize('string', ['x * and y / ', 'x @ y / * '])
 @pytest.mark.parametrize('rbp, correct', [(6, False), (8, True), (10, True)])
 def test_need_parenthesis_on_right(string, correct, rbp, settings):
-    expr = parse(string)
+    expr = settings.parse(string)
     out = unparse.need_parenthesis_on_right(rbp, expr)
 
     assert out is correct
@@ -268,7 +270,7 @@ def test_need_parenthesis_on_right(string, correct, rbp, settings):
 @pytest.mark.parametrize('string', ['prefix0 + + x', '+ prefix0 + x'])
 @pytest.mark.parametrize('lbp, correct', [(4, False), (6, False), (8, True)])
 def test_need_parenthesis_on_left(string, correct, lbp, settings):
-    expr = parse(string)
+    expr = settings.parse(string)
     out = unparse.need_parenthesis_on_left(lbp, expr)
 
     assert out is correct
@@ -285,7 +287,7 @@ def test_need_parenthesis_on_left(string, correct, lbp, settings):
 )
 def test_deal_with_right(correct, rbp, settings):
     string = 'x * and y /'
-    expr = parse(string)
+    expr = settings.parse(string)
     out = unparse.deal_with_right(rbp, expr)
 
     assert out == correct
@@ -302,10 +304,26 @@ def test_deal_with_right(correct, rbp, settings):
 )
 def test_deal_with_left(correct, lbp, settings):
     string = ' prefix0 + + x '
-    expr = parse(string)
+    expr = settings.parse(string)
     out = unparse.deal_with_left(lbp, expr)
 
     assert out == correct
+
+# test middle_item_CA
+@pytest.mark.parametrize(
+    'item, correct',
+    [
+        (Co('-', (Sy('x'),Sy('y'))), '7 @ (x - y) '),
+        (Co('infix0', (Sy('x'),Sy('y'))), '7 @ (x infix0 y) '),
+        (Co('infix1', (Sy('x'),Sy('y'))), '7 @ (x infix1 y) '),
+        (Co('and', (Sy('x'),Sy('y'))), '7 @ x and y '),
+    ]
+)
+def test_middle_item_CA(item, correct, settings):
+    newoutstr = unparse.middle_item_CA(item, '@', 9, 9, '7 ')
+
+    assert newoutstr == correct
+
 
 
 # Test addhandler and last_handler Methods
@@ -322,3 +340,19 @@ def test_addhandler(SpecialObject, readspecial, settings):
     out = readspecial(specialobject)
 
     assert out == 'unparsed special object'
+
+
+
+@pytest.fixture
+def alist(settings):
+    aa = settings.parse(' x / / ')
+    bb = settings.parse(' + + x ')
+    alist = [
+        (aa, 'x / /'),
+        (bb, '+ + x'),
+    ]
+    return alist
+
+def test_alist(alist, settings):
+    for item in alist:
+        assert unparse(item[0]) == item[1]

@@ -37,6 +37,7 @@ will modify the subdict dictionary.
 
 from abc import ABC, abstractmethod
 from truealgebra.core.rules import Substitute, TrueThing
+from truealgebra.core.settings import settings
 from truealgebra.core.err import ta_logger
 
 
@@ -84,23 +85,15 @@ class ExprBase(ABC):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    str_func = None
-
-    @classmethod
-    def set_str_func(cls, func):
-        cls.str_func = func
-        # Note: When this class attribute is inherited by an instance
-        # it becomes an instance method ==> 
-        # the first function argument becomes the instance (i.e. self)
-        # See stackoverflow question 35321744
-
+    # settings.unparse must be a function with one argument that converts
+    # an expression to a mathematically readable string.
+    # As per stackoverflow question 1436703, users Martelli and moshez
     def __str__(self):
-        str_func = self.str_func
-       # xxx = 101; embed()
-        if self.str_func is None:
+        if settings.unparse is None:
             return self.__repr__()
         else:
-            return self.str_func()
+            return settings.unparse(self)
+
 
 class NullSingleton(ExprBase):
     _instance = None
@@ -200,7 +193,6 @@ false = Symbol('false')
 # special symbol used
 # when substituting into predicates during pattern matching
 any__ = Symbol('__any')
-
 
 
 class Number(Atom):
@@ -385,9 +377,11 @@ class CommAssoc(Container):
         ))
 
     def __eq__(self, other):
-        if (self.name != other.name
+        if (
+                self.name != other.name
                 or type(self) is not type(other)
-                or len(self) != len(other)):
+                or len(self) != len(other)
+            ):
             return False
         else:
             return self.inner_eq(list(self.items), list(other.items))
@@ -628,6 +622,65 @@ class CommAssocMatch:
             return False
 
 
+def isNumber(expr):
+    return isinstance(expr, Number)
+
+
+def isContainer(expr, name=None, arity=None):
+    if not isinstance(expr, Container):
+        return False
+
+    if name is None:
+        name_ok = True
+    else:
+        name_ok = expr.name == name
+    if arity is None:
+        arity_ok = True
+    else:
+        arity_ok = (len(expr) == arity)
+
+    return name_ok and arity_ok
+
+
+def isRestricted(expr, name=None, arity=None):
+    if not isinstance(expr, Restricted):
+        return False
+
+    if name is None:
+        name_ok = True
+    else:
+        name_ok = expr.name == name
+    if arity is None:
+        arity_ok = True
+    else:
+        arity_ok = (len(expr) == arity)
+
+    return name_ok and arity_ok
+
+
+def isCommAssoc(expr, name=None, arity=None):
+    if not isinstance(expr, CommAssoc):
+        return False
+
+    if name is None:
+        name_ok = True
+    else:
+        name_ok = expr.name == name
+    if arity is None:
+        arity_ok = True
+    else:
+        arity_ok = (len(expr) == arity)
+
+    return name_ok and arity_ok
+
+
+def isSymbol(expr, name=None):
+    if name is None:
+        return isinstance(expr, Symbol)
+    else:
+        return isinstance(expr, Symbol) and expr.name == name
+# What about multiple names
+        
 
 
 

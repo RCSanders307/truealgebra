@@ -17,32 +17,6 @@ def test_integer_factory(conftest_settings):
     assert type(out.value) == int
 
 
-def test_complex_real_factory(conftest_settings):
-    parse = Parse()
-    parse.buf = '84.34'
-
-    out = parse.complex_real_factory()
-
-    assert out == Number(complex(0, float('84.34')))
-
-
-def test_complex_int_factory(conftest_settings):
-    parse = Parse()
-    parse.buf = '8'
-
-    out = parse.complex_int_factory()
-
-    assert out == Number(complex(0, int('8')))
-
-
-def test_complex_factory(conftest_settings):
-    parse = Parse()
-
-    out = parse.complex_factory()
-
-    assert out == Number(complex(0, 1))
-
-
 # test real_factory - Done
 def test_real_factory(conftest_settings):
     parse = Parse()

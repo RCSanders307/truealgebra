@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from truealgebra.core.settings import settings
 from truealgebra.core.expressions import (
-    Number, Symbol, Container, CommAssoc, NullSingleton, End
+    Number, Symbol, Container, CommAssoc, NullSingleton, isCommAssoc
 )
 from truealgebra.core.constants import isoperatorname, issymbolname
+
+from IPython import embed
 
 
 class ReadableString:
@@ -36,7 +38,9 @@ class ReadableString:
         """
         if isinstance(expr, Container):
             if isoperatorname(expr.name):
-                if expr.name in settings.custom_bp:
+                if expr.name in settings.infixprefix and len(expr) == 1:
+                    return 0
+                elif expr.name in settings.custom_bp:
                     return settings.custom_bp[expr.name].lbp
                 else:
                     return settings.default_bp.lbp
@@ -63,6 +67,8 @@ class ReadableString:
         """
         if isinstance(expr, Container):
             if isoperatorname(expr.name):
+                if expr.name in settings.infixprefix and len(expr) == 1:
+                    return settings.infixprefix[expr.name]
                 if expr.name in settings.custom_bp:
                     return settings.custom_bp[expr.name].rbp
                 else:
@@ -143,6 +149,17 @@ class ReadableString:
         else:
             return ' ' + argstr
 
+    def middle_item_CA(self, item, name, lbp, rbp, outstr):
+        argstr = self(item)
+        if (
+            self.need_parenthesis_on_left(lbp, item)
+            or self.need_parenthesis_on_right(rbp, item)
+        ):
+            outstr += name + ' (' + argstr + ') '
+        else:
+            outstr += name + ' ' + argstr + ' '
+        return outstr
+
 
 class ReadableHandlerBase(ABC):
     def __init__(self, nxt, parent):
@@ -219,7 +236,7 @@ class UnparseBodiedFunct(ReadableHandlerBase):
 
 class UnparseCommAssoc(ReadableHandlerBase):
     def handle_expr(self, expr):
-        if isinstance(expr, CommAssoc):
+        if isCommAssoc(expr):
             if not expr.items:
                 return expr.name + '()'
             elif len(expr.items) == 1:
@@ -228,36 +245,25 @@ class UnparseCommAssoc(ReadableHandlerBase):
 
             lbp = self.parent.tlbp(expr)
             rbp = self.parent.trbp(expr)
-            outstr = ''
 
-            leftstr = self.parent.deal_with_left(lbp, expr.items[0])
-            outstr += leftstr
+            outstr = self.parent.deal_with_left(lbp, expr.items[0])
 
             for item in expr.items[1:-1]:
-                argstr = self.parent(item)
-                if (
-                    self.parent.need_parenthesis_on_left(lbp, item)
-                    or self.parent.need_parenthesis_on_right(rbp, item)
-                ):
-                    outstr += expr.name + ' (' + argstr + ') '
-                else:
-                    outstr += expr.name + ' ' + argstr + ' '
+                outstr = self.parent.middle_item_CA(
+                    item, expr.name, lbp, rbp, outstr
+                )
 
-            rightstr = self.parent.deal_with_right(rbp, expr.items[-1])
-            outstr += expr.name + rightstr
+            outstr += expr.name + self.parent.deal_with_right(
+                rbp, expr.items[-1]
+            )
             return outstr
+
 
 
 class UnparseNull(ReadableHandlerBase):
     def handle_expr(self, expr):
         if isinstance(expr, NullSingleton):
             return '<NULL>'
-
-
-class UnparseEnd(ReadableHandlerBase):
-    def handle_expr(self, expr):
-        if isinstance(expr, End):
-            return '<END>'
 
 
 unparse = ReadableString(
@@ -268,5 +274,5 @@ unparse = ReadableString(
     UnparseFunctForm,
     UnparseSymbol,
     UnparseNull,
-    UnparseEnd,
 )
+

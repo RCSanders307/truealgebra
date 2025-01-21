@@ -12,6 +12,8 @@ from truealgebra.core.expressions import (
     ExprBase, null
 )
 from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core import setsettings
+
 from truealgebra.core.unparse import unparse
 import pytest
 
@@ -21,35 +23,31 @@ def settings(scope='module'):
     settings = SettingsSingleton()
     settings.reset()
 
-    settings.set_default_bp(251, 252)
-    settings.set_custom_bp('!', 2000, 0)
-    settings.set_custom_bp('!!!', 3000, 0)
-    settings.set_custom_bp('/', 1100, 1100)
-    settings.set_custom_bp('**', 1251, 1250)
-    settings.set_custom_bp('*', 1000, 999)
-    settings.set_custom_bp("@", 0, 3000)
-    settings.set_custom_bp("%", 0, 10)
-    settings.set_custom_bp("!**", 1000, 1000)
-    settings.set_custom_bp("!!*", 999, 2000)
-    settings.set_custom_bp("!!**", 900, 2000)
-    settings.set_custom_bp("!!+", 2000, 1000)
-    settings.set_custom_bp("!!++", 2000, 900)
+    setsettings.set_default_bp(251, 252)
+    setsettings.set_custom_bp('!', 2000, 0)
+    setsettings.set_custom_bp('!!!', 3000, 0)
+    setsettings.set_custom_bp('/', 1100, 1100)
+    setsettings.set_custom_bp('**', 1251, 1250)
+    setsettings.set_custom_bp('*', 1000, 999)
+    setsettings.set_custom_bp("@", 0, 3000)
+    setsettings.set_custom_bp("%", 0, 10)
+    setsettings.set_custom_bp("!**", 1000, 1000)
+    setsettings.set_custom_bp("!!*", 999, 2000)
+    setsettings.set_custom_bp("!!**", 900, 2000)
+    setsettings.set_custom_bp("!!+", 2000, 1000)
+    setsettings.set_custom_bp("!!++", 2000, 900)
 
-    settings.set_bodied_functions('D', 481)
-    settings.set_symbol_operators("and", 75, 76)
-    settings.set_infixprefix("-", 999)
-    settings.set_container_subclass('*', CA)
+    setsettings.set_bodied_functions('D', 481)
+    setsettings.set_symbol_operators("and", 75, 76)
+    setsettings.set_infixprefix("-", 999)
+    setsettings.set_container_subclass('*', CA)
 
-    settings.set_sqrtneg1('j')
+
 
     yield settings
     settings.reset()
 
 
-parse = Parse()
-
-
-# Done
 @pytest.mark.parametrize(
     ('expr, repr_'),
     [
@@ -61,17 +59,9 @@ parse = Parse()
         (Co('f', ()), 'f()'),
     ],
 )
-def test_repr(expr, repr_):
+def test_repr(expr, repr_, settings):
     assert unparse(expr) == repr_
-#   assert repr(expr) == repr_
 
-
-@pytest.fixture
-def assign_exprbase_settings(settings):
-    ExprBase.settings = settings
-    parse = Parse(settings)
-    yield parse
-    ExprBase.settings = None
 
 
 @pytest.mark.parametrize(
@@ -105,7 +95,6 @@ def test_unparse_symbolname(
 
 
 # Functional TEsting
-# data
 unp_ex01 = null
 unp_ex03 = Nu(2.56)
 unp_ex03a = Nu(complex(2, 3))

@@ -7,8 +7,9 @@ from truealgebra.core.expressions import (
 from truealgebra.core.rules import (
     donothing_rule, Rule, RulesBU
 )
-from truealgebra.core.parse import parse
+from truealgebra.core.parse import Parse
 from truealgebra.core.settings import SettingsSingleton
+from truealgebra.core import setsettings
 from truealgebra.core.naturalrules import(
     TrueThingNR, TrueThingHNR, NaturalRuleBase, NaturalRule, HalfNaturalRule
 )
@@ -24,15 +25,15 @@ def settings(scope='module'):
     settings = SettingsSingleton()
     settings.reset()
 
-    settings.set_custom_bp("=", 50, 50)
-    settings.set_custom_bp("*", 1000, 1000)
+    setsettings.set_custom_bp("=", 50, 50)
+    setsettings.set_custom_bp("*", 1000, 1000)
 
-    settings.set_container_subclass("*", CA)
-    settings.set_complement('star', '*')
+    setsettings.set_container_subclass("*", CA)
+    setsettings.set_complement('star', '*')
 
-    settings.set_categories('suchthat', '|')
-    settings.set_categories('forall', '@')
-    settings.active_parse = parse
+    setsettings.set_categories('suchthat', '|')
+    setsettings.set_categories('forall', '@')
+    settings.parse = Parse()
 
     yield settings
     settings.reset()
@@ -143,6 +144,7 @@ def test_truethinghnr(settings):
     ],
 )
 def test_create_vardict(varstring, vardict, settings):
+#   xxx = 100; embed()
     out = NaturalRuleBase.create_vardict(varstring)
 
     assert out == vardict
@@ -187,7 +189,7 @@ def test_naturalrulebase_init_pattern_error(badsettings, capsys):
     NaturalRule(pattern='x + y')
     output = capsys.readouterr()
 
-    assert 'settings.active_parse must point to a Parse instance' in output.out
+    assert 'Change settings.parse from noparse to something useful.' in output.out
 
 
 def test_naturalrulebase_init_vardict(settings):
@@ -332,8 +334,8 @@ def test_naturalrule_functional_case_0(settings):
     argument0 = '(a = b) * (c = d)'
     correct0 = 'a * c = b * d'
 
-    argument = settings.active_parse(argument0)
-    correct = settings.active_parse(correct0)
+    argument = settings.parse(argument0)
+    correct = settings.parse(correct0)
     output = rule(argument)
 
     assert output == correct
@@ -351,12 +353,12 @@ def test_naturalrule_functional_case_12(settings):
     argument2 = ' star(3, 3.7, 4, 5) '
     correct2 = ' star(3, 3.7, 4, 5) '
 
-    argument11 = settings.active_parse(argument1)
-    correct11 = settings.active_parse(correct1)
+    argument11 = settings.parse(argument1)
+    correct11 = settings.parse(correct1)
 #   xxx = 234; embed()
     output11 = rule(argument11)
-    argument22 = settings.active_parse(argument2)
-    correct22 = settings.active_parse(correct2)
+    argument22 = settings.parse(argument2)
+    correct22 = settings.parse(correct2)
     output22 = rule(argument22)
 
     assert output11 == correct11
@@ -371,8 +373,8 @@ def test_naturalrule_functional_case_3(settings):
     )
     argument3 = ' star(3, 1, 2) '
     correct3 = '6'
-    argument = settings.active_parse(argument3)
-    correct = settings.active_parse(correct3)
+    argument = settings.parse(argument3)
+    correct = settings.parse(correct3)
     output = rule(argument)
 
     assert output == correct
@@ -388,8 +390,8 @@ def test_naturalrule_functional_case_4(settings):
     argument4 = ' star(3, 1, a) '
     correct4 = ' f(3, 1, a) '
 
-    argument = settings.active_parse(argument4)
-    correct = settings.active_parse(correct4)
+    argument = settings.parse(argument4)
+    correct = settings.parse(correct4)
     output = rule(argument)
 
     assert output == correct
@@ -412,7 +414,7 @@ def HNR0(settings):
             ' suchthat(forall(y), isreal(y)); '
             ' forall(_) '
         )
-        pattern = parse(' _ ++ (y ** x) ')
+        pattern = settings.parse(' _ ++ (y ** x) ')
         predicate_rule = predrule
 
         def body(self, expr, var):
@@ -437,8 +439,8 @@ def halfnaturalrule1(settings, HNR0):
 
     
 def test_hnr_tpredicate(settings, halfnaturalrule0):
-    expr0 = settings.active_parse(' y ++ (3.0 ** 2) ')
-    expr1 = settings.active_parse(' y ++ (4 ** a) ')
+    expr0 = settings.parse(' y ++ (3.0 ** 2) ')
+    expr1 = settings.parse(' y ++ (4 ** a) ')
 
     pred_out0 = halfnaturalrule0.tpredicate(expr0)
     pred_out1 = halfnaturalrule0.tpredicate(expr1)
@@ -453,7 +455,7 @@ def test_hnr_tpredicate(settings, halfnaturalrule0):
 
 
 def test_hnr_tbody(settings, halfnaturalrule0):
-    expr0 = settings.active_parse(' y ++ (3.0 ** 2) ')
+    expr0 = settings.parse(' y ++ (3.0 ** 2) ')
     var = HalfNaturalRule.VarNames(
         {Sy('_'): Sy('y'), Sy('x'): Nu(2), Sy('y'): Nu(3.0)}
     )
@@ -465,7 +467,7 @@ def test_hnr_tbody(settings, halfnaturalrule0):
 
 
 def test_hnr_tbody_error(settings, halfnaturalrule1, capsys):
-    expr0 = settings.active_parse(' y ++ (3.0 ** 2) ')
+    expr0 = settings.parse(' y ++ (3.0 ** 2) ')
     var = HalfNaturalRule.VarNames(
         {Sy('_'): Sy('y'), Sy('x'): Nu(2), Sy('y'): Nu(3.0)}
     )

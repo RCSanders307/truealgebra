@@ -18,8 +18,8 @@ Import as shown below from ``truealgebra.stdcas`` to get the standard CAS (Compu
 
 .. ipython::
 
-    In [0]: from truealgebra.stdcas import (
-       ...:     frontend, Rules, RulesBU, JustOne, JustOneBU, toform0
+    In [0]: from truealgebra.std import (
+       ...:     frontend, Rules, RulesBU, JustOne, JustOneBU, simplify
        ...: )
        ...: fe = frontend
        ...: Ex = frontend.history
@@ -165,13 +165,13 @@ to ``True`` to stop the printing.
 Apply Additional Rule
 +++++++++++++++++++++
 The call of ``fe`` below  shows the use of the ``apply`` parameter which is
-assigned the rule ``toform0``. The rule ``toform0`` algebraically simplifies the
+assigned the rule ``toform0``. The rule ``simplify`` algebraically simplifies the
 expression to what is called form 0. This is a one time application
-of the ``toform0`` rule.
+of the ``simplify`` rule.
 
 .. ipython::
 
-    In [0]: fe(' a * a**2 / a ', apply=toform0)
+    In [0]: fe(' a * a**2 / a ', apply=simplify)
     
 
 Hold Keyword Arguments

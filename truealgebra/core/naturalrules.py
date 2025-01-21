@@ -41,10 +41,10 @@ class NaturalRuleBase(RuleBase):
             self.pattern = kwargs['pattern']
         try:
             if isinstance(self.pattern, str):
-                self.pattern = settings.active_parse(self.pattern)
+                self.pattern = settings.parse(self.pattern)
         except TypeError:
             ta_logger.log(
-                'settings.active_parse must point to a Parse instance'
+                'settings.parse must point to a Parse instance'
             )
 
         if "vardict" in kwargs:
@@ -110,7 +110,7 @@ class NaturalRule(NaturalRuleBase):
         if 'outcome' in kwargs:
             self.outcome = kwargs['outcome']
         if isinstance(self.outcome, str):
-            self.outcome = settings.active_parse(self.outcome)
+            self.outcome = settings.parse(self.outcome)
 
         super().__init__(*args, **kwargs)
 

@@ -55,10 +55,6 @@ bp : namedtuple
 """
 from collections import namedtuple, defaultdict
 from truealgebra.core.err import ta_logger
-from truealgebra.core.expressions import Container
-from truealgebra.core.constants import (
-    isbindingpower, issymbolname, isoperatorname,
-)
 
 
 # a bp object stores two binding powers
@@ -67,11 +63,9 @@ from truealgebra.core.constants import (
 bp = namedtuple("bp", ["lbp", "rbp"])
 
 
-def _msg_function(bool_tuple, msg_tuple, msg=''):
-    for ndx, bool_value in enumerate(bool_tuple):
-        if bool_value:
-            msg += msg_tuple[ndx]
-    return msg
+def noparse(anystring):
+    ta_logger.log("Change settings.parse from noparse to something useful.")
+    return None
 
 
 class SettingsSingleton():
@@ -119,11 +113,6 @@ class SettingsSingleton():
         A key to bodied_functions must be a symbol name.
         The key cannot be a key in the symbol_operator dictionary.
         The value to bodied_functions must be a positive binding power.
-    sqrtneg1 : str
-        indicates the square root of negative one.
-
-        sqrtneg1 can only be '', 'i', or 'j'.
-        If "",  there is no square root of negative one.
     container_subclass : dict
         Identifies Container subclass, based on name attribute.
         If a name is not in the dictionary, the name
@@ -147,7 +136,7 @@ class SettingsSingleton():
         The values are sets. The contents of the sets must be either
         a symbol names or operator names.
         The set contents represent name attributes of Container instances.
-    active_parse : None
+    parse : None
         Points to Parse instance that will be used throughout a
         truealgebra session.
 
@@ -161,292 +150,20 @@ class SettingsSingleton():
         return cls._instance
 
     def reset(self):
-        self.custom_bp = dict()
         self.default_bp = bp(250, 250)
+        self.custom_bp = dict()
         self.infixprefix = dict()
         self.symbol_operators = dict()
         self.bodied_functions = dict()
-        self.sqrtneg1 = ""
         self.container_subclass = dict()
         self.complement = dict()
         self.categories = defaultdict(set)
-# THIS HAS YET TO BE TESTED
         self.categories['suchthat'].add('suchthat')
-# THIS HAS YET TO BE TESTED
         self.categories['forall'].add('forall')
-        self.active_parse = None
-
-    def set_default_bp(self, lbp, rbp):
-        """Set default binding powers for operators.
-
-        lbp : str
-            left binding power
-        rbp : str
-            right binding power
-        """
-        bool_tuple = (
-            not isbindingpower(lbp),
-            not isbindingpower(rbp),
-            lbp == 0 and rbp == 0,
-        )
-        msg_tuple = (
-            '\n    lbp {} must be a binding power'.format(lbp),
-            '\n    rbp {} must be a binding power'.format(rbp),
-            '\n    lbp and rbp cannot both be 0',
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple,
-                msg_tuple,
-                msg='set_default_bp error'
-            )
-            ta_logger.log(msg)
-            return
-        self.default_bp = bp(lbp, rbp)
-
-    def set_custom_bp(self, name, lbp, rbp):
-        """ Add key and value pair to the self.custom_bp dictionary.
-
-            name : str
-                operator name.
-            lbp : int
-                left binding power.
-            rbp : int
-                right binding power.
-        """
-        bool_tuple = (
-            not isoperatorname(name),
-            not isbindingpower(lbp),
-            not isbindingpower(rbp),
-            lbp == 0 and rbp == 0,
-        )
-        msg_tuple = (
-            '\n    name {} must be an operator name.'.format(name),
-            '\n    lbp {} must be a binding power'.format(lbp),
-            '\n    rbp {} must be a binding power'.format(rbp),
-            '\n    lbp and rbp cannot both be 0',
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple, msg_tuple, msg='set_custom_bp error'
-            )
-            ta_logger.log(msg)
-            return
-        self.custom_bp[name] = bp(lbp, rbp)
-
-    def set_infixprefix(self, name, rbp):
-        """ Add key and value pair to the self.infixprefix dictionary.
-
-            name : str
-                operator name that will be parsed as either an infix
-                or prefix operator.
-            rbp : int
-                right binding power for prefix form.
-        """
-        if name in self.custom_bp:
-            bp = self.custom_bp[name]
-        else:
-            bp = self.default_bp
-        bool_tuple = (
-            not isoperatorname(name),
-            not (isbindingpower(rbp) and rbp >= 1),
-            bp.lbp == 0,
-            bp.rbp == 0,
-        )
-        msg_tuple = (
-            'name {} must be an operator name'.format(name),
-            'rbp {} must be a binding power greater than 0'.format(rbp),
-            'left binding power of {} infix form cannot be 0'.format(name),
-            'right binding power of {} infix form cannot be 0'.format(name),
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple, msg_tuple, msg='set_infixprefix error\n    '
-            )
-            ta_logger.log(msg)
-            return
-
-        self.infixprefix[name] = rbp
-
-    def set_symbol_operators(self, name, lbp=None, rbp=None):
-        """Specify Container instances that parse as mathematical operators.
-
-        name : str
-            name attribute of a Container instance.
-        lbp : int
-            left binding power
-        rbp : int
-            right binding power
-        """
-        if lbp is None:
-            lbp = self.default_bp.lbp
-        if rbp is None:
-            rbp = self.default_bp.rbp
-
-        bool_tuple = (
-            not issymbolname(name),
-            name in self.bodied_functions,
-            not isbindingpower(lbp),
-            not isbindingpower(rbp),
-            rbp == 0 and lbp == 0,
-        )
-        msg_tuple = (
-            'name {} must be a symbol name.'.format(name),
-            'name {} cannot be key in bodied_functions'.format(name),
-            'lbp {} must be a binding power'.format(lbp),
-            'rbp {} must be a binding power'.format(rbp),
-            'lbp and rbp cannot both be 0'
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple, msg_tuple, msg='set_symbol_operator error\n    '
-            )
-            ta_logger.log(msg)
-            return
-
-        self.symbol_operators[name] = bp(lbp, rbp)
-
-    def set_bodied_functions(self, name, rbp=None):
-        """Set which Container instance will parse as a bodied function.
-
-        name : str
-            Container instance name attribute.
-        rbp : int
-            Right binding power for parsing purposes.
-        """
-        if rbp is None:
-            rbp = self.default_bp.rbp
-
-        bool_tuple = (
-            not issymbolname(name),
-            name in self.symbol_operators,
-            not isbindingpower(rbp) or rbp == 0,
-        )
-        msg_tuple = (
-            'name {} must be a symbol name.'.format(name),
-            'name {} cannot be key in symbol_operators'.format(name),
-            'rbp {} must be a positive binding power'.format(rbp),
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple, msg_tuple, msg='set_bodied_functions error\n    '
-            )
-            ta_logger.log(msg)
-            return
-
-        self.bodied_functions[name] = rbp
-
-    def set_sqrtneg1(self, a_string):
-        """Character representing square root of negative one.
-
-        a_string : str
-            'j' or 'k' will represent negative one
-            '' implies there is no square root of neagtive one.
-        """
-        if a_string not in ('i', 'j', ''):
-            msg = (
-                'a_string {} cannot be used for '
-                'square root of -1'.format(a_string)
-            )
-            ta_logger.log(msg)
-            return
-
-        self.sqrtneg1 = a_string
-
-    def set_container_subclass(self, name, cls):
-        """Assign name attributes for Container Subclasses
-
-        name : str
-            name attribute for Container subclass
-        cls : class
-            Container subclass
-        """
-        bool_tuple = (
-            not issymbolname(name) and not isoperatorname(name),
-            not issubclass(cls, Container),
-        )
-        msg_tuple = (
-            'name {} must b a symbol or operator name'.format(name),
-            'cls {} is not a Container subclass'.format(cls),
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple, msg_tuple, msg='set_container_subclass error\n    '
-            )
-            ta_logger.log(msg)
-            return
-
-        self.container_subclass[name] = cls
-
-    def set_complement(self, complementname, targetname):
-        ''' Add key and value pair to the env.complement dictionary.
-
-        complementname : str
-            Dictionary key.
-            Identifies Container objects named complementname.
-        targetname : str
-            Dictionary value.
-            Identifies Container objects named targetname.
-
-        During parsing, Container objects having a name of complementname are
-        replaced by a corresponding Container object with the targetname.
-        '''
-        bool_tuple = (
-            (
-                not issymbolname(complementname)
-                and not isoperatorname(complementname)
-            ),
-            not issymbolname(targetname) and not isoperatorname(targetname),
-        )
-        msg_tuple = (
-            (
-                'complementname {} must be a symbol '
-                'or operator name'.format(complementname)
-            ),
-            'targetname {} must be a symbol '
-            'or operator name'.format(targetname),
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple, msg_tuple, msg='set_complement error\n    '
-            )
-            ta_logger.log(msg)
-            return
-
-        self.complement[complementname] = targetname
-
-    def set_categories(self, category, name=None):
-        """ Add key and value to the categories defaultdict dictionary.
-
-            category : str
-                Category
-            name : str
-                A Container name attribute that is in the category.
-        """
-        bool_tuple = (
-            not isinstance(category, str),
-            (
-                not issymbolname(name)
-                and not isoperatorname(name)
-                and name is not None
-            ),
-        )
-        msg_tuple = (
-            'category {} must be a string instance'.format(category),
-            'name {} must be an operator name or symbol name'.format(name),
-        )
-        if any(bool_tuple):
-            msg = _msg_function(
-                bool_tuple,
-                msg_tuple,
-                msg='set_categories error\n    '
-            )
-            ta_logger.log(msg)
-            return
-
-        set_ = self.categories[category]
-        if name is not None:
-            set_.add(name)
+        self.parse = noparse
+        self.unparse = None
+        self.float_class = None
+        self.integer_class = None
 
 
 settings = SettingsSingleton()

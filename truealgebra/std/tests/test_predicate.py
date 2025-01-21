@@ -1,31 +1,47 @@
+from truealgebra.core.settings import SettingsSingleton
+from truealgebra.common.commonsettings import commonsettings
+
+from truealgebra.std.setup_func import std_setup_func
+from truealgebra.common.setup_func import common_setup_func
+
 from truealgebra.core.abbrv import *   # import abbreviations
 from truealgebra.core.expressions import true, false
-#from truealgebra.std.predicate import(
-#    number_type_rules, logic_rules, comparison_rules, if_rules,
-#)
-#from truealgebra.std.std_settings import parse
-from truealgebra.std.stdsettings_function import set_stdsettings
-from truealgebra.core.settings import settings
+
 from fractions import Fraction
 import pytest
+
 from IPython import embed
 
 
 @pytest.fixture
-def stdsettings(scope='module'):
-    yield set_stdsettings()
+def settings(scope='module'):
+    settings = SettingsSingleton()
     settings.reset()
+    commonsettings.reset()
+    std_setup_func()
+    common_setup_func()
+
+    yield settings
+        
+    settings.reset()
+    commonsettings.reset()
+
+
+#@pytest.fixture
+#def stdsettings(scope='module'):
+#    yield set_stdsettings()
+#   settings.reset()
     
 
 @pytest.fixture
-def predicate(stdsettings, scope='module'):
+def predicate(settings, scope='module'):
     from truealgebra.std import predicate
     return predicate
 
 
 @pytest.fixture
-def parse(stdsettings, scope='module'):
-    return settings.active_parse
+def parse(settings, scope='module'):
+    return settings.parse
 
 
 # ======================

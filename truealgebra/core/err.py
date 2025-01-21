@@ -34,6 +34,10 @@ stderr_handler = logging.StreamHandler(sys.stderr)
 logger.handlers = [stderr_handler]
 logger.setLevel(logging.ERROR)
 
+#This needs to be integrated with what is belo
+class TrueAlgebraError(Exception):
+    pass
+
 
 def print_error(msg):
     print('TRUEALGEBRA ERROR!\n' + msg)
