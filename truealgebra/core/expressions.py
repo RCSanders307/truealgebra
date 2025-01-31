@@ -40,6 +40,7 @@ from truealgebra.core.rules import Substitute, TrueThing
 from truealgebra.core.settings import settings
 from truealgebra.core.err import ta_logger
 
+from IPython import embed
 
 class ExprBase(ABC):
     
@@ -49,11 +50,10 @@ class ExprBase(ABC):
         else:
             raise AttributeError("This object should not be mutated")
             
-    # The line below is undesirable.
-    # It is used to prevent errors with core/parse.py
-    # and core/tests/test_parse.py
-    # Next time core/parse is rewritten, the line below 
-    # Should be removed.
+    # Te line below is used to prevent errors with core/parse.py
+    # The parsing uses the name attribute of all tokens.
+    # Number and other objects do not need names.
+    # .. But the default name below  makes the parsing work nicely
     name = None
 
     def __delattr__(self, *args):
@@ -93,6 +93,59 @@ class ExprBase(ABC):
             return self.__repr__()
         else:
             return settings.unparse(self)
+
+
+# NOT Unit Tested
+class MultiExprs(ExprBase):
+    def __init__(self, exprs=()):
+        object.__setattr__(self, "exprs", tuple(exprs))
+
+    def __getitem__(self, ndex):
+        return self.exprs[ndex]
+
+    def __iter__(self):
+        for expr in self.exprs:
+            yield expr
+
+    def __eq__(self, other):
+        if (
+            type(self) is not type(other)
+            or len(self.exprs) != len(other.exprs)
+        ):
+            return False
+        else:
+            for ndx, expr in enumerate(self):
+                if expr != other[ndx]:
+                    return False
+        return True
+
+    def __hash__(self):
+        return hash((
+            type(self),
+            len(self.exprs),
+            tuple(map(hash, self.exprs)),
+        ))
+
+    def __repr__(self):
+        out = 'MultiExprs[['
+        if self.exprs:
+            out = out + repr(self.exprs[0])
+            for expr in self.exprs[1:]:
+                out += ', ' + repr(expr)
+        return out + "]]"
+
+    def bottomup(self, rule):
+        return rule(self, _pathinhibit=True, _buinhibit=True)
+
+    def apply2path(self, path, rule, _buinhibit=False):
+        if path:
+            ta_logger.log("Path too long, cannot enter MultiExpr object.")
+            return null
+        return rule(self, _pathinhibit=True, _buinhibit=_buinhibit)
+
+    def match(self, vardict, subdict, pred_rule, expr):
+        return self == expr
+
 
 
 class NullSingleton(ExprBase):

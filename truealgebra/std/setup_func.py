@@ -53,9 +53,7 @@ class SpecialSymbols(RecursiveChild):
 class MakeFraction(RecursiveChild):
     def predicate(self, expr):
         return (
-            expr.name == '/'
-            and isinstance(expr, Container) 
-            and len(expr) == 2
+            isContainer(expr, '/', 2)
             and isinstance(expr[0], Number)
             and isinstance(expr[0].value, int)
             and isinstance(expr[1], Number)

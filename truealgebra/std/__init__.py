@@ -21,6 +21,7 @@ from truealgebra.std.evalnum import (
 )
 from truealgebra.std.eqnmath import eqnmath, eqnflip
 from truealgebra.common.simplify import simplify
+from truealgebra.common.utility import create_frontend
 
 
 from truealgebra.std.unparse import alg_unparse
@@ -28,4 +29,10 @@ parse = settings.parse
 
 frontend = FrontEnd(
     default_rule=RulesBU(evalnum, predicate_rule,)
+)
+
+frontend = create_frontend(
+    pred_rule=predicate_rule,
+    prerule=JustOneBU(evalnum, predicate_rule),
+    postrule=RulesBU(simplify),
 )

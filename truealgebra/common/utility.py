@@ -4,8 +4,13 @@ from truealgebra.core.expressions import (
     Container, CommAssoc, Number, 
     isCommAssoc, isContainer, isNumber,
 )
-from truealgebra.core.rules import Rule
+from truealgebra.core.rules import Rule, JustOneBU, donothing_rule
 from IPython import embed
+from truealgebra.core.frontend import (
+    FrontEnd, HistoryRuleAction, AssignRuleAction, NaturalUpdateAction,
+    RuleAction, EventRuleAction, NaturalRuleAction, RuleAction,
+    AssignUpdateAction, HistoryUpdateAction, PrintAction,
+)
 
 
 def addnums(num0, num1):
@@ -161,3 +166,22 @@ class EvalMathDictDouble(EvalMathDictSingle):
     def calculation(self, func, expr):
         return func(expr[0].value, expr[1].value)
 
+def create_frontend(
+    pred_rule=donothing_rule, prerule=donothing_rule, postrule=donothing_rule
+):
+    frontend = FrontEnd(
+        (HistoryRuleAction, 'historyrule'),
+        (AssignRuleAction, 'assignrule'),
+        (NaturalUpdateAction, 'naturalupdate'),
+        (RuleAction, 'prerule'),
+        (EventRuleAction, 'eventrule'),
+        (NaturalRuleAction, 'naturalrule'),
+        (RuleAction, 'postrule'),
+        (AssignUpdateAction, 'assignupdate'),
+        (HistoryUpdateAction, 'historyupdate'),
+        (PrintAction, 'print'),
+        pred_rule = pred_rule,
+    )
+    frontend.prerule.rule=prerule
+    frontend.postrule.rule=postrule
+    return frontend
