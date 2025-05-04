@@ -12,7 +12,7 @@ from truealgebra.core.expressions import (
 from truealgebra.common.commonsettings import commonsettings
 from truealgebra.std.evalnum import evalnum, evalnumbu, num0, num1, neg1
 from truealgebra.core.err import ta_logger
-from truealgebra.std.unparse import alg_unparse
+from truealgebra.std.unparse import unparse
 from fractions import Fraction
 
 from IPython import embed
@@ -81,4 +81,4 @@ def std_setup_func():
         RestrictedChild, AssignChild,  PlusComplement, StarComplement,
         SpecialSymbols, MakeFraction,
     ))
-    settings.unparse = alg_unparse
+    settings.unparse = unparse

@@ -172,13 +172,13 @@ def create_frontend(
     frontend = FrontEnd(
         (HistoryRuleAction, 'historyrule'),
         (AssignRuleAction, 'assignrule'),
-        (NaturalUpdateAction, 'naturalupdate'),
+        (NaturalRuleAction, 'naturalrule'),
         (RuleAction, 'prerule'),
         (EventRuleAction, 'eventrule'),
-        (NaturalRuleAction, 'naturalrule'),
         (RuleAction, 'postrule'),
-        (AssignUpdateAction, 'assignupdate'),
         (HistoryUpdateAction, 'historyupdate'),
+        (AssignUpdateAction, 'assignupdate'),
+        (NaturalUpdateAction, 'naturalupdate'),
         (PrintAction, 'print'),
         pred_rule = pred_rule,
     )

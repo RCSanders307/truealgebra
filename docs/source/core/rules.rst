@@ -27,8 +27,8 @@ Import the necessary packages, modules, and objects.
 .. ipython::
 
     In [1]: from truealgebra.core.rules import (
-       ...:     Rule, Rules, RulesBU, JustOne, JustOneBU, Substitute,
-       ...:     donothing_rule 
+       ...:     Rule, Rules, RulesBU, JustOne, JustOneBU, donothing_rule,
+       ...:     Substitute, SubstituteBU
        ...: )
        ...: from truealgebra.core.naturalrules import (
        ...:     NaturalRuleBase, NaturalRule, HalfNaturalRule
@@ -508,6 +508,8 @@ and andrule.
 
 The predrule will be used in the examples below.
 
+.. _naturalrule_class-tag:
+
 NaturalRule Class
 =================
 The name 'NaturualRule' for this class is used because the natural
@@ -524,8 +526,9 @@ contrived.
     In [1]: natrule = NaturalRule( 
        ...:     predicate_rule = predrule,
        ...:     vardict = (
-       ...:         'forall(e0, e1);'
-       ...:         'suchthat(forall(n0), isint(n0) and (n0 < 7))'
+       ...:         'forall(e0, e1, suchthat(n0,  isint(n0) and (n0 < 7)))'
+       ...:         #'forall(e0, e1);'
+       ...:         #'suchthat(forall(n0), isint(n0) and (n0 < 7))'
        ...:     ), 
        ...:     pattern='  (e0 = e1) + (x = n0)  ',
        ...:     outcome='  (e0 + x) = (e1 + n0)  ',
@@ -574,6 +577,8 @@ forall and suchthat. The content of the forall and suchthat
 objects are inspected and if the syntax is correct are made into the
 variable dictionary.
 
+.. _forall_function-tag:
+
 forall Function 
 '''''''''''''''
 The class method create_vardict does the conversion process. This method
@@ -590,6 +595,8 @@ that represents a mathematical function. The ``forall`` contains two symbols
        ...: vardict_1 = NaturalRule.create_vardict(vardict_string_1) 
        ...: vardict_1 
 
+.. _suchthat_function-tag:
+
 suchthat Function
 '''''''''''''''''
 The ``suchthat`` function below is the top level of the expression and
@@ -599,12 +606,15 @@ argument that is a symbol.
 .. ipython::
 
     In [1]: vardict_2 = NaturalRule.create_vardict( 
-       ...:     '  suchthat( forall(n0),  isint(n0) and (n0 < 7) )  ' 
-       ...:  )
-       ...:  vardict_2
+       ...: #   '  suchthat( forall(n0),  isint(n0) and (n0 < 7) )  ' 
+       ...:     '  forall( suchthat(n0, isint(n0) and (n0 < 7) ))  ' 
+       ...: )
+       ...: aa = vardict_2[Symbol('n0')]
+       ...: print(aa) 
        ...:  
-       ...: #aa = Substitute(xx, var)(vardict_dict_1[var])
-       ...: #out = predrule(aa) 
+       ...: bb = SubstituteBU(subdict={Symbol('n0'): Number(3)})
+       ...: print(bb)
+       ...: predrule(bb(aa)) 
 
 The ``vardict_dict_2`` dictionary has one key the symbol ``n0``. The value for
 that key is the logical expression  for ``n0``. The logical expression contains
@@ -644,9 +654,9 @@ For an example look at the vardict and pattern attributes of natrule.
 .. ipython::
 
     In [1]: print('vardict =   ', natrule.vardict)
-       ...: print('vardict[e0]=  ', natrule.vardict[Symbol('e0')])
-       ...: print('vardict[e1]=  ', natrule.vardict[Symbol('e1')]) 
-       ...: print('vardict[n0]=  ', natrule.vardict[Symbol('n0')]) 
+       ...: #print('vardict[e0]=  ', natrule.vardict[Symbol('e0')])
+       ...: #print('vardict[e1]=  ', natrule.vardict[Symbol('e1')]) 
+       ...: #print('vardict[n0]=  ', natrule.vardict[Symbol('n0')]) 
     
 The variables ``e0`` and ``e1`` in  the variable dictionary ``vardict``,
 each have a value of ``true``.
@@ -718,6 +728,7 @@ well.
 
 If ``matchout`` had been False, the rule would returned the input expression ``ex1`` unchanged.
 
+.. _natural_substitution-tag:
 
 Substitution
 ++++++++++++
@@ -744,6 +755,8 @@ NauralRule Subclasses
 When a group of natural rules must be create that will share common attributes,
 it is expediant to create a NaturalRule subclass that has the common
 attributes and then instantiate the rules from the subclass.
+
+.. _naturalrule_attributes-tag:
 
 NaturalRule Class Attributes
 ++++++++++++++++++++++++++++
@@ -810,8 +823,7 @@ In the body method below:
     In [1]: class PlusIntEval(HalfNaturalRule): 
        ...:     predicate_rule = predrule 
        ...:     vardict = ( 
-       ...:         '  suchthat(forall(n0), isint(n0));' + 
-       ...:         '  suchthat(forall(n0), isint(n0))' 
+       ...:         'Forall(suchthat(n0, isint(n0)), suchthat(n1, isint(n1)))' 
        ...:     ) 
        ...:     pattern = '  n0 + n1  ' 
        ...:  

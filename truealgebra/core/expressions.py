@@ -89,10 +89,7 @@ class ExprBase(ABC):
     # an expression to a mathematically readable string.
     # As per stackoverflow question 1436703, users Martelli and moshez
     def __str__(self):
-        if settings.unparse is None:
-            return self.__repr__()
-        else:
-            return settings.unparse(self)
+        return settings.unparse(self)
 
 
 # NOT Unit Tested

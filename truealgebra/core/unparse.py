@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from truealgebra.core.settings import settings
 from truealgebra.core.expressions import (
-    Number, Symbol, Container, CommAssoc, NullSingleton, isCommAssoc
+    Number, Symbol, Container, CommAssoc, NullSingleton, isCommAssoc,
+    MultiExprs,
 )
 from truealgebra.core.constants import isoperatorname, issymbolname
 
@@ -19,7 +20,7 @@ class ReadableString:
         self.chain.represent = self
 
     def last_handler(self, expr):
-        return str(expr)
+        return repr(expr)
 
     def __call__(self, expr):
         return self.chain(expr)
@@ -137,14 +138,20 @@ class ReadableString:
 
     def deal_with_left(self, lbp, leftarg):
         argstr = self(leftarg)
-        if self.need_parenthesis_on_left(lbp, leftarg):
+        if (
+            self.need_parenthesis_on_left(lbp, leftarg)
+            or self.does_num_need_paren(leftarg)
+        ):
             return '(' + argstr + ') '
         else:
             return argstr + ' '
 
     def deal_with_right(self, rbp, rightarg):
         argstr = self(rightarg)
-        if self.need_parenthesis_on_right(rbp, rightarg):
+        if (
+            self.need_parenthesis_on_right(rbp, rightarg)
+            or self.does_num_need_paren(rightarg)
+        ):
             return ' (' + argstr + ')'
         else:
             return ' ' + argstr
@@ -154,11 +161,16 @@ class ReadableString:
         if (
             self.need_parenthesis_on_left(lbp, item)
             or self.need_parenthesis_on_right(rbp, item)
+            or self.does_num_need_paren(item)
         ):
             outstr += name + ' (' + argstr + ') '
         else:
             outstr += name + ' ' + argstr + ' '
         return outstr
+
+    def does_num_need_paren(self, item):
+        return False
+
 
 
 class ReadableHandlerBase(ABC):
@@ -259,6 +271,16 @@ class UnparseCommAssoc(ReadableHandlerBase):
             return outstr
 
 
+class UnparseMultiExprs(ReadableHandlerBase):
+    def handle_expr(self, multiexprs):
+        if isinstance(multiexprs, MultiExprs):
+            outstr = ''
+            for expr in multiexprs.exprs[:1]:
+                outstr += self.parent(expr)
+            for expr in multiexprs.exprs[1:]:
+                outstr += '; ' + self.parent(expr)
+            return outstr
+
 
 class UnparseNull(ReadableHandlerBase):
     def handle_expr(self, expr):
@@ -274,5 +296,6 @@ unparse = ReadableString(
     UnparseFunctForm,
     UnparseSymbol,
     UnparseNull,
+    UnparseMultiExprs,
 )
 

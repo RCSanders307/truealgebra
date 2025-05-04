@@ -1,6 +1,7 @@
 from truealgebra.core.unparse import (
     ReadableHandlerBase, UnparseNumber, UnparseOperator, UnparseBodiedFunct,
-    UnparseFunctForm, UnparseSymbol, UnparseNull, ReadableString
+    UnparseFunctForm, UnparseSymbol, UnparseNull, ReadableString,
+    UnparseMultiExprs,
 )
 from truealgebra.common.unparse import (
     UnparseCommAssocPlus, UnparseCommAssocStar,
@@ -47,7 +48,7 @@ class UnparseFractionNumber(ReadableHandlerBase):
             )
 
 
-alg_unparse = ReadableString(
+unparse = ReadableString(
     UnparseComplexNumber,
     UnparseFractionNumber,
     UnparseNumber,
@@ -58,4 +59,5 @@ alg_unparse = ReadableString(
     UnparseFunctForm,
     UnparseSymbol,
     UnparseNull,
+    UnparseMultiExprs,
 )

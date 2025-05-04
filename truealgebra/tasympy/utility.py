@@ -6,17 +6,27 @@ class SympyNumbers:
         if accuracy is not None:
             self.accuracy = accuracy
 
-    accuracy = 10
+    accuracy = None
+
+    def rawinteger(self, string):
+        return sympy.core.numbers.Integer(string)
 
     def integer(self, string):
-        return Number(sympy.core.numbers.Integer(string))
+        return Number(self.rawinteger(string))
+#       return Number(sympy.core.numbers.Integer(string))
 
-    def float(self, string, accuracy=None):
-        if accuracy is None:
-            return Number(sympy.core.numbers.Float(string, self.accuracy))
+    def rawfloat(self, string):
+        if self.accuracy is None:
+            return sympy.core.numbers.Float(string)
         else:
-            return Number(sympy.core.numbers.Float(string, accuracy))
+            return sympy.core.numbers.Float(string, self.accuracy)
+
+    def float(self, string):
+        return Number(self.rawfloat(string))
             
+    def rational(self, *args):
+        return Number(sympy.core.numbers.Rational(*args))
+
 
 snum = SympyNumbers()
 

@@ -10,10 +10,10 @@ Algebra System). Howrver the core modules by themselves are not a CAS but provid
 **Content**
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
 
-   overview.rst
-   rules.rst
-   expressions.rst
-   settings.rst
+    overview.rst
+    rules.rst
+    expressions.rst
+    settings.rst

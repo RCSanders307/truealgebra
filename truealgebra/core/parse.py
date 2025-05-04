@@ -8,6 +8,7 @@ from truealgebra.core.constants import (
 )
 from truealgebra.core.rules import RecursiveChild
 
+from IPython import embed
 
 def parse_logger(msg):
     ta_logger.log('Parse Error\n' + msg)
@@ -450,16 +451,10 @@ class Parse:
 
 # factory methods
     def integer_factory(self):
-        if settings.integer_class is None:
-            return Number(int(self.buf))
-        else:
-            return Number(settings.integer_class(self.buf))
+        return Number(settings.integer_class(self.buf))
 
     def real_factory(self):
-        if settings.float_class is None:
-            return Number(float(self.buf))
-        else:
-            return Number(settings.float_class(self.buf))
+        return Number(settings.float_class(self.buf))
 
     def make_container_instance(self):
         name = settings.complement.get(self.buf, self.buf)
