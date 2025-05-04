@@ -67,6 +67,9 @@ def noparse(anystring):
     ta_logger.log("Change settings.parse from noparse to something useful.")
     return None
 
+def nounparse(anything):
+    return repr(anything)
+
 
 class SettingsSingleton():
     """
@@ -161,9 +164,9 @@ class SettingsSingleton():
         self.categories['suchthat'].add('suchthat')
         self.categories['forall'].add('forall')
         self.parse = noparse
-        self.unparse = None
-        self.float_class = None
-        self.integer_class = None
+        self.unparse = nounparse
+        self.float_class = float
+        self.integer_class = int
 
 
 settings = SettingsSingleton()

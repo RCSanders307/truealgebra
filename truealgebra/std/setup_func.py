@@ -12,7 +12,7 @@ from truealgebra.core.expressions import (
 from truealgebra.common.commonsettings import commonsettings
 from truealgebra.std.evalnum import evalnum, evalnumbu, num0, num1, neg1
 from truealgebra.core.err import ta_logger
-from truealgebra.std.unparse import alg_unparse
+from truealgebra.std.unparse import unparse
 from fractions import Fraction
 
 from IPython import embed
@@ -53,9 +53,7 @@ class SpecialSymbols(RecursiveChild):
 class MakeFraction(RecursiveChild):
     def predicate(self, expr):
         return (
-            expr.name == '/'
-            and isinstance(expr, Container) 
-            and len(expr) == 2
+            isContainer(expr, '/', 2)
             and isinstance(expr[0], Number)
             and isinstance(expr[0].value, int)
             and isinstance(expr[1], Number)
@@ -83,4 +81,4 @@ def std_setup_func():
         RestrictedChild, AssignChild,  PlusComplement, StarComplement,
         SpecialSymbols, MakeFraction,
     ))
-    settings.unparse = alg_unparse
+    settings.unparse = unparse

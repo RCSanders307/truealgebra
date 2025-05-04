@@ -3,16 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+=========================
 TrueAlgebra Documentation
 =========================
 
 .. toctree::
-   :maxdepth: 4
-   :caption: Contents:
+    :maxdepth: 1
+    :caption: Contents:
 
-   intro
-   stdcas
-   core/index.rst
+    intro
+    tasympy/index.rst
+    std.rst
+    core/index.rst
 
 
 Indices and tables

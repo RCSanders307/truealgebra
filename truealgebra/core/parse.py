@@ -1,6 +1,6 @@
 from truealgebra.core.err import ta_logger
 from truealgebra.core.expressions import (
-    Container, Number, Symbol, Restricted, Assign, null, end
+    Container, Number, Symbol, Restricted, Assign, null, end, MultiExprs
 )
 from truealgebra.core.settings import settings
 from truealgebra.core.constants import (
@@ -8,6 +8,7 @@ from truealgebra.core.constants import (
 )
 from truealgebra.core.rules import RecursiveChild
 
+from IPython import embed
 
 def parse_logger(msg):
     ta_logger.log('Parse Error\n' + msg)
@@ -34,34 +35,8 @@ class RestrictedChild(RecursiveChild):
         for item in expr.items:
             newitems.append(self.parent(item))
         return Restricted(expr.name, newitems)
-
-
-#class Bypass(Rule):
-#    """
-#    This rule bypasses restrictions of Restricred and Assign expressions.
-#    """
-#    def __init__(self, *rules, **kwargs):
-#        self.rulelist = rules
-#
-#        super().__init__(*rules, **kwargs)
-#
-#    def predicate(self, expr):
-#        return True
-#
-#    def body(self, expr):
-#        if isinstance(expr, Restricted):
-#            newitems = list()
-#            for item in expr.items:
-#                newitems.append(self(item))
-#            newexpr = Restricted(expr.name, newitems)
-#        else:
-#            newexpr = expr
-
-        for rule in self.rulelist:
-            newexpr = rule(newexpr)
-        return newexpr
-
-    bottomup = True
+# I do not think the line below is needed.
+#   bottomup = True
 
 
 class Parse:
@@ -107,6 +82,31 @@ class Parse:
 
     def next_char(self):
         self.char = next(self.string_iterator, 'end')
+
+    # NOT Unit Tested
+    def multi(self, string):
+        if not string:
+            return null
+
+        ndex = string.find(';')
+
+        if ndex == -1:
+            return self(string)
+        
+        multilist = list()
+        while string:
+            if ndex == -1:
+                multilist.append(self(string))
+                break
+            front = string[:ndex]
+            string = string[(ndex + 1):]
+
+            if front:
+                multilist.append(self(front))
+            else:
+                multilist.append(null)
+            ndex = string.find(';')
+        return MultiExprs(multilist)
 
     def __call__(self, strn):
         self.string = strn
@@ -349,7 +349,7 @@ class Parse:
             return self.symbol_factory()
 
     def sform_tokenizer(self):
-        """ Develope Scientific form tokens for numbers."""
+        """ Develop Scientific form tokens for numbers."""
         self.buf += self.char
         self.next_char()
         if self.char in ('+', '-'):
@@ -451,16 +451,10 @@ class Parse:
 
 # factory methods
     def integer_factory(self):
-        if settings.integer_class is None:
-            return Number(int(self.buf))
-        else:
-            return Number(settings.integer_class(self.buf))
+        return Number(settings.integer_class(self.buf))
 
     def real_factory(self):
-        if settings.float_class is None:
-            return Number(float(self.buf))
-        else:
-            return Number(settings.float_class(self.buf))
+        return Number(settings.float_class(self.buf))
 
     def make_container_instance(self):
         name = settings.complement.get(self.buf, self.buf)
@@ -526,3 +520,28 @@ def meta_parser(strn):
             result = settings.parse(strn[:indx])
             strn = strn[indx+1:]
         yield result
+
+
+def multiparse(string):
+    if not string:
+        return null
+
+    ndex = string.find(';')
+
+    if ndex == -1:
+        return settings.parse(string)
+    
+    multilist = list()
+    while string:
+        if ndex == -1:
+            multilist.append(settings.parse(string))
+            break
+        sss = string[:ndex]
+        string = string[(ndex + 1):]
+
+        if sss:
+            multilist.append(settings.parse(sss))
+        else:
+            multilist.append(null)
+        ndex = string.find(';')
+    return Container('multi', multilist)

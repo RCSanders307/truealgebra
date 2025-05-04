@@ -123,6 +123,9 @@ class Substitute(Rule):
         """
         return self.subdict[expr]
 
+class SubstituteBU(Substitute):
+    bottomup = True
+
 
 class Rules(RuleBase):
     def __init__(self, *rules, **kwargs):

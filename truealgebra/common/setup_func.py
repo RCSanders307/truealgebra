@@ -31,11 +31,11 @@ def common_setup_func():
     setsettings.set_symbol_operators("and", 75, 75)
     setsettings.set_symbol_operators("or", 75, 75)
     setsettings.set_symbol_operators("not", 0, 70)
+    setsettings.set_symbol_operators("suchthat", 3001, 70)
 
     setsettings.set_bodied_functions("D", 70)
     setsettings.set_bodied_functions("Intergrate", 70)
     setsettings.set_bodied_functions("I", 70)
-    setsettings.set_bodied_functions("Rule", 70)
 
     setsettings.set_infixprefix("-", 999)
 
@@ -54,7 +54,7 @@ def common_setup_func():
     setsettings.set_categories('rule_names', ':=') 
     setsettings.set_categories('rule_names', '==>') 
     setsettings.set_categories('eqn_names', '=') 
-    setsettings.set_categories('suchthat', '|') 
+    setsettings.set_categories('suchthat', ':') 
     setsettings.set_categories('suchthat', 'suchthat') 
     setsettings.set_categories('forall', '@') 
     setsettings.set_categories('forall', 'forall') 

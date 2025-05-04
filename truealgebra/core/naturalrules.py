@@ -3,9 +3,13 @@ from truealgebra.core.rules import (
 )
 from truealgebra.core.settings import settings
 from truealgebra.core.parse import meta_parser
-from truealgebra.core.expressions import null, Symbol, true
+from truealgebra.core.expressions import (
+    null, Symbol, true, isContainer, isSymbol, ExprBase
+)
 from truealgebra.core.err import ta_logger
 import types
+
+from IPython import embed
 
 
 class TrueThingNR(TrueThing):
@@ -50,6 +54,8 @@ class NaturalRuleBase(RuleBase):
         if "vardict" in kwargs:
             if isinstance(kwargs['vardict'], str):
                 self.vardict = self.create_vardict(kwargs['vardict'])
+            elif isinstance(kwargs['vardict'], ExprBase):
+                self.vardict = self.expr_to_vardict(kwargs['vardict'])
             else:
                 self.vardict = kwargs['vardict']
 
@@ -58,12 +64,40 @@ class NaturalRuleBase(RuleBase):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def convert_classvar(cls):
-        if isinstance(cls.vardict, str):
-            cls.vardict = cls.create_vardict(cls.vardict)
+    def process_forall(cls, vardict, expr):
+        if (
+            isContainer(expr)
+            and expr.name in settings.categories['forall']
+        ):
+            for item in expr.items:
+                if isSymbol(item):
+                    vardict[item] = true
+                elif (
+                    isContainer(item)
+                    and item.name in settings.categories['suchthat']
+                    and len(item.items) == 2
+                    and isSymbol(item[0])
+                ):
+                    vardict[item[0]] = item[1]
+                elif (
+                    isContainer(item)
+                    and item.name in settings.categories['forall']
+                ):
+                    cls.process_forall(vardict, item)
+
+    @classmethod
+    def expr_to_vardict(cls, expr):
+        vardict = dict()
+        cls.process_forall(vardict, expr)
+        return types.MappingProxyType(vardict)
 
     @classmethod
     def create_vardict(cls, string):
+        expr = settings.parse(string)
+        return cls.expr_to_vardict(expr)
+                    
+    @classmethod
+    def convert_classvar(cls):
         """Create a variable dictionary used for pattern matching
 
         string : str instance is parsed into truealgebra expressions
@@ -73,29 +107,10 @@ class NaturalRuleBase(RuleBase):
         ------
         vardict : dict
             The keys are Symbol instances called variables.
-            A variable was the argument of a forall expression.
-            The values are the second arguments of suchthat expressions.
-            a variable not in a suchthat expression has null for a value.
+            the values are the predicates that the variables must satisfy
         """
-        parsed_string = meta_parser(string)
-        vardict = dict()
-        for ex in parsed_string:
-            try:
-                if ex.name in settings.categories['forall']:
-                    for item in ex.items:
-                        if isinstance(item, Symbol):
-                            vardict[item] = true
-                elif ex.name in settings.categories['suchthat']:
-                    if (
-                        ex[0].name in settings.categories['forall']
-                        and isinstance(ex[0][0], Symbol)
-                    ):
-                        vardict[ex[0][0]] = ex[1]
-            except IndexError:
-                ta_logger.log(
-                    'Index Error in forall or suchthat container expression'
-                )
-        return vardict
+        if isinstance(cls.vardict, str):
+            cls.vardict = cls.create_vardict(cls.vardict)
 
 
 class NaturalRule(NaturalRuleBase):

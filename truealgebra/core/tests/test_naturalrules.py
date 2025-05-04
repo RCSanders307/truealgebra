@@ -131,16 +131,17 @@ def test_truethinghnr(settings):
     'varstring, vardict',
     [
         (' forall(x, 7, y, sin(z)) ', {Sy('x'): true, Sy('y'): true}),
-        ('suchthat(forall(x), isint(x))', {Sy('x'): Co('isint', (Sy('x'),))}),
+#       ('suchthat(forall(x), isint(x))', {Sy('x'): Co('isint', (Sy('x'),))}),
+        ('forall(suchthat(x, isint(x)))', {Sy('x'): Co('isint', (Sy('x'),))}),
         (
-            'forall(x, y); forall(z) ',
+            'forall(x, y, forall(z)) ',
             {Sy('x'): true, Sy('y'): true, Sy('z'): true}
         ),
     ],
     ids=[
         'forall intro',
         'suchthat intro',
-        'meta_parser',
+        'nested forall',
     ],
 )
 def test_create_vardict(varstring, vardict, settings):
@@ -148,16 +149,6 @@ def test_create_vardict(varstring, vardict, settings):
     out = NaturalRuleBase.create_vardict(varstring)
 
     assert out == vardict
-
-
-def test_create_vardict_exception(capsys, settings):
-    msg = 'Index Error in forall or suchthat container expression'
-    out = NaturalRule.create_vardict('suchthat()')
-    output = capsys.readouterr()
-
-    assert msg in output.out
-    assert out == dict()
-
 
 
 def test_naturalrulebase_default(settings):
@@ -344,7 +335,8 @@ def test_naturalrule_functional_case_0(settings):
 def test_naturalrule_functional_case_12(settings):
     rule = NaturalRule(
         predicate_rule=predrule,
-        vardict=" suchthat( forall(__x), isint(__x)); forall(__1) ",
+#       vardict=" suchthat( forall(__x), isint(__x)); forall(__1) ",
+        vardict=" forall( suchthat((__x), isint(__x)), forall(__1)) ",
         pattern=" star(__x, 3.7, __1) ",
         outcome=" star( 3.7, __x, __1) ",
     )
@@ -382,7 +374,7 @@ def test_naturalrule_functional_case_3(settings):
 
 def test_naturalrule_functional_case_4(settings):
     rule = NaturalRule(
-        vardict=" suchthat( forall(x), isint(x)); forall(y) ",
+        vardict=" forall( suchthat(x, isint(x)), forall(y)) ",
         predicate_rule=predrule,
         pattern=" star(x, y, 3) ",
         outcome=" f(3, x, y) ",
@@ -410,9 +402,7 @@ def test_hnr_varnames(settings):
 def HNR0(settings):
     class HNR0(HalfNaturalRule):
         vardict = (
-            ' suchthat(forall(x), isint(x)); '
-            ' suchthat(forall(y), isreal(y)); '
-            ' forall(_) '
+            'forall(suchthat(x, isint(x)), suchthat(y, isreal(y)), _)'
         )
         pattern = settings.parse(' _ ++ (y ** x) ')
         predicate_rule = predrule

@@ -1,3 +1,5 @@
+import sympy
+
 from truealgebra.core.parse import Parse, RestrictedChild, AssignChild
 from truealgebra.core.rules import (RecursiveChild, RecursiveParentBU)
 from truealgebra.core.settings import settings
@@ -5,9 +7,10 @@ from truealgebra.core.expressions import (
     isContainer, isSymbol, isNumber,  Number, CommAssoc,
 )
 from truealgebra.common.commonsettings import commonsettings
-from truealgebra.tasympy.evalnum import evalnum, evalnumbu, num0, num1, neg1
 
-import sympy
+from .evalnum import evalnum, evalnumbu, num0, num1, neg1
+from .utility import snum
+from .unparse import unparse
 
 
 class MakeRational(RecursiveChild):
@@ -81,6 +84,9 @@ def tasympy_setup_func():
         SpecialSymbols, MakeRational,
     ))
 
-    settings.unparse = None
-    settings.float_class = makefloat
+#   settings.unparse = None
+    settings.float_class = snum.rawfloat
+#   settings.float_class = snum.float
     settings.integer_class = sympy.core.numbers.Integer
+#   settings.integer_class = snum.rawinteger
+    settings.unparse = unparse

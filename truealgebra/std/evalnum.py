@@ -72,7 +72,6 @@ class CleanComplex(Rule):
             return expr
 
 
-
 cleanfraction = CleanFraction()
 cleancomplex = CleanComplex()
 
